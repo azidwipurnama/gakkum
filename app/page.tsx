@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { LayoutDashboard, Wifi, Server, Laptop, Search } from 'lucide-react';
 import { Device } from '../types/network';
+import { RadarVisualizer } from '../components/RadarVisualizer';
+
 
 export default function Dashboard() {
-  const devices = useWebSocket();
+  const { devices, metrics } = useWebSocket();
   const [search, setSearch] = useState('');
 
   const safeDevices = Array.isArray(devices) ? devices : [];
@@ -30,7 +32,7 @@ export default function Dashboard() {
       <section className="grid grid-cols-3 gap-6 mb-8">
         <div className="bg-slate-900 p-6 rounded-lg border border-slate-800">
            <h2 className="text-slate-400 mb-2 flex items-center gap-2"><Server size={18}/> Server Connection</h2>
-           <p className="text-sm">IP: 192.168.1.100 | Room: Gakkum-1</p>
+           <p className="text-sm">IP: {metrics.server_ip} | Room: Gakkum-1</p>
         </div>
         <div className="bg-slate-900 p-6 rounded-lg border border-slate-800">
            <h2 className="text-slate-400 mb-2 flex items-center gap-2"><Wifi size={18}/> Device Metrics</h2>
@@ -41,7 +43,9 @@ export default function Dashboard() {
         </div>
         <div className="bg-slate-900 p-6 rounded-lg border border-slate-800">
            <h2 className="text-slate-400 mb-2 flex items-center gap-2"><Laptop size={18}/> Radar</h2>
-           <div className="h-16 bg-slate-800 rounded flex items-center justify-center text-slate-500 text-xs">Radar UI Placeholder</div>
+           <div className="flex items-center justify-center">
+             <RadarVisualizer devices={safeDevices} />
+           </div>
         </div>
       </section>
 
@@ -62,9 +66,12 @@ export default function Dashboard() {
           <thead className="text-slate-400 border-b border-slate-800">
             <tr>
               <th className="py-2">Hostname</th>
+              <th className="py-2">Vendor</th>
               <th className="py-2">IP Address</th>
               <th className="py-2">MAC</th>
+              <th className="py-2">Category</th>
               <th className="py-2">Location</th>
+              <th className="py-2">Last Active</th>
               <th className="py-2">Status</th>
             </tr>
           </thead>
@@ -72,9 +79,24 @@ export default function Dashboard() {
             {filteredDevices.map((d: Device) => (
               <tr key={d.mac} className="border-b border-slate-800">
                 <td className="py-2 font-medium">{d.hostname || 'N/A'}</td>
+                <td className="py-2 text-slate-400">{d.vendor || 'N/A'}</td>
                 <td className="py-2">{d.ip || 'N/A'}</td>
                 <td className="py-2">{d.mac}</td>
+                <td className="py-2">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    d.category === 'Router / AP' ? 'bg-blue-900 text-blue-200' :
+                    d.category === 'Printer' ? 'bg-purple-900 text-purple-200' :
+                    d.category === 'Smartphone' ? 'bg-cyan-900 text-cyan-200' :
+                    d.category === 'Laptop / PC' ? 'bg-emerald-900 text-emerald-200' :
+                    'bg-slate-700 text-slate-200'
+                  }`}>
+                    {d.category}
+                  </span>
+                </td>
                 <td className="py-2">{d.location || '-'}</td>
+                <td className="font-mono text-xs text-slate-300 py-2">
+                  {d.last_seen ? d.last_seen.replace('T', ' ') : '-'}
+                </td>
                 <td className="py-2">
                   <span className={`px-2 py-1 rounded text-xs ${d.status === 'UP' ? 'bg-emerald-900' : 'bg-red-900'}`}>
                     {d.status}

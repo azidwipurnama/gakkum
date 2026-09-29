@@ -5,6 +5,7 @@ const WS_URL = 'ws://localhost:8000/ws/network-monitor?api_key=GAKKUM_SECRET_KEY
 
 export function useWebSocket() {
   const [devices, setDevices] = useState<Device[]>([]);
+  const [metrics, setMetrics] = useState({ total_up: 0, total_down: 0, server_ip: 'Unknown' });
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -19,18 +20,15 @@ export function useWebSocket() {
     ws.current = new WebSocket(WS_URL);
 
     ws.current.onmessage = (event) => {
-      console.log("[DEBUG FRONTEND] Message received from WS:", event.data);
       try {
         const data = JSON.parse(event.data);
 
-        // Safeguard data handling
         if (data && typeof data === 'object') {
-          if (data.type === "DEVICE_UPDATE" && Array.isArray(data.devices)) {
-            setDevices(data.devices);
+          if (data.type === "DEVICE_UPDATE") {
+            if (Array.isArray(data.devices)) setDevices(data.devices);
+            if (data.metrics) setMetrics(data.metrics);
           } else if (Array.isArray(data)) {
             setDevices(data);
-          } else {
-            console.warn('Received unexpected WebSocket data format', data);
           }
         }
       } catch (err) {
@@ -39,10 +37,9 @@ export function useWebSocket() {
     };
 
     ws.current.onclose = () => {
-      console.warn('[DEBUG FRONTEND] WS Disconnected, reconnecting...');
-      setTimeout(connect, 3000); // Auto-reconnect
+      setTimeout(connect, 3000);
     };
   };
 
-  return devices;
+  return { devices, metrics };
 }

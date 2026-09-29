@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 import uvicorn
 import asyncio
 from sniffer import NetworkSniffer
-from timestamp_engine import TimestampEngine
+from timestamp_engine import TimestampEngine, mac_lookup
 from config import API_KEY, BROADCAST_INTERVAL_SECONDS
 
 app = FastAPI()
@@ -31,6 +31,18 @@ manager = ConnectionManager()
 
 @app.on_event("startup")
 async def startup_event():
+    # Update OUI Database asynchronously
+    if mac_lookup:
+        async def update_mac_db():
+            try:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(None, mac_lookup.update_vendors)
+                print("[SUCCESS] OUI Database updated successfully.")
+            except Exception as e:
+                print(f"Gagal update OUI via internet: {e}")
+
+        asyncio.create_task(update_mac_db())
+
     # Start sniffer in a background thread
     import threading
     threading.Thread(target=sniffer.launch, daemon=True).start()
@@ -50,15 +62,18 @@ async def broadcast_loop():
     while True:
         payload = engine.get_full_payload()
 
+        # Add server IP to metrics
+        payload["metrics"]["server_ip"] = sniffer.local_ip
+
         # Inject dummy data if no devices
         if not payload["devices"]:
             payload = {
                 "type": "DEVICE_UPDATE",
                 "devices": [
-                    {"ip": "192.168.1.15", "mac": "AA:BB:CC:11:22:33", "hostname": "Test-Laptop", "location": "Gakkum-1", "status": "UP", "category": "Laptop", "vendor": "Dell", "last_seen": "2026-09-29T07:47:00Z"},
-                    {"ip": "192.168.1.20", "mac": "DD:EE:FF:44:55:66", "hostname": "Test-Phone", "location": "Gakkum-1", "status": "UP", "category": "Smartphone", "vendor": "Apple Inc", "last_seen": "2026-09-29T07:47:00Z"}
+                    {"ip": "10.10.8.15", "mac": "AA:BB:CC:11:22:33", "hostname": "Test-Laptop", "location": "Gakkum-1", "status": "UP", "category": "Laptop", "vendor": "Dell", "last_seen": "2026-09-29T07:47:00Z"},
+                    {"ip": "10.10.8.20", "mac": "DD:EE:FF:44:55:66", "hostname": "Test-Phone", "location": "Gakkum-1", "status": "UP", "category": "Smartphone", "vendor": "Apple Inc", "last_seen": "2026-09-29T07:47:00Z"}
                 ],
-                "metrics": {"total_up": 2, "total_down": 0}
+                "metrics": {"total_up": 2, "total_down": 0, "server_ip": sniffer.local_ip}
             }
 
         print(f"[DEBUG WS] Mengirim data ke client: {payload}")
