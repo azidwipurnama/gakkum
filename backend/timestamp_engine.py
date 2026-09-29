@@ -117,12 +117,17 @@ class TimestampEngine:
             print(f"New MAC detected: {mac}")
 
             # Initialize with basic info
+            vendor = self.lookup_vendor(mac)
+            display_name = hostname
+            if not display_name or display_name.lower() == "loading...":
+                display_name = f"{vendor} Device"
+
             self.devices[mac] = {
                 "ip": ip,
                 "last_seen": now,
                 "status": "UP",
-                "vendor": self.lookup_vendor(mac), # Quick lookup
-                "hostname": hostname or "Loading...",
+                "vendor": vendor,
+                "hostname": display_name,
                 "bssid": bssid,
                 "category": "General Device"
             }
@@ -132,7 +137,12 @@ class TimestampEngine:
         self.devices[mac]["status"] = "UP"
         if ip: self.devices[mac]["ip"] = ip
         if bssid: self.devices[mac]["bssid"] = bssid
-        if hostname: self.devices[mac]["hostname"] = hostname
+
+        # Intelligent Hostname/Display Name Fallback during updates
+        if hostname and hostname.lower() != "loading...":
+            self.devices[mac]["hostname"] = hostname
+        elif self.devices[mac]["hostname"] == "Loading..." or self.devices[mac]["hostname"] == "Loading...":
+            self.devices[mac]["hostname"] = f"{self.devices[mac]['vendor']} Device"
 
         # Check if needs probing
         if self.devices[mac]["category"] == "General Device":

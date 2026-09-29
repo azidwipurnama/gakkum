@@ -4,6 +4,7 @@ import time
 import subprocess
 import re
 import socket
+import asyncio
 from config import PING_INTERVAL_SECONDS
 
 class NetworkSniffer:
@@ -81,31 +82,36 @@ class NetworkSniffer:
 
     def active_arp_scan(self, aggressive=False):
         print(f"Starting ARP scan on {self.target_iface}...")
-        subnet = self.get_local_subnet()
-        arp_request = ARP(pdst=subnet)
-        broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
-        arp_request_broadcast = broadcast/arp_request
 
+        # Periodic Active Scan Loop (every 15 seconds)
+        def periodic_scan():
+            while True:
+                subnet = self.get_local_subnet()
+                arp_request = ARP(pdst=subnet)
+                broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
+                arp_request_broadcast = broadcast/arp_request
+
+                try:
+                    answered_list = srp(arp_request_broadcast, timeout=3, verbose=False, iface=self.target_iface)[0]
+                    for element in answered_list:
+                        mac = element[1].hwsrc.lower()
+                        ip = element[1].psrc
+                        if self.is_valid_client_ip(ip, mac):
+                            needs_probe, _ = self.engine.update_device(mac, ip=ip)
+                            if needs_probe:
+                                asyncio.run(self.engine.probe_device_ports(ip, mac))
+                except Exception as e:
+                    print(f"Scapy ARP scan warning: {e}")
+
+                time.sleep(15)
+
+        # Start periodic scan thread
+        threading.Thread(target=periodic_scan, daemon=True).start()
+
+        # Existing ARP table scan logic as immediate loop
         while True:
-            try:
-                answered_list = srp(arp_request_broadcast, timeout=2, verbose=False, iface=self.target_iface)[0]
-                for element in answered_list:
-                    mac = element[1].hwsrc.lower()
-                    ip = element[1].psrc
-                    if self.is_valid_client_ip(ip, mac):
-                        needs_probe, _ = self.engine.update_device(mac, ip=ip)
-                        if needs_probe:
-                            asyncio.run(self.engine.probe_device_ports(ip, mac))
-            except Exception as e:
-                print(f"Scapy scan warning: {e}")
-
             self.scan_arp_table()
-
-            if aggressive:
-                aggressive = False
-                time.sleep(1)
-            else:
-                time.sleep(PING_INTERVAL_SECONDS)
+            time.sleep(PING_INTERVAL_SECONDS)
 
     def start_passive_sniffing(self):
         sniff(iface=self.target_iface, prn=self.packet_callback, store=0)
