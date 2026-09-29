@@ -1,0 +1,90 @@
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
+import uvicorn
+import asyncio
+from sniffer import NetworkSniffer
+from timestamp_engine import TimestampEngine
+from config import API_KEY, BROADCAST_INTERVAL_SECONDS
+
+app = FastAPI()
+
+# Initialize Engine and Sniffer
+engine = TimestampEngine()
+sniffer = NetworkSniffer(engine)
+
+# Connection Manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast_json(self, message: dict):
+        for connection in self.active_connections:
+            await connection.send_json(message)
+
+manager = ConnectionManager()
+
+@app.on_event("startup")
+async def startup_event():
+    # Start sniffer in a background thread
+    import threading
+    threading.Thread(target=sniffer.launch, daemon=True).start()
+
+    # Start status check loop
+    asyncio.create_task(status_check_loop())
+
+    # Start broadcast loop
+    asyncio.create_task(broadcast_loop())
+
+async def status_check_loop():
+    while True:
+        engine.check_status()
+        await asyncio.sleep(10)
+
+async def broadcast_loop():
+    while True:
+        payload = engine.get_full_payload()
+
+        # Inject dummy data if no devices
+        if not payload["devices"]:
+            payload = {
+                "type": "DEVICE_UPDATE",
+                "devices": [
+                    {"ip": "192.168.1.15", "mac": "AA:BB:CC:11:22:33", "hostname": "Test-Laptop", "location": "Gakkum-1", "status": "UP", "category": "Laptop", "vendor": "Dell", "last_seen": "2026-09-29T07:47:00Z"},
+                    {"ip": "192.168.1.20", "mac": "DD:EE:FF:44:55:66", "hostname": "Test-Phone", "location": "Gakkum-1", "status": "UP", "category": "Smartphone", "vendor": "Apple Inc", "last_seen": "2026-09-29T07:47:00Z"}
+                ],
+                "metrics": {"total_up": 2, "total_down": 0}
+            }
+
+        print(f"[DEBUG WS] Mengirim data ke client: {payload}")
+        await manager.broadcast_json(payload)
+        await asyncio.sleep(BROADCAST_INTERVAL_SECONDS)
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+@app.websocket("/ws/network-monitor")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    api_key: str = Query(...)
+):
+    if api_key != API_KEY:
+        await websocket.close(code=1008)
+        return
+
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

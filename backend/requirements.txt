@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+scapy
+websockets
+# Supabase Python client if needed, or just use requests if they want simple
+# supabase
+python-dotenv
