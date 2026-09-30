@@ -1,164 +1,384 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import * as THREE from "three";
 
-export default function CyberGlobeBg() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const globeGroupRef = useRef<THREE.Group | null>(null);
+interface CyberGlobeBgProps {
+  wifiName?: string;
+}
+
+export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlobeBgProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const cv = canvasRef.current;
+    if (!cv) return;
 
-    // 1. Setup Scene & Kamera (Near Clipping Plane & Z-Position Diatur Presisi)
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      0.1, // Near plane diperkecil agar tidak memotong tengah bola
-      2000
-    );
+    const g = cv.getContext("2d");
+    if (!g) return;
 
-    // Mundurkan kamera jauh ke belakang agar 1 bola utuh muat di tengah
-    camera.position.set(0, -10, 260);
-    camera.lookAt(0, 0, 0);
+    let W = 0, H = 0, R = 0, cx = 0, cy = 0;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // Bersihkan container sebelum append
-    containerRef.current.innerHTML = "";
-    containerRef.current.appendChild(renderer.domElement);
-
-    const globeGroup = new THREE.Group();
-    globeGroupRef.current = globeGroup;
-    scene.add(globeGroup);
-
-    // Radius Bola Dikecilkan Pas (Radius 50)
-    const radius = 85;
-
-    // 2. Dots Globe Sphere (Titik Cyan, Orange, Slate)
-    const count = 3000;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-
-    const colorCyan = new THREE.Color("#00f3ff");
-    const colorOrange = new THREE.Color("#ff5500");
-    const colorSlate = new THREE.Color("#334155");
-
-    for (let i = 0; i < count; i++) {
-      const phi = Math.acos(-1 + (2 * i) / count);
-      const theta = Math.sqrt(count * Math.PI) * phi;
-
-      positions[i * 3] = radius * Math.cos(theta) * Math.sin(phi);
-      positions[i * 3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
-      positions[i * 3 + 2] = radius * Math.cos(phi);
-
-      const rand = Math.random();
-      const col = rand > 0.85 ? colorCyan : rand > 0.7 ? colorOrange : colorSlate;
-      colors[i * 3] = col.r;
-      colors[i * 3 + 1] = col.g;
-      colors[i * 3 + 2] = col.b;
-    }
-
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-
-    const pointsMat = new THREE.PointsMaterial({
-      size: 1.5,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.85,
-    });
-    globeGroup.add(new THREE.Points(geometry, pointsMat));
-
-    // 3. Cyber Glowing Tube Arcs (Garis Busur Lengkung Neon)
-    const createArc = (colorHex: string) => {
-      const p1 = new THREE.Vector3().setFromSphericalCoords(
-        radius,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI * 2
-      );
-      const p2 = new THREE.Vector3().setFromSphericalCoords(
-        radius,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI * 2
-      );
-
-      const mid = p1.clone().add(p2).multiplyScalar(0.5);
-      mid.normalize().multiplyScalar(radius * 1.35);
-
-      const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
-      const tubeGeo = new THREE.TubeGeometry(curve, 30, 0.7, 8, false);
-      const tubeMat = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(colorHex),
-        transparent: true,
-        opacity: 0.9,
-      });
-
-      return new THREE.Mesh(tubeGeo, tubeMat);
+    const size = () => {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      cv.width = W * dpr;
+      cv.height = H * dpr;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      R = Math.min(W, H) * 0.38;
+      cx = W / 2;
+      cy = H / 2;
     };
 
-    for (let i = 0; i < 10; i++) {
-      const color = i % 2 === 0 ? "#00f3ff" : "#ff5500";
-      globeGroup.add(createArc(color));
-    }
+    window.addEventListener("resize", size);
+    size();
 
-    // 4. Rotasi HANYA Saat Scroll
+    const TILT = 0.42;
+    let yaw = 0;
+    let drag = false;
+    let lx = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      drag = true;
+      lx = e.clientX;
+    };
+    const onPointerUp = () => (drag = false);
+    const onPointerMove = (e: PointerEvent) => {
+      if (drag) {
+        yaw += (e.clientX - lx) * 0.006;
+        lx = e.clientX;
+      }
+    };
+
+    cv.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointermove", onPointerMove);
+
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
       const delta = window.scrollY - lastScrollY;
-      if (globeGroupRef.current) {
-        globeGroupRef.current.rotation.y += delta * 0.002;
-        globeGroupRef.current.rotation.x += delta * 0.0008;
-      }
+      yaw += delta * 0.003;
       lastScrollY = window.scrollY;
     };
     window.addEventListener("scroll", handleScroll);
 
-    // Render Loop
-    let animId: number;
-    const animate = () => {
-      if (globeGroupRef.current) {
-        // Rotasi otomatis melingkar konstan seperti bumi
-        globeGroupRef.current.rotation.y += 0.0015;
-      }
-      renderer.render(scene, camera);
-      animId = requestAnimationFrame(animate);
+    const ll = (la: number, lo: number): [number, number, number] => {
+      la *= Math.PI / 180;
+      lo *= Math.PI / 180;
+      return [
+        Math.cos(la) * Math.sin(lo),
+        Math.sin(la),
+        Math.cos(la) * Math.cos(lo),
+      ];
     };
-    animate();
 
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener("resize", handleResize);
+    function view(v: [number, number, number], useYaw = true): [number, number, number] {
+      let [x, y, z] = v;
+      if (useYaw) {
+        const c = Math.cos(yaw),
+          s = Math.sin(yaw);
+        [x, z] = [x * c + z * s, -x * s + z * c];
+      }
+      const ct = Math.cos(TILT),
+        st = Math.sin(TILT);
+      [y, z] = [y * ct - z * st, y * st + z * ct];
+      return [x, y, z];
+    }
+
+    const P = (v: [number, number, number]): [number, number] => [
+      cx + v[0] * R,
+      cy - v[1] * R,
+    ];
+
+    // Land Dots Generation
+    const dots: { v: [number, number, number]; land: boolean }[] = [];
+    const N = 2400;
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (2 * (i + 0.5)) / N;
+      const r = Math.sqrt(1 - y * y);
+      const a = i * 2.399963;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      const f =
+        Math.sin(3 * x + 1) +
+        Math.sin(4 * y) * Math.cos(3 * z) +
+        Math.sin(5 * z + x * 2);
+      dots.push({ v: [x, y, z], land: f > 0.55 });
+    }
+
+    const target = ll(-6.2, 106.8); // Jakarta Target Point
+    const threats = [
+      [40, -74],
+      [55, 37],
+      [35, 116],
+      [-23, -46],
+      [52, 10],
+      [1, 32],
+      [36, 139],
+      [-33, 151],
+      [25, 55],
+      [19, -99],
+    ].map(([a, b]) => ll(a, b));
+
+    const normals = [
+      [1.3, 103.8],
+      [35, -118],
+      [51, 0],
+      [-26, 28],
+      [28, 77],
+      [37, 127],
+    ].map(([a, b]) => ll(a, b));
+
+    function arc(
+      a: [number, number, number],
+      b: [number, number, number],
+      t: number,
+      lift: number
+    ): [number, number, number] {
+      const d = Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+      const o = Math.acos(d);
+      const s = Math.sin(o) || 1;
+      const k1 = Math.sin((1 - t) * o) / s;
+      const k2 = Math.sin(t * o) / s;
+      let v: [number, number, number] = [
+        a[0] * k1 + b[0] * k2,
+        a[1] * k1 + b[1] * k2,
+        a[2] * k1 + b[2] * k2,
+      ];
+      const h = 1 + (lift * Math.sin(Math.PI * t) * o) / Math.PI;
+      const n = Math.hypot(...v);
+      return v.map((q) => (q / n) * h) as [number, number, number];
+    }
+
+    interface Flow {
+      a: [number, number, number];
+      b: [number, number, number];
+      th: boolean;
+      t: number;
+      sp: number;
+      lift: number;
+    }
+
+    const flows: Flow[] = [];
+    function spawn() {
+      const th = Math.random() < 0.55;
+      const srcList = th ? threats : normals;
+      const src = srcList[Math.floor(Math.random() * srcList.length)];
+      flows.push({
+        a: src,
+        b: target,
+        th,
+        t: 0,
+        sp: 0.006 + Math.random() * 0.006,
+        lift: 0.35 + Math.random() * 0.2,
+      });
+    }
+
+    for (let i = 0; i < 9; i++) {
+      spawn();
+      flows[i].t = Math.random();
+    }
+
+    let animId: number;
+
+    function frame() {
+      if (!drag) yaw += 0.0028;
+      g.clearRect(0, 0, W, H);
+
+      // 1. Atmosphere Glow (Dibuat Lebih Terang & Tegas)
+      let gr = g.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.55);
+      gr.addColorStop(0, "rgba(0,240,255,0.35)"); // Opacity dinaikkan dari 0.16
+      gr.addColorStop(1, "rgba(0,240,255,0)");
+      g.fillStyle = gr;
+      g.beginPath();
+      g.arc(cx, cy, R * 1.55, 0, 7);
+      g.fill();
+
+      // 2. Base Globe Body
+      gr = g.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R);
+      gr.addColorStop(0, "#0e2230");
+      gr.addColorStop(1, "#050d14");
+      g.fillStyle = gr;
+      g.beginPath();
+      g.arc(cx, cy, R, 0, 7);
+      g.fill();
+      g.strokeStyle = "rgba(0,240,255,0.65)"; // Garis luar dibikin lebih menyala
+      g.lineWidth = 1.8;
+      g.stroke();
+
+      // 3. Dots Peta Benua (Dibuat Lebih Besar & Menyala)
+      for (const d of dots) {
+        const v = view(d.v);
+        const [x, y] = P(v);
+        if (v[2] < 0) {
+          g.fillStyle = "rgba(0,240,255,0.15)"; // Titik belakang lebih terlihat
+          g.fillRect(x, y, 1.2, 1.2);
+          continue;
+        }
+        const a = 0.3 + 0.7 * v[2];
+        if (d.land) {
+          g.fillStyle = `rgba(0,240,255,${0.4 + 0.6 * a})`;
+          // Titik benua diperbesar menjadi 2.8px
+          g.fillRect(
+            x - 1.2,
+            y - 1.2,
+            2.8 * (0.6 + v[2] * 0.5),
+            2.8 * (0.6 + v[2] * 0.5)
+          );
+        } else {
+          g.fillStyle = `rgba(100,180,210,${0.35 * a})`;
+          g.fillRect(x - 0.5, y - 0.5, 1.5, 1.5);
+        }
+      }
+
+      // 4. Orbit Rings (Cincin Dibuat Lebih Tebal & Terang)
+      [
+        [0.5, 0.2, 1.32],
+        [-0.9, -0.35, 1.55],
+      ].forEach(([tx, tz, r], k) => {
+        g.lineWidth = 1.8; // Garis tebal
+        let prev: [number, number] | null = null;
+        for (let u = 0; u <= 64; u++) {
+          const q = (u / 64) * Math.PI * 2;
+          let x = Math.cos(q) * r,
+            y = 0,
+            z = Math.sin(q) * r;
+          [x, y] = [
+            x * Math.cos(tz) - y * Math.sin(tz),
+            x * Math.sin(tz) + y * Math.cos(tz),
+          ];
+          [y, z] = [
+            y * Math.cos(tx) - z * Math.sin(tx),
+            y * Math.sin(tx) + z * Math.cos(tx),
+          ];
+          const v = view([x, y, z], false);
+          const p = P(v);
+          if (prev) {
+            const hid = v[2] < 0 && Math.hypot(v[0], v[1]) < 1;
+            if (!hid) {
+              g.strokeStyle = `rgba(0,240,255,${v[2] > 0 ? 0.6 : 0.2})`;
+              g.beginPath();
+              g.moveTo(prev[0], prev[1]);
+              g.lineTo(p[0], p[1]);
+              g.stroke();
+            }
+          }
+          prev = p;
+        }
+
+        const q = (performance.now() / (3500 + k * 2000)) * (k ? -1 : 1);
+        let x = Math.cos(q) * r,
+          y = 0,
+          z = Math.sin(q) * r;
+        [x, y] = [
+          x * Math.cos(tz) - y * Math.sin(tz),
+          x * Math.sin(tz) + y * Math.cos(tz),
+        ];
+        [y, z] = [
+          y * Math.cos(tx) - z * Math.sin(tx),
+          y * Math.sin(tx) + z * Math.cos(tx),
+        ];
+        const v = view([x, y, z], false);
+        if (!(v[2] < 0 && Math.hypot(v[0], v[1]) < 1)) {
+          const p = P(v);
+          g.fillStyle = "#00f3ff";
+          g.beginPath();
+          g.arc(p[0], p[1], 4, 0, 7); // Node ring diperbesar
+          g.fill();
+        }
+      });
+
+      // 5. Garis Arcs Flow (Garis Dibuat Tebal 3.2px Neon)
+      for (let i = flows.length - 1; i >= 0; i--) {
+        const f = flows[i];
+        f.t += f.sp;
+        const col = f.th ? "255,85,0" : "0,240,255";
+        const steps = 40,
+          head = Math.min(f.t, 1),
+          tail = Math.max(0, head - 0.4);
+        let prev: [number, number] | null = null;
+        for (let s = 0; s <= steps; s++) {
+          const t = tail + ((head - tail) * s) / steps;
+          const v = view(arc(f.a, f.b, t, f.lift));
+          const p = P(v);
+          if (prev && !(v[2] < 0 && Math.hypot(v[0], v[1]) < 1)) {
+            g.strokeStyle = `rgba(${col},${(1.0 * s) / steps})`;
+            g.lineWidth = 3.2; // Ditebalkan dari 1.6 ke 3.2
+            g.beginPath();
+            g.moveTo(prev[0], prev[1]);
+            g.lineTo(p[0], p[1]);
+            g.stroke();
+          }
+          prev = p;
+        }
+        if (f.t >= 1) {
+          flows.splice(i, 1);
+          spawn();
+        }
+      }
+
+      // 6. Nodes Threat & Target Wi-Fi Point
+      const now = performance.now();
+      const node = (v0: [number, number, number], c: string, r: number) => {
+        const v = view(v0);
+        if (v[2] < 0) return null;
+        const p = P(v);
+        g.fillStyle = `rgb(${c})`;
+        g.beginPath();
+        g.arc(p[0], p[1], r, 0, 7);
+        g.fill();
+        return p;
+      };
+
+      threats.forEach((v) => node(v, "255,85,0", 4.5));
+      normals.forEach((v) => node(v, "0,240,255", 4));
+
+      // Target Wi-Fi Node (Titik Putih Utama)
+      const tp = node(target, "255,255,255", 6);
+
+      if (tp) {
+        const k = (now % 1800) / 1800;
+        // Pendar lingkaran Putih Menyala
+        g.strokeStyle = `rgba(255,255,255,${0.8 * (1 - k)})`;
+        g.lineWidth = 2;
+        g.beginPath();
+        g.arc(tp[0], tp[1], 8 + k * 32, 0, 7);
+        g.stroke();
+
+        // Label Nama Wi-Fi Dinamis & Bold
+        g.fillStyle = "#ffffff";
+        g.font = "bold 13px ui-monospace, Consolas, monospace";
+        g.shadowColor = "rgba(0,240,255,0.8)";
+        g.shadowBlur = 8;
+        g.fillText(`CONNECTED: ${wifiName.toUpperCase()}`, tp[0] + 16, tp[1] - 8);
+        g.shadowBlur = 0; // Reset Shadow
+      }
+
+      animId = requestAnimationFrame(frame);
+    }
+
+    frame();
 
     return () => {
+      window.removeEventListener("resize", size);
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
+      cv.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointermove", onPointerMove);
       cancelAnimationFrame(animId);
-      if (containerRef.current) containerRef.current.innerHTML = "";
     };
-  }, []);
+  }, [wifiName]);
 
   return (
-    <div
-      ref={containerRef}
+    <canvas
+      ref={canvasRef}
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
+        inset: 0,
         width: "100vw",
         height: "100vh",
         zIndex: 0,
-        pointerEvents: "none",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        pointerEvents: "auto",
       }}
     />
   );
