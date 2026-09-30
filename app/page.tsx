@@ -24,7 +24,7 @@ export default function Dashboard() {
   const countDown = safeDevices.filter(d => d.status === 'DOWN').length;
 
   const Card = ({ children }: { children: React.ReactNode }) => (
-    <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/60 rounded-xl p-5">
+    <div className="bg-slate-900/35 backdrop-blur-md border border-slate-800/50 rounded-xl p-5">
       {children}
     </div>
   );

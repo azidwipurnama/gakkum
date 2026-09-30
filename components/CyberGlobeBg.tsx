@@ -20,7 +20,7 @@ export default function CyberGlobeBg() {
     );
 
     // Mundurkan kamera jauh ke belakang agar 1 bola utuh muat di tengah
-    camera.position.set(0, 0, 350);
+    camera.position.set(0, -10, 260);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -36,7 +36,7 @@ export default function CyberGlobeBg() {
     scene.add(globeGroup);
 
     // Radius Bola Dikecilkan Pas (Radius 50)
-    const radius = 50;
+    const radius = 85;
 
     // 2. Dots Globe Sphere (Titik Cyan, Orange, Slate)
     const count = 3000;
@@ -111,8 +111,8 @@ export default function CyberGlobeBg() {
     const handleScroll = () => {
       const delta = window.scrollY - lastScrollY;
       if (globeGroupRef.current) {
-        globeGroupRef.current.rotation.y += delta * 0.003;
-        globeGroupRef.current.rotation.x += delta * 0.001;
+        globeGroupRef.current.rotation.y += delta * 0.002;
+        globeGroupRef.current.rotation.x += delta * 0.0008;
       }
       lastScrollY = window.scrollY;
     };
@@ -121,6 +121,10 @@ export default function CyberGlobeBg() {
     // Render Loop
     let animId: number;
     const animate = () => {
+      if (globeGroupRef.current) {
+        // Rotasi otomatis melingkar konstan seperti bumi
+        globeGroupRef.current.rotation.y += 0.0015;
+      }
       renderer.render(scene, camera);
       animId = requestAnimationFrame(animate);
     };
