@@ -6,7 +6,7 @@ interface CyberGlobeBgProps {
   wifiName?: string;
 }
 
-export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlobeBgProps) {
+export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlobeBgProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -35,29 +35,59 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
 
     const TILT = 0.42;
     let yaw = 0;
+
+    // VARIABEL DRAG HANYA DIDEFINISIKAN 1 KALI DI SINI
     let drag = false;
     let lx = 0;
 
+    // 1. Hybrid Event Listener (Kursor Drag Globe + Scroll Web Berjalan)
     const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      // Jangan drag jika fokus pada elemen interaktif UI
+      if (
+        target.tagName === "BUTTON" ||
+        target.closest(".bg-slate-900\\/50") ||
+        target.closest("table")
+      ) {
+        return;
+      }
+
+      // Pastikan hanya drag jika berada di area globe
+      const rect = cv.getBoundingClientRect();
+      const dx = e.clientX - rect.left - cx;
+      const dy = e.clientY - rect.top - cy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist > R * 1.25) {
+        return; // Outside globe area, biarkan event mouse/touch untuk scroll
+      }
+
       drag = true;
       lx = e.clientX;
     };
-    const onPointerUp = () => (drag = false);
+
+    const onPointerUp = () => {
+      drag = false;
+    };
+
     const onPointerMove = (e: PointerEvent) => {
       if (drag) {
-        yaw += (e.clientX - lx) * 0.006;
+        const dx = e.clientX - lx;
+        yaw += dx * 0.005; // Putar globe mengikuti drag kursor
         lx = e.clientX;
       }
     };
 
+    // Pasang listener langsung ke elemen canvas
     cv.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointermove", onPointerMove);
+    cv.addEventListener("pointerup", onPointerUp);
+    cv.addEventListener("pointermove", onPointerMove);
 
+    // 2. Scroll Listener (Rotasi Globe saat Web discroll)
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
       const delta = window.scrollY - lastScrollY;
-      yaw += delta * 0.003;
+      yaw += delta * 0.002;
       lastScrollY = window.scrollY;
     };
     window.addEventListener("scroll", handleScroll);
@@ -106,7 +136,7 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
       dots.push({ v: [x, y, z], land: f > 0.55 });
     }
 
-    const target = ll(-6.2, 106.8); // Jakarta Target Point
+    const target = ll(-6.2, 106.8);
     const threats = [
       [40, -74],
       [55, 37],
@@ -185,16 +215,16 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
       if (!drag) yaw += 0.0028;
       g.clearRect(0, 0, W, H);
 
-      // 1. Atmosphere Glow (Dibuat Lebih Terang & Tegas)
+      // Atmosphere Glow
       let gr = g.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.55);
-      gr.addColorStop(0, "rgba(0,240,255,0.35)"); // Opacity dinaikkan dari 0.16
+      gr.addColorStop(0, "rgba(0,240,255,0.35)");
       gr.addColorStop(1, "rgba(0,240,255,0)");
       g.fillStyle = gr;
       g.beginPath();
       g.arc(cx, cy, R * 1.55, 0, 7);
       g.fill();
 
-      // 2. Base Globe Body
+      // Base Globe Body
       gr = g.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R);
       gr.addColorStop(0, "#0e2230");
       gr.addColorStop(1, "#050d14");
@@ -202,23 +232,22 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
       g.beginPath();
       g.arc(cx, cy, R, 0, 7);
       g.fill();
-      g.strokeStyle = "rgba(0,240,255,0.65)"; // Garis luar dibikin lebih menyala
+      g.strokeStyle = "rgba(0,240,255,0.65)";
       g.lineWidth = 1.8;
       g.stroke();
 
-      // 3. Dots Peta Benua (Dibuat Lebih Besar & Menyala)
+      // Dots Peta Benua
       for (const d of dots) {
         const v = view(d.v);
         const [x, y] = P(v);
         if (v[2] < 0) {
-          g.fillStyle = "rgba(0,240,255,0.15)"; // Titik belakang lebih terlihat
+          g.fillStyle = "rgba(0,240,255,0.15)";
           g.fillRect(x, y, 1.2, 1.2);
           continue;
         }
         const a = 0.3 + 0.7 * v[2];
         if (d.land) {
           g.fillStyle = `rgba(0,240,255,${0.4 + 0.6 * a})`;
-          // Titik benua diperbesar menjadi 2.8px
           g.fillRect(
             x - 1.2,
             y - 1.2,
@@ -231,12 +260,12 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
         }
       }
 
-      // 4. Orbit Rings (Cincin Dibuat Lebih Tebal & Terang)
+      // Orbit Rings
       [
         [0.5, 0.2, 1.32],
         [-0.9, -0.35, 1.55],
       ].forEach(([tx, tz, r], k) => {
-        g.lineWidth = 1.8; // Garis tebal
+        g.lineWidth = 1.8;
         let prev: [number, number] | null = null;
         for (let u = 0; u <= 64; u++) {
           const q = (u / 64) * Math.PI * 2;
@@ -283,12 +312,12 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
           const p = P(v);
           g.fillStyle = "#00f3ff";
           g.beginPath();
-          g.arc(p[0], p[1], 4, 0, 7); // Node ring diperbesar
+          g.arc(p[0], p[1], 4, 0, 7);
           g.fill();
         }
       });
 
-      // 5. Garis Arcs Flow (Garis Dibuat Tebal 3.2px Neon)
+      // Garis Arcs Flow
       for (let i = flows.length - 1; i >= 0; i--) {
         const f = flows[i];
         f.t += f.sp;
@@ -303,7 +332,7 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
           const p = P(v);
           if (prev && !(v[2] < 0 && Math.hypot(v[0], v[1]) < 1)) {
             g.strokeStyle = `rgba(${col},${(1.0 * s) / steps})`;
-            g.lineWidth = 3.2; // Ditebalkan dari 1.6 ke 3.2
+            g.lineWidth = 3.2;
             g.beginPath();
             g.moveTo(prev[0], prev[1]);
             g.lineTo(p[0], p[1]);
@@ -317,7 +346,7 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
         }
       }
 
-      // 6. Nodes Threat & Target Wi-Fi Point
+      // Target Wi-Fi Node
       const now = performance.now();
       const node = (v0: [number, number, number], c: string, r: number) => {
         const v = view(v0);
@@ -333,25 +362,22 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
       threats.forEach((v) => node(v, "255,85,0", 4.5));
       normals.forEach((v) => node(v, "0,240,255", 4));
 
-      // Target Wi-Fi Node (Titik Putih Utama)
       const tp = node(target, "255,255,255", 6);
 
       if (tp) {
         const k = (now % 1800) / 1800;
-        // Pendar lingkaran Putih Menyala
         g.strokeStyle = `rgba(255,255,255,${0.8 * (1 - k)})`;
         g.lineWidth = 2;
         g.beginPath();
         g.arc(tp[0], tp[1], 8 + k * 32, 0, 7);
         g.stroke();
 
-        // Label Nama Wi-Fi Dinamis & Bold
         g.fillStyle = "#ffffff";
         g.font = "bold 13px ui-monospace, Consolas, monospace";
         g.shadowColor = "rgba(0,240,255,0.8)";
         g.shadowBlur = 8;
         g.fillText(`CONNECTED: ${wifiName.toUpperCase()}`, tp[0] + 16, tp[1] - 8);
-        g.shadowBlur = 0; // Reset Shadow
+        g.shadowBlur = 0;
       }
 
       animId = requestAnimationFrame(frame);
@@ -362,9 +388,10 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
     return () => {
       window.removeEventListener("resize", size);
       window.removeEventListener("scroll", handleScroll);
+      // Bersihkan listener dari elemen canvas
       cv.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointermove", onPointerMove);
+      cv.removeEventListener("pointerup", onPointerUp);
+      cv.removeEventListener("pointermove", onPointerMove);
       cancelAnimationFrame(animId);
     };
   }, [wifiName]);
@@ -379,6 +406,7 @@ export default function CyberGlobeBg({ wifiName = "WING C · GAKKUM" }: CyberGlo
         height: "100vh",
         zIndex: 0,
         pointerEvents: "auto",
+        touchAction: "pan-y",
       }}
     />
   );

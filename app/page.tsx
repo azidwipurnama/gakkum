@@ -1,154 +1,213 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useWebSocket } from '../hooks/useWebSocket';
-import { LayoutDashboard, Wifi, Server, Laptop, Search } from 'lucide-react';
-import { Device } from '../types/network';
-import { RadarVisualizer } from '../components/RadarVisualizer';
-import CyberGlobeBg from '../components/CyberGlobeBg';
+import React, { useState, useEffect, useRef } from "react";
+import CyberGlobeBg from "@/components/CyberGlobeBg";
 
-export default function Dashboard() {
-  const { devices, metrics } = useWebSocket();
-  const [activeTab, setActiveTab] = useState<'overview' | 'inspector'>('overview');
-  const [search, setSearch] = useState('');
+// Sub-component Canvas Radar Visualizer
+function RadarCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const safeDevices = Array.isArray(devices) ? devices : [];
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const g = cv.getContext("2d");
+    if (!g) return;
 
-  const filteredDevices = safeDevices.filter(d =>
-    (d.hostname?.toLowerCase().includes(search.toLowerCase()) ||
-    d.mac?.toLowerCase().includes(search.toLowerCase()) ||
-    d.ip?.toLowerCase().includes(search.toLowerCase()))
-  );
+    let angle = 0;
+    let animId: number;
+    const size = 260;
+    cv.width = size;
+    cv.height = size;
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size / 2 - 15;
 
-  const countUp = safeDevices.filter(d => d.status === 'UP').length;
-  const countDown = safeDevices.filter(d => d.status === 'DOWN').length;
+    // Simulated radar blips
+    const blips = [
+      { x: cx + 45, y: cy - 30, color: "#00f3ff", ping: 0 },
+      { x: cx - 50, y: cy + 40, color: "#00f3ff", ping: 0.3 },
+      { x: cx + 20, y: cy + 60, color: "#ff5500", ping: 0.6 },
+      { x: cx - 60, y: cy - 50, color: "#22c55e", ping: 0.8 },
+    ];
 
-  const Card = ({ children }: { children: React.ReactNode }) => (
-    <div className="bg-slate-900/35 backdrop-blur-md border border-slate-800/50 rounded-xl p-5">
-      {children}
-    </div>
-  );
+    const draw = () => {
+      g.clearRect(0, 0, size, size);
 
-  const ServerConnectionCard = () => (
-    <Card>
-      <h2 className="text-slate-400 mb-2 flex items-center gap-2"><Server size={18}/> Server Connection</h2>
-      <p className="text-sm">IP: {metrics.server_ip || '...'}</p>
-      <p className="text-sm">Room: Gakkum-1</p>
-    </Card>
-  );
+      // Radar Grid Circles
+      g.strokeStyle = "rgba(0, 243, 255, 0.2)";
+      g.lineWidth = 1;
+      [0.3, 0.6, 0.9].forEach((scale) => {
+        g.beginPath();
+        g.arc(cx, cy, r * scale, 0, Math.PI * 2);
+        g.stroke();
+      });
 
-  const DeviceMetricsCard = () => (
-    <Card>
-      <h2 className="text-slate-400 mb-2 flex items-center gap-2"><Wifi size={18}/> Device Metrics</h2>
-      <div className="flex gap-4">
-        <span className="text-emerald-500 font-bold">{countUp} UP</span>
-        <span className="text-red-500 font-bold">{countDown} DOWN</span>
-      </div>
-    </Card>
-  );
+      // Axis Lines
+      g.beginPath();
+      g.moveTo(cx - r, cy); g.lineTo(cx + r, cy);
+      g.moveTo(cx, cy - r); g.lineTo(cx, cy + r);
+      g.stroke();
 
-  const RadarCard = () => (
-    <Card>
-      <h2 className="text-slate-400 mb-2 flex items-center gap-2"><Laptop size={18}/> Radar Visualizer</h2>
-      <div className="flex items-center justify-center p-4">
-        <RadarVisualizer devices={safeDevices} />
-      </div>
-    </Card>
-  );
+      // Sweep Line
+      angle += 0.03;
+      const sx = cx + Math.cos(angle) * r;
+      const sy = cy + Math.sin(angle) * r;
 
-  const DeviceInspectorTable = ({ devices }: { devices: Device[] }) => (
-    <table className="w-full text-sm text-left">
-      <thead className="text-slate-400 border-b border-slate-800">
-        <tr>
-          <th className="py-3 px-4">Hostname</th>
-          <th className="py-3 px-4">Vendor</th>
-          <th className="py-3 px-4">IP Address</th>
-          <th className="py-3 px-4">MAC</th>
-          <th className="py-3 px-4">Category</th>
-          <th className="py-3 px-4">Location</th>
-          <th className="py-3 px-4">Last Active</th>
-          <th className="py-3 px-4">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {filteredDevices.map((d: Device) => (
-          <tr key={d.mac} className="border-b border-slate-800">
-            <td className="py-2 px-4 font-medium">{d.hostname || 'N/A'}</td>
-            <td className="py-2 px-4 text-slate-400">{d.vendor || 'N/A'}</td>
-            <td className="py-2 px-4">{d.ip || 'N/A'}</td>
-            <td className="py-2 px-4">{d.mac}</td>
-            <td className="py-2 px-4">
-              <span className={`px-2 py-1 rounded text-xs font-medium`}>
-                {d.category}
-              </span>
-            </td>
-            <td className="py-2 px-4">{d.location || '-'}</td>
-            <td className="font-mono text-xs text-slate-300 py-2 px-4">
-              {d.last_seen ? d.last_seen.replace('T', ' ') : '-'}
-            </td>
-            <td className="py-2 px-4">
-              <span className={`px-2 py-1 rounded text-xs ${d.status === 'UP' ? 'bg-emerald-900' : 'bg-red-900'}`}>
-                {d.status}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+      const grad = g.createConicGradient(angle - 0.5, cx, cy);
+      grad.addColorStop(0, "rgba(0, 243, 255, 0.35)");
+      grad.addColorStop(0.15, "rgba(0, 243, 255, 0)");
+      grad.addColorStop(1, "rgba(0, 243, 255, 0)");
+
+      g.fillStyle = grad;
+      g.beginPath();
+      g.arc(cx, cy, r, 0, Math.PI * 2);
+      g.fill();
+
+      g.strokeStyle = "#00f3ff";
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.moveTo(cx, cy);
+      g.lineTo(sx, sy);
+      g.stroke();
+
+      // Blips
+      blips.forEach((b) => {
+        g.fillStyle = b.color;
+        g.beginPath();
+        g.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
+        g.fill();
+
+        g.strokeStyle = b.color;
+        g.lineWidth = 0.8;
+        g.beginPath();
+        g.arc(b.x, b.y, 7, 0, Math.PI * 2);
+        g.stroke();
+      });
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  return <canvas ref={canvasRef} className="mx-auto block" />;
+}
+
+export default function DashboardPage() {
+  const [ssid, setSsid] = useState<string>("WING C - GAKKUM");
+
+  // Sample Scanned Devices (Subnet 192.168.100.x)
+  const devices = [
+    { ip: "192.168.100.1", mac: "00:1A:2B:3C:4D:5E", name: "Gateway Router", status: "ONLINE", latency: "2ms" },
+    { ip: "192.168.100.23", mac: "A4:C3:F0:12:88:1A", name: "Gakkum Server 01", status: "ONLINE", latency: "1ms" },
+    { ip: "192.168.100.45", mac: "BC:D1:93:44:00:2B", name: "CCTV Wing C-1", status: "ONLINE", latency: "12ms" },
+    { ip: "192.168.100.102", mac: "E8:99:C6:11:52:3F", name: "Inspector Terminal", status: "OFFLINE", latency: "-" },
+    { ip: "192.168.100.115", mac: "F4:8E:38:77:90:CD", name: "Unknown Device", status: "OFFLINE", latency: "-" },
+  ];
 
   return (
-    <main className="relative min-h-screen bg-transparent text-white overflow-x-hidden">
-      <CyberGlobeBg />
-      <div className="relative z-10 p-6">
-        <header className="mb-8 flex items-center justify-between">
-          <h1 className="text-2xl font-bold flex items-center gap-2"><LayoutDashboard /> Wing C Gakkum Monitor</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded font-medium ${activeTab === 'overview' ? 'bg-blue-600' : 'bg-slate-800 hover:bg-slate-700'}`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('inspector')}
-              className={`px-4 py-2 rounded font-medium ${activeTab === 'inspector' ? 'bg-blue-600' : 'bg-slate-800 hover:bg-slate-700'}`}
-            >
-              Device Inspector
-            </button>
-          </div>
-        </header>
+    <main className="relative min-h-screen bg-[#05080d] text-white overflow-y-scroll snap-y snap-mandatory h-screen scroll-smooth touch-pan-y">
+      <CyberGlobeBg wifiName={ssid} />
 
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-4 flex flex-col gap-4">
-              <ServerConnectionCard />
-              <DeviceMetricsCard />
-            </div>
-            <div className="col-span-8">
-              <RadarCard />
+      {/* SEKSI 1: SERVER CONNECTION */}
+      <section className="relative z-10 h-screen w-full snap-start snap-always flex items-start justify-start pt-10 px-10 pointer-events-none">
+        <div className="max-w-xs w-full space-y-3 pointer-events-auto">
+          <div className="bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-4 shadow-2xl">
+            <h2 className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mb-3 font-semibold">
+              Server Connection
+            </h2>
+            <div className="space-y-2 font-mono text-xs">
+              <p className="text-slate-300 flex justify-between">
+                <span>IP:</span> <span className="text-white font-bold">192.168.100.23</span>
+              </p>
+              <p className="text-slate-300 flex justify-between">
+                <span>Room:</span> <span className="text-white font-bold">Gakkum-1</span>
+              </p>
+              <p className="text-slate-300 pt-2 border-t border-slate-800/80 flex justify-between items-center">
+                <span>SSID:</span> <span className="text-cyan-400 font-bold uppercase">{ssid}</span>
+              </p>
             </div>
           </div>
-        )}
+          <p className="text-[10px] font-mono text-slate-500 animate-pulse pl-1">
+            ↓ Scroll ke bawah untuk Radar & Inspector
+          </p>
+        </div>
+      </section>
 
-        {activeTab === 'inspector' && (
-          <div className="w-full bg-slate-900/30 backdrop-blur-md border border-slate-800/50 rounded-xl p-6">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-xl font-semibold">Device Inspector</h2>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 text-slate-500" size={16}/>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="bg-slate-800 pl-8 pr-4 py-2 rounded text-sm w-64"
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
-            <DeviceInspectorTable devices={safeDevices} />
+      {/* SEKSI 2: RADAR VISUALIZER */}
+      <section className="relative z-10 h-screen w-full snap-start snap-always flex items-start justify-end pt-10 px-10 pointer-events-none">
+        <div className="max-w-sm w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-5 shadow-2xl space-y-4 pointer-events-auto">
+          <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+            <h2 className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase font-semibold">
+              Radar Visualizer
+            </h2>
+            <span className="text-[10px] font-mono bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30 animate-pulse">
+              SWEEPING
+            </span>
           </div>
-        )}
-      </div>
+          <RadarCanvas />
+        </div>
+      </section>
+
+      {/* SEKSI 3: DEVICE INSPECTOR */}
+      <section className="relative z-10 h-screen w-full snap-start snap-always flex items-center justify-center px-10 pointer-events-none">
+        <div className="max-w-4xl w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-6 shadow-2xl space-y-5 pointer-events-auto">
+          <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
+            <div>
+              <h2 className="text-xs font-mono text-cyan-400 tracking-widest uppercase font-semibold">
+                Device Inspector (192.168.100.x)
+              </h2>
+              <p className="text-[11px] font-mono text-slate-400 mt-0.5">Scapy ARP Scanner Active</p>
+            </div>
+            <div className="flex gap-4 font-mono text-xs">
+              <span className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded border border-cyan-500/30">
+                3 UP
+              </span>
+              <span className="bg-orange-500/10 text-orange-400 px-3 py-1 rounded border border-orange-500/30">
+                2 DOWN
+              </span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-mono text-xs">
+              <thead>
+                <tr className="text-slate-400 border-b border-slate-800/80 uppercase text-[10px]">
+                  <th className="pb-3">IP Address</th>
+                  <th className="pb-3">MAC Address</th>
+                  <th className="pb-3">Device Name</th>
+                  <th className="pb-3">Status</th>
+                  <th className="pb-3 text-right">Latency</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {devices.map((dev, idx) => (
+                  <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                    <td className="py-3 font-bold text-white">{dev.ip}</td>
+                    <td className="py-3 text-slate-400">{dev.mac}</td>
+                    <td className="py-3 text-slate-300">{dev.name}</td>
+                    <td className="py-3">
+                      {dev.status === "ONLINE" ? (
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          ONLINE
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] border border-orange-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                          OFFLINE
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 text-right text-slate-400">{dev.latency}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
