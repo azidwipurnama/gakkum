@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useRef, useEffect } from "react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 // Sub-component Canvas Radar Visualizer
 function RadarCanvas() {
@@ -22,7 +23,7 @@ function RadarCanvas() {
     const cy = size / 2;
     const r = size / 2 - 15;
 
-    // Simulated radar blips
+    // Simulated radar blips - to be replaced by real data later
     const blips = [
       { x: cx + 45, y: cy - 30, color: "#00f3ff", ping: 0 },
       { x: cx - 50, y: cy + 40, color: "#00f3ff", ping: 0.3 },
@@ -95,16 +96,7 @@ function RadarCanvas() {
 }
 
 export default function DashboardPage() {
-  const [ssid, setSsid] = useState<string>("WING C - GAKKUM");
-
-  // Sample Scanned Devices (Subnet 192.168.100.x)
-  const devices = [
-    { ip: "192.168.100.1", mac: "00:1A:2B:3C:4D:5E", name: "Gateway Router", status: "ONLINE", latency: "2ms" },
-    { ip: "192.168.100.23", mac: "A4:C3:F0:12:88:1A", name: "Gakkum Server 01", status: "ONLINE", latency: "1ms" },
-    { ip: "192.168.100.45", mac: "BC:D1:93:44:00:2B", name: "CCTV Wing C-1", status: "ONLINE", latency: "12ms" },
-    { ip: "192.168.100.102", mac: "E8:99:C6:11:52:3F", name: "Inspector Terminal", status: "OFFLINE", latency: "-" },
-    { ip: "192.168.100.115", mac: "F4:8E:38:77:90:CD", name: "Unknown Device", status: "OFFLINE", latency: "-" },
-  ];
+  const { devices, metrics, ssid, loading } = useWebSocket();
 
   return (
     <main className="relative min-h-screen bg-[#05080d] text-white overflow-y-scroll snap-y snap-mandatory h-screen scroll-smooth touch-pan-y">
@@ -119,7 +111,7 @@ export default function DashboardPage() {
             </h2>
             <div className="space-y-2 font-mono text-xs">
               <p className="text-slate-300 flex justify-between">
-                <span>IP:</span> <span className="text-white font-bold">192.168.100.23</span>
+                <span>IP:</span> <span className="text-white font-bold">{metrics.server_ip}</span>
               </p>
               <p className="text-slate-300 flex justify-between">
                 <span>Room:</span> <span className="text-white font-bold">Gakkum-1</span>
@@ -162,49 +154,55 @@ export default function DashboardPage() {
             </div>
             <div className="flex gap-4 font-mono text-xs">
               <span className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded border border-cyan-500/30">
-                3 UP
+                {metrics.total_up} UP
               </span>
               <span className="bg-orange-500/10 text-orange-400 px-3 py-1 rounded border border-orange-500/30">
-                2 DOWN
+                {metrics.total_down} DOWN
               </span>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono text-xs">
-              <thead>
-                <tr className="text-slate-400 border-b border-slate-800/80 uppercase text-[10px]">
-                  <th className="pb-3">IP Address</th>
-                  <th className="pb-3">MAC Address</th>
-                  <th className="pb-3">Device Name</th>
-                  <th className="pb-3">Status</th>
-                  <th className="pb-3 text-right">Latency</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {devices.map((dev, idx) => (
-                  <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-3 font-bold text-white">{dev.ip}</td>
-                    <td className="py-3 text-slate-400">{dev.mac}</td>
-                    <td className="py-3 text-slate-300">{dev.name}</td>
-                    <td className="py-3">
-                      {dev.status === "ONLINE" ? (
-                        <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          ONLINE
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] border border-orange-500/30">
-                          <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                          OFFLINE
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 text-right text-slate-400">{dev.latency}</td>
+            {loading ? (
+              <div className="text-center py-10 text-slate-400 font-mono text-xs">Connecting to scanner...</div>
+            ) : devices.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 font-mono text-xs">No devices found.</div>
+            ) : (
+              <table className="w-full text-left font-mono text-xs">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-800/80 uppercase text-[10px]">
+                    <th className="pb-3">IP Address</th>
+                    <th className="pb-3">MAC Address</th>
+                    <th className="pb-3">Device Name</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3 text-right">Last Seen</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {devices.map((dev, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-3 font-bold text-white">{dev.ip || "-"}</td>
+                      <td className="py-3 text-slate-400">{dev.mac}</td>
+                      <td className="py-3 text-slate-300">{dev.hostname}</td>
+                      <td className="py-3">
+                        {dev.status === "UP" ? (
+                          <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            ONLINE
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] border border-orange-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                            OFFLINE
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-right text-slate-400 truncate max-w-[100px]">{new Date(dev.last_seen).toLocaleTimeString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </section>

@@ -43,23 +43,22 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
     // 1. Hybrid Event Listener (Kursor Drag Globe + Scroll Web Berjalan)
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
-      // Jangan drag jika fokus pada elemen interaktif UI
+
+      // 2. Cegah drag jika klik pada elemen UI interaktif
       if (
         target.tagName === "BUTTON" ||
-        target.closest(".bg-slate-900\\/50") ||
+        target.closest("button") ||
+        target.closest(".pointer-events-auto") || // UI elements
         target.closest("table")
       ) {
         return;
       }
 
-      // Pastikan hanya drag jika berada di area globe
-      const rect = cv.getBoundingClientRect();
-      const dx = e.clientX - rect.left - cx;
-      const dy = e.clientY - rect.top - cy;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-
-      if (dist > R * 1.25) {
-        return; // Outside globe area, biarkan event mouse/touch untuk scroll
+      // 1. Batasan area drag (R * 1.55)
+      // cx & cy are viewport centers, clientX/Y are viewport relative
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+      if (dist > R * 1.55) {
+        return; // Klik di luar area neon biru, biarkan scroll lewat
       }
 
       drag = true;
@@ -78,10 +77,10 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
       }
     };
 
-    // Pasang listener langsung ke elemen canvas
-    cv.addEventListener("pointerdown", onPointerDown);
-    cv.addEventListener("pointerup", onPointerUp);
-    cv.addEventListener("pointermove", onPointerMove);
+    // Pasang listener ke WINDOW agar tidak memblokir event scroll pada canvas
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointermove", onPointerMove);
 
     // 2. Scroll Listener (Rotasi Globe saat Web discroll)
     let lastScrollY = window.scrollY;
@@ -388,10 +387,10 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
     return () => {
       window.removeEventListener("resize", size);
       window.removeEventListener("scroll", handleScroll);
-      // Bersihkan listener dari elemen canvas
-      cv.removeEventListener("pointerdown", onPointerDown);
-      cv.removeEventListener("pointerup", onPointerUp);
-      cv.removeEventListener("pointermove", onPointerMove);
+      // Bersihkan listener dari WINDOW, bukan elemen canvas
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointermove", onPointerMove);
       cancelAnimationFrame(animId);
     };
   }, [wifiName]);
@@ -405,7 +404,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
         width: "100vw",
         height: "100vh",
         zIndex: 0,
-        pointerEvents: "auto",
+        pointerEvents: "none", // CANVAS TIDAK MEMBLOKIR KLIK/SCROLL
         touchAction: "pan-y",
       }}
     />

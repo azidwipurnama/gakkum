@@ -7,6 +7,8 @@ from config import API_KEY, BROADCAST_INTERVAL_SECONDS
 
 app = FastAPI()
 
+from get_ssid import get_active_ssid
+
 # Initialize Engine and Sniffer
 engine = TimestampEngine()
 sniffer = NetworkSniffer(engine)
@@ -64,6 +66,8 @@ async def broadcast_loop():
 
         # Add server IP to metrics
         payload["metrics"]["server_ip"] = sniffer.local_ip
+        # Add SSID to payload
+        payload["ssid"] = get_active_ssid()
 
         # Inject dummy data if no devices
         if not payload["devices"]:
