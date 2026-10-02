@@ -113,9 +113,6 @@ export default function DashboardPage() {
               <p className="text-slate-300 flex justify-between">
                 <span>IP:</span> <span className="text-white font-bold">{metrics.server_ip}</span>
               </p>
-              <p className="text-slate-300 flex justify-between">
-                <span>Room:</span> <span className="text-white font-bold">Gakkum-1</span>
-              </p>
               <p className="text-slate-300 pt-2 border-t border-slate-800/80 flex justify-between items-center">
                 <span>SSID:</span> <span className="text-cyan-400 font-bold uppercase">{ssid}</span>
               </p>
