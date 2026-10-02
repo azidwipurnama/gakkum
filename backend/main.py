@@ -80,7 +80,7 @@ async def broadcast_loop():
                 "metrics": {"total_up": 2, "total_down": 0, "server_ip": sniffer.local_ip}
             }
 
-        print(f"[DEBUG WS] Mengirim data ke client: {payload}")
+        print(f"[DEBUG WS] Broadcasting to {len(manager.active_connections)} client(s): {payload['type']}, devices={len(payload.get('devices', []))}, up={payload['metrics'].get('total_up', 0)}, down={payload['metrics'].get('total_down', 0)}")
         await manager.broadcast_json(payload)
         await asyncio.sleep(BROADCAST_INTERVAL_SECONDS)
 
