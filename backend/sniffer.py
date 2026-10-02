@@ -134,7 +134,7 @@ class NetworkSniffer:
                 except Exception as e:
                     print(f"Scapy ARP scan warning: {e}")
 
-                time.sleep(8)
+                time.sleep(4) # Sweep every 4 seconds to balance response and load
 
         # Start periodic scan thread
         threading.Thread(target=periodic_scan, daemon=True).start()

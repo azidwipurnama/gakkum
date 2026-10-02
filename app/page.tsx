@@ -99,6 +99,12 @@ export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useWebSocket();
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
 
+  // Use metrics.server_ip for dynamic subnet detection
+  const subnetPrefix = metrics?.server_ip
+    ? metrics.server_ip.split('.').slice(0, 3).join('.') + '.x'
+    : 'Localhost';
+
+
   return (
     <main className="relative min-h-screen bg-[#05080d] text-white overflow-y-scroll snap-y snap-mandatory h-screen scroll-smooth touch-pan-y">
       <CyberGlobeBg wifiName={ssid} />
@@ -142,11 +148,11 @@ export default function DashboardPage() {
 
       {/* SEKSI 3: DEVICE INSPECTOR */}
       <section className="relative z-10 h-screen w-full snap-start snap-always flex items-center justify-center px-10 pointer-events-none">
-        <div className="max-w-4xl w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-6 shadow-2xl space-y-5 pointer-events-auto">
+        <div className="max-w-7xl w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-8 shadow-2xl space-y-5 pointer-events-auto">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <div>
               <h2 className="text-xs font-mono text-cyan-400 tracking-widest uppercase font-semibold">
-                Device Inspector (192.168.100.x)
+                Device Inspector ({subnetPrefix})
               </h2>
               <p className="text-[11px] font-mono text-slate-400 mt-0.5">Scapy ARP Scanner Active</p>
             </div>
@@ -169,28 +175,28 @@ export default function DashboardPage() {
               <table className="w-full text-left font-mono text-xs">
                 <thead>
                   <tr className="text-slate-400 border-b border-slate-800/80 uppercase text-[10px]">
-                    <th className="pb-3">IP Address</th>
-                    <th className="pb-3">MAC Address</th>
-                    <th className="pb-3">Device Name</th>
-                    <th className="pb-3">Category</th>
-                    <th className="pb-3">Vendor</th>
-                    <th className="pb-3">Location</th>
-                    <th className="pb-3">Latency</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3 text-right">Last Seen</th>
+                    <th className="px-4 py-3">IP Address</th>
+                    <th className="px-4 py-3">MAC Address</th>
+                    <th className="px-4 py-3">Device Name</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Vendor</th>
+                    <th className="px-4 py-3">Location</th>
+                    <th className="px-4 py-3">Latency</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Last Seen</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
                   {validDevices.map((dev, idx) => (
                     <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 font-bold text-white">{dev.ip || "-"}</td>
-                      <td className="py-3 text-slate-400">{dev.mac}</td>
-                      <td className="py-3 text-slate-300">{dev.hostname}</td>
-                      <td className="py-3 text-slate-400">{dev.category}</td>
-                      <td className="py-3 text-slate-400">{dev.vendor}</td>
-                      <td className="py-3 text-slate-400">{dev.location}</td>
-                      <td className="py-3 text-cyan-400 font-mono">{dev.latency !== undefined ? `${dev.latency}ms` : "-"}</td>
-                      <td className="py-3">
+                      <td className="px-4 py-3 font-bold text-white">{dev.ip || "-"}</td>
+                      <td className="px-4 py-3 text-slate-400">{dev.mac}</td>
+                      <td className="px-4 py-3 text-slate-300">{dev.hostname}</td>
+                      <td className="px-4 py-3 text-slate-400">{dev.category}</td>
+                      <td className="px-4 py-3 text-slate-400">{dev.vendor}</td>
+                      <td className="px-4 py-3 text-slate-400">{dev.location}</td>
+                      <td className="px-4 py-3 text-cyan-400 font-mono">{dev.latency !== undefined ? `${dev.latency}ms` : "-"}</td>
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           {dev.status === "UP" ? (
                             <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
@@ -210,7 +216,7 @@ export default function DashboardPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 text-right text-slate-400 truncate max-w-[100px]">{new Date(dev.last_seen).toLocaleTimeString()}</td>
+                      <td className="px-4 py-3 text-right text-slate-400 truncate">{new Date(dev.last_seen).toLocaleTimeString()}</td>
                     </tr>
                   ))}
                 </tbody>

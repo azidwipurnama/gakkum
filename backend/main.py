@@ -69,17 +69,6 @@ async def broadcast_loop():
         # Add SSID to payload
         payload["ssid"] = get_active_ssid()
 
-        # Inject dummy data if no devices
-        if not payload["devices"]:
-            payload = {
-                "type": "DEVICE_UPDATE",
-                "devices": [
-                    {"ip": "10.10.8.15", "mac": "AA:BB:CC:11:22:33", "hostname": "Test-Laptop", "location": "Gakkum-1", "status": "UP", "category": "Laptop", "vendor": "Dell", "last_seen": "2026-09-29T07:47:00Z"},
-                    {"ip": "10.10.8.20", "mac": "DD:EE:FF:44:55:66", "hostname": "Test-Phone", "location": "Gakkum-1", "status": "UP", "category": "Smartphone", "vendor": "Apple Inc", "last_seen": "2026-09-29T07:47:00Z"}
-                ],
-                "metrics": {"total_up": 2, "total_down": 0, "server_ip": sniffer.local_ip}
-            }
-
         print(f"[DEBUG WS] Broadcasting to {len(manager.active_connections)} client(s): {payload['type']}, devices={len(payload.get('devices', []))}, up={payload['metrics'].get('total_up', 0)}, down={payload['metrics'].get('total_down', 0)}")
         await manager.broadcast_json(payload)
         await asyncio.sleep(BROADCAST_INTERVAL_SECONDS)
