@@ -39,11 +39,12 @@ export function useWebSocket() {
 
         if (data && typeof data === 'object') {
           if (data.type === 'DEVICE_UPDATE' || data.type === 'UPDATE') {
-            if (Array.isArray(data.devices)) setDevices(data.devices.filter((d: any) => d.ip !== ""));
+            // Pass full device list without filtering — backend already validates IPs
+            if (Array.isArray(data.devices)) setDevices(data.devices);
             if (data.metrics) setMetrics(data.metrics);
             if (data.ssid) setSsid(data.ssid);
           } else if (Array.isArray(data)) {
-            setDevices(data.filter((d: any) => d.ip !== ""));
+            setDevices(data);
           }
         }
       } catch (err) {
