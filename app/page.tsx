@@ -106,11 +106,11 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="relative min-h-screen bg-[#05080d] text-white overflow-y-scroll snap-y snap-mandatory h-screen scroll-smooth touch-pan-y">
+    <main className="relative min-h-screen bg-[#05080d] text-white overflow-y-auto scroll-smooth h-screen touch-pan-y">
       <CyberGlobeBg wifiName={ssid} />
 
       {/* SEKSI 1: SERVER CONNECTION */}
-      <section className="relative z-10 h-screen w-full snap-start snap-always flex items-start justify-start pt-10 px-10 pointer-events-none">
+      <section className="relative z-10 h-screen w-full flex flex-col justify-center pt-10 px-10 pointer-events-none">
         <div className="max-w-xs w-full space-y-3 pointer-events-auto">
           <div className="bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-4 shadow-2xl">
             <h2 className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mb-3 font-semibold">
@@ -132,8 +132,8 @@ export default function DashboardPage() {
       </section>
 
       {/* SEKSI 2: RADAR VISUALIZER */}
-      <section className="relative z-10 h-screen w-full snap-start snap-always flex items-start justify-end pt-10 px-10 pointer-events-none">
-        <div className="max-w-sm w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-5 shadow-2xl space-y-4 pointer-events-auto">
+      <section className="relative z-10 h-screen w-full flex flex-col justify-center pt-10 px-10 pointer-events-none">
+        <div className="max-w-sm w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-5 shadow-2xl space-y-4 pointer-events-auto ml-auto">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
             <h2 className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase font-semibold">
               Radar Visualizer
@@ -147,8 +147,8 @@ export default function DashboardPage() {
       </section>
 
       {/* SEKSI 3: DEVICE INSPECTOR */}
-      <section className="relative z-10 h-screen w-full snap-start snap-always flex items-center justify-center px-10 pointer-events-none">
-        <div className="max-w-7xl w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-8 shadow-2xl space-y-5 pointer-events-auto">
+      <section className="relative z-10 h-screen w-full flex flex-col justify-center px-10 pointer-events-none">
+        <div className="max-w-7xl w-full bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-8 shadow-2xl space-y-5 pointer-events-auto mx-auto">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <div>
               <h2 className="text-xs font-mono text-cyan-400 tracking-widest uppercase font-semibold">
@@ -166,7 +166,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="max-h-[60vh] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
             {loading ? (
               <div className="text-center py-10 text-slate-400 font-mono text-xs">Connecting to scanner...</div>
             ) : validDevices.length === 0 ? (
@@ -174,7 +174,7 @@ export default function DashboardPage() {
             ) : (
               <table className="w-full text-left font-mono text-xs">
                 <thead>
-                  <tr className="text-slate-400 border-b border-slate-800/80 uppercase text-[10px]">
+                  <tr className="text-slate-400 border-b border-slate-800/80 uppercase text-[10px] sticky top-0 bg-[#05080d]">
                     <th className="px-4 py-3">IP Address</th>
                     <th className="px-4 py-3">MAC Address</th>
                     <th className="px-4 py-3">Device Name</th>
