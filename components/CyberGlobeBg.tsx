@@ -149,7 +149,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
 
     // Land Dots Generation
     const dots: { v: [number, number, number]; land: boolean }[] = [];
-    const N = 2400;
+    const N = 4000; // Increased density
     for (let i = 0; i < N; i++) {
       const y = 1 - (2 * (i + 0.5)) / N;
       const r = Math.sqrt(1 - y * y);
@@ -175,6 +175,8 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
       [-33, 151],
       [25, 55],
       [19, -99],
+      [-15, -60],
+      [50, -100],
     ].map(([a, b]) => ll(a, b));
 
     const normals = [
@@ -184,6 +186,8 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
       [-26, 28],
       [28, 77],
       [37, 127],
+      [10, -20],
+      [-40, 10],
     ].map(([a, b]) => ll(a, b));
 
     function arc(
@@ -231,7 +235,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
       });
     }
 
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 15; i++) { // Increased spawn count
       spawn();
       flows[i].t = Math.random();
     }
@@ -245,6 +249,15 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
       g.clearRect(0, 0, W, H);
 
       // Base Globe Body - "ink on paper" style
+      // Subtle atmosphere glow
+      const atmosphereGradient = g.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.3);
+      atmosphereGradient.addColorStop(0, `${resolvedColors.line}33`);
+      atmosphereGradient.addColorStop(1, 'transparent');
+      g.fillStyle = atmosphereGradient;
+      g.beginPath();
+      g.arc(cx, cy, R * 1.3, 0, Math.PI * 2);
+      g.fill();
+
       // Globe sits directly on page background (no card, no glow)
       const globeGradient = g.createRadialGradient(
         cx - R * 0.3,
@@ -292,7 +305,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
         [0.5, 0.2, 1.32],
         [-0.9, -0.35, 1.55],
       ].forEach(([tx, tz, r], k) => {
-        g.lineWidth = 0.75;
+        g.lineWidth = 1.8; // Thicker orbit rings
         let prev: [number, number] | null = null;
         for (let u = 0; u <= 64; u++) {
           const q = (u / 64) * Math.PI * 2;
@@ -362,7 +375,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
           if (prev && !(v[2] < 0 && Math.hypot(v[0], v[1]) < 1)) {
             const flowAlpha = (1.0 * s) / steps;
             g.strokeStyle = `rgba(${hexToRgb(col)}, ${flowAlpha})`;
-            g.lineWidth = 1.2;
+            g.lineWidth = 2.5; // Thicker flow lines
             g.beginPath();
             g.moveTo(prev[0], prev[1]);
             g.lineTo(p[0], p[1]);
