@@ -97,6 +97,7 @@ function RadarCanvas() {
 
 export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useWebSocket();
+  const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
 
   return (
     <main className="relative min-h-screen bg-[#05080d] text-white overflow-y-scroll snap-y snap-mandatory h-screen scroll-smooth touch-pan-y">
@@ -162,7 +163,7 @@ export default function DashboardPage() {
           <div className="overflow-x-auto">
             {loading ? (
               <div className="text-center py-10 text-slate-400 font-mono text-xs">Connecting to scanner...</div>
-            ) : devices.length === 0 ? (
+            ) : validDevices.length === 0 ? (
               <div className="text-center py-10 text-slate-400 font-mono text-xs">No devices found.</div>
             ) : (
               <table className="w-full text-left font-mono text-xs">
@@ -171,28 +172,43 @@ export default function DashboardPage() {
                     <th className="pb-3">IP Address</th>
                     <th className="pb-3">MAC Address</th>
                     <th className="pb-3">Device Name</th>
+                    <th className="pb-3">Category</th>
+                    <th className="pb-3">Vendor</th>
+                    <th className="pb-3">Location</th>
+                    <th className="pb-3">Latency</th>
                     <th className="pb-3">Status</th>
                     <th className="pb-3 text-right">Last Seen</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
-                  {devices.map((dev, idx) => (
+                  {validDevices.map((dev, idx) => (
                     <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
                       <td className="py-3 font-bold text-white">{dev.ip || "-"}</td>
                       <td className="py-3 text-slate-400">{dev.mac}</td>
                       <td className="py-3 text-slate-300">{dev.hostname}</td>
+                      <td className="py-3 text-slate-400">{dev.category}</td>
+                      <td className="py-3 text-slate-400">{dev.vendor}</td>
+                      <td className="py-3 text-slate-400">{dev.location}</td>
+                      <td className="py-3 text-cyan-400 font-mono">{dev.latency !== undefined ? `${dev.latency}ms` : "-"}</td>
                       <td className="py-3">
-                        {dev.status === "UP" ? (
-                          <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            ONLINE
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] border border-orange-500/30">
-                            <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                            OFFLINE
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {dev.status === "UP" ? (
+                            <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              ONLINE
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] border border-orange-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                              OFFLINE
+                            </span>
+                          )}
+                          {dev.is_blacklisted && (
+                            <span className="inline-flex items-center bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] border border-red-500/30">
+                              BLOCKED
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 text-right text-slate-400 truncate max-w-[100px]">{new Date(dev.last_seen).toLocaleTimeString()}</td>
                     </tr>

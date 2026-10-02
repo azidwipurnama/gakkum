@@ -110,7 +110,23 @@ class NetworkSniffer:
                         mac = element[1].hwsrc.lower()
                         ip = element[1].psrc
                         if self.is_valid_client_ip(ip, mac):
-                            needs_probe, _ = self.engine.update_device(mac, ip=ip)
+                            # Add hostname resolution and latency check
+                            hostname = "Unknown"
+                            latency = 0
+                            try:
+                                hostname = socket.gethostbyaddr(ip)[0]
+                            except:
+                                pass
+
+                            try:
+                                output = subprocess.check_output(f"ping -n 1 -w 500 {ip}", shell=True).decode()
+                                match = re.search(r'time[=<](\d+)ms', output)
+                                if match:
+                                    latency = int(match.group(1))
+                            except:
+                                pass
+
+                            needs_probe, _ = self.engine.update_device(mac, ip=ip, hostname=hostname, latency=latency, is_blacklisted=False)
                             if needs_probe:
                                 asyncio.run(self.engine.probe_device_ports(ip, mac))
                             discovered += 1

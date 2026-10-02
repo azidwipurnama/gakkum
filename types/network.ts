@@ -9,4 +9,6 @@ export interface Device {
   location: string; // Room mapping
   last_seen: string; // ISO format
   status: DeviceStatus;
+  latency?: number; // Latency in ms
+  is_blacklisted: boolean; // Restriction status
 }

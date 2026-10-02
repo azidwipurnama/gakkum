@@ -109,7 +109,7 @@ class TimestampEngine:
         self.devices[mac]['vendor'] = vendor
         return True
 
-    def update_device(self, mac, ip="", hostname="", bssid=""):
+    def update_device(self, mac, ip="", hostname="", bssid="", latency=0, is_blacklisted=False):
         now = datetime.now()
         mac = mac.lower()
 
@@ -129,7 +129,9 @@ class TimestampEngine:
                 "vendor": vendor,
                 "hostname": display_name,
                 "bssid": bssid,
-                "category": "General Device"
+                "category": "General Device",
+                "latency": latency,
+                "is_blacklisted": is_blacklisted
             }
             return True, ip # Needs async probing
 
@@ -137,6 +139,8 @@ class TimestampEngine:
         self.devices[mac]["status"] = "UP"
         if ip: self.devices[mac]["ip"] = ip
         if bssid: self.devices[mac]["bssid"] = bssid
+        self.devices[mac]["latency"] = latency
+        self.devices[mac]["is_blacklisted"] = is_blacklisted
 
         # Intelligent Hostname/Display Name Fallback during updates
         if hostname and hostname.lower() != "loading...":
@@ -167,6 +171,10 @@ class TimestampEngine:
         total_down = 0
 
         for mac, data in self.devices.items():
+            # Filter devices without IP
+            if not data.get("ip"):
+                continue
+
             if data["status"] == "UP": total_up += 1
             else: total_down += 1
 
@@ -180,7 +188,9 @@ class TimestampEngine:
                 "category": data.get("category", "General Device"),
                 "location": location,
                 "status": data["status"],
-                "last_seen": data["last_seen"].isoformat()
+                "last_seen": data["last_seen"].isoformat(),
+                "latency": data.get("latency", 0),
+                "is_blacklisted": data.get("is_blacklisted", False)
             })
 
         return {
