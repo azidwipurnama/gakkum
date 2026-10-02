@@ -1,28 +1,70 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  /* Warm Paper Design Tokens */
+  --bg-page:      #E8E3D8; /* latar halaman (kertas gelap) */
+  --bg-panel:     #FAF8F3; /* card, panel, tabel */
+  --bg-subtle:    #F1EDE3; /* header tabel, isi bola globe, hover baris */
+  --line:         #DDD7C8; /* border 1px, garis pemisah, cincin radar */
+
+  --ink:          #1F1D1A; /* teks utama, garis luar globe */
+  --ink-soft:     #6B665C; /* teks sekunder, label, titik globe */
+  --ink-faint:    #B8B1A0; /* orbit globe, elemen sangat halus */
+
+  --accent:       #B4531A; /* terakota: satu-satunya aksen */
+  --accent-hover: #9A4516;
+
+  --status-on:    #4A7A57; /* online, hijau lumut */
+  --status-off:   #A5432B; /* offline, merah bata */
+
+  --radius-card:  12px;
+  --radius-ctl:   8px;
+
+  /* Tailwind v4 token mappings */
+  --color-background: var(--bg-page);
+  --color-foreground: var(--ink);
+  --color-panel: var(--bg-panel);
+  --color-subtle: var(--bg-subtle);
+  --color-line: var(--line);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-status-on: var(--status-on);
+  --color-status-off: var(--status-off);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-status-on: var(--status-on);
+  --color-status-off: var(--status-off);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-page);
+  color: var(--ink);
+  font-family: var(--font-geist-sans, sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
   scroll-behavior: smooth;
   overflow-y: auto;
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    scroll-behavior: auto;
+  }
 }

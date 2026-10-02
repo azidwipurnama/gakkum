@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Device } from '../types/network';
 
 const WS_URL = 'ws://localhost:8000/ws/network-monitor?api_key=GAKKUM_SECRET_KEY';
@@ -11,19 +11,9 @@ export function useWebSocket() {
   const [error, setError] = useState<string | null>(null);
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<number | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
-  useEffect(() => {
-    connect();
-
-    return () => {
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-      }
-      ws.current?.close();
-    };
-  }, []);
-
-  const connect = () => {
+  const connect = useCallback(() => {
     ws.current = new WebSocket(WS_URL);
 
     ws.current.onopen = () => {
@@ -64,9 +54,21 @@ export function useWebSocket() {
       if (reconnectTimeout.current) {
         clearTimeout(reconnectTimeout.current);
       }
-      reconnectTimeout.current = window.setTimeout(connect, 3000);
+      reconnectTimeout.current = window.setTimeout(() => connectRef.current?.(), 3000);
     };
-  };
+  }, []);
+
+  useEffect(() => {
+    connectRef.current = connect;
+    connect();
+
+    return () => {
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
+      ws.current?.close();
+    };
+  }, [connect]);
 
   return { devices, metrics, ssid, loading, error };
 }
