@@ -110,7 +110,7 @@ export default function DashboardPage() {
       <CyberGlobeBg wifiName={ssid} />
 
       {/* SEKSI 1: SERVER CONNECTION */}
-      <section className="relative z-10 h-screen w-full flex flex-col justify-center pt-10 px-10 pointer-events-none">
+      <section className="relative z-10 h-screen w-full flex items-start justify-start pt-8 pl-8 pointer-events-none">
         <div className="max-w-xs w-full space-y-3 pointer-events-auto">
           <div className="bg-slate-900/50 backdrop-blur-md border border-cyan-500/20 rounded-xl p-4 shadow-2xl">
             <h2 className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mb-3 font-semibold">
