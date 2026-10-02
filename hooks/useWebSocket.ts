@@ -27,6 +27,7 @@ export function useWebSocket() {
     ws.current = new WebSocket(WS_URL);
 
     ws.current.onopen = () => {
+      console.log("✅ WS Connected to Python Backend");
       setLoading(false);
       setError(null);
     };
@@ -34,14 +35,15 @@ export function useWebSocket() {
     ws.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log("📩 Received WS Data:", data);
 
         if (data && typeof data === 'object') {
           if (data.type === 'DEVICE_UPDATE' || data.type === 'UPDATE') {
-            if (Array.isArray(data.devices)) setDevices(data.devices);
+            if (Array.isArray(data.devices)) setDevices(data.devices.filter((d: any) => d.ip !== ""));
             if (data.metrics) setMetrics(data.metrics);
             if (data.ssid) setSsid(data.ssid);
           } else if (Array.isArray(data)) {
-            setDevices(data);
+            setDevices(data.filter((d: any) => d.ip !== ""));
           }
         }
       } catch (err) {
