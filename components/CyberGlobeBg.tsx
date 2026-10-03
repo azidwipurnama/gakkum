@@ -284,18 +284,21 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
         const v = view(d.v);
         const [x, y] = P(v);
         if (v[2] < 0) {
-          g.fillStyle = `${resolvedColors.inkSoft}1F`;
+          // Darken dots 25%: reduce alpha/tone
+          g.fillStyle = `${resolvedColors.inkSoft}15`;
           g.fillRect(x, y, 1, 1);
           continue;
         }
         const a = 0.3 + 0.7 * v[2];
         if (d.land) {
-          const landColor = hexToRgba(resolvedColors.inkSoft, 0.25 + 0.45 * a);
-          g.fillStyle = `rgba(${landColor}, ${0.25 + 0.45 * a})`;
+          // Darker land dots
+          const landColor = hexToRgba(resolvedColors.inkSoft, 0.35 + 0.55 * a);
+          g.fillStyle = `rgba(${landColor}, ${0.35 + 0.55 * a})`;
           const dotSize = 2.8 * (0.6 + v[2] * 0.5);
           g.fillRect(x - dotSize / 2, y - dotSize / 2, dotSize, dotSize);
         } else {
-          g.fillStyle = `rgba(${hexToRgb(resolvedColors.inkFaint)}, ${0.2 * a})`;
+          // Darker faint dots
+          g.fillStyle = `rgba(${hexToRgb(resolvedColors.inkSoft)}, ${0.3 * a})`;
           g.fillRect(x - 0.4, y - 0.4, 1.2, 1.2);
         }
       }
@@ -325,8 +328,8 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
           if (prev) {
             const hid = v[2] < 0 && Math.hypot(v[0], v[1]) < 1;
             if (!hid) {
-              const orbitAlpha = v[2] > 0 ? 0.4 : 0.15;
-              g.strokeStyle = `rgba(${hexToRgb(resolvedColors.inkFaint)}, ${orbitAlpha})`;
+              const orbitAlpha = v[2] > 0 ? 0.6 : 0.3; // Darkened/Increased opacity
+              g.strokeStyle = `rgba(${hexToRgb(resolvedColors.inkSoft)}, ${orbitAlpha})`; // Changed inkFaint to inkSoft
               g.beginPath();
               g.moveTo(prev[0], prev[1]);
               g.lineTo(p[0], p[1]);
