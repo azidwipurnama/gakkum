@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
 import AlertsPanel from "@/components/AlertsPanel";
 import { useNetwork } from "@/contexts/NetworkContext";
+import LoadingUI from "@/components/LoadingUI";
 
 const COLORS = {
   ink: "#1F1D1A",
@@ -111,6 +112,7 @@ function RadarCanvas() {
 
 export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useNetwork();
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
 
@@ -120,10 +122,12 @@ export default function DashboardPage() {
     : 'Localhost';
 
   return (
-    <main className="relative min-h-screen bg-[var(--bg-page)] text-[var(--ink)] overflow-y-auto scroll-smooth h-screen touch-pan-y" style={{ backgroundColor: COLORS.bgPage, color: COLORS.ink }} suppressHydrationWarning>
-      <CyberGlobeBg wifiName={ssid} />
+    <>
+      {!isLoaded && <LoadingUI onFinished={() => setIsLoaded(true)} />}
+      <main className={`relative min-h-screen bg-[var(--bg-page)] text-[var(--ink)] overflow-y-auto scroll-smooth h-screen touch-pan-y ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-700`} style={{ backgroundColor: COLORS.bgPage, color: COLORS.ink }} suppressHydrationWarning>
+        <CyberGlobeBg wifiName={ssid} />
 
-      {/* SEKSI 1: SERVER CONNECTION */}
+        {/* SEKSI 1: SERVER CONNECTION */}
       <section className="relative z-10 h-screen w-full flex items-start justify-start pt-8 pl-8 pointer-events-none">
         <div className="max-w-xs w-full space-y-3 pointer-events-auto">
           <div className="bg-[var(--bg-panel--50)] backdrop-blur-md border border-[var(--line)] rounded-[var(--radius-card)] p-4 shadow-none" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
@@ -242,6 +246,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

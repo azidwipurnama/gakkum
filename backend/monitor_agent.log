@@ -332,3 +332,553 @@
 2026-10-05 10:27:45,527 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
 2026-10-05 10:27:48,471 - WARNING - Server returned 429
 2026-10-05 10:27:57,768 - WARNING - Server returned 429
+2026-10-05 10:28:04,808 - WARNING - Server returned 429
+2026-10-05 10:28:14,116 - WARNING - Server returned 429
+2026-10-05 10:28:21,155 - WARNING - Server returned 429
+2026-10-05 10:28:30,474 - WARNING - Server returned 429
+2026-10-05 10:28:37,546 - WARNING - Server returned 429
+2026-10-05 10:28:45,528 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:28:46,855 - WARNING - Server returned 429
+2026-10-05 10:28:53,948 - WARNING - Server returned 429
+2026-10-05 10:29:03,218 - WARNING - Server returned 429
+2026-10-05 10:29:10,270 - WARNING - Server returned 429
+2026-10-05 10:29:19,568 - WARNING - Server returned 429
+2026-10-05 10:29:26,627 - WARNING - Server returned 429
+2026-10-05 10:29:35,902 - WARNING - Server returned 429
+2026-10-05 10:29:42,970 - WARNING - Server returned 429
+2026-10-05 10:29:45,554 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:29:52,244 - WARNING - Server returned 429
+2026-10-05 10:29:59,299 - WARNING - Server returned 429
+2026-10-05 10:30:08,678 - WARNING - Server returned 429
+2026-10-05 10:30:15,767 - WARNING - Server returned 429
+2026-10-05 10:30:25,041 - WARNING - Server returned 429
+2026-10-05 10:30:32,106 - WARNING - Server returned 429
+2026-10-05 10:30:41,530 - WARNING - Server returned 429
+2026-10-05 10:30:45,557 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:30:48,549 - WARNING - Server returned 429
+2026-10-05 10:30:57,896 - WARNING - Server returned 429
+2026-10-05 10:31:04,943 - WARNING - Server returned 429
+2026-10-05 10:31:14,202 - WARNING - Server returned 429
+2026-10-05 10:31:21,294 - WARNING - Server returned 429
+2026-10-05 10:31:30,626 - WARNING - Server returned 429
+2026-10-05 10:31:37,666 - WARNING - Server returned 429
+2026-10-05 10:31:45,571 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:31:46,945 - WARNING - Server returned 429
+2026-10-05 10:31:54,025 - WARNING - Server returned 429
+2026-10-05 10:32:03,307 - WARNING - Server returned 429
+2026-10-05 10:32:10,388 - WARNING - Server returned 429
+2026-10-05 10:32:19,652 - WARNING - Server returned 429
+2026-10-05 10:32:26,710 - WARNING - Server returned 429
+2026-10-05 10:32:36,039 - WARNING - Server returned 429
+2026-10-05 10:32:43,090 - WARNING - Server returned 429
+2026-10-05 10:32:45,592 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:32:52,416 - WARNING - Server returned 429
+2026-10-05 10:32:59,480 - WARNING - Server returned 429
+2026-10-05 10:33:08,781 - WARNING - Server returned 429
+2026-10-05 10:33:15,800 - WARNING - Server returned 429
+2026-10-05 10:33:25,058 - WARNING - Server returned 429
+2026-10-05 10:33:32,090 - WARNING - Server returned 429
+2026-10-05 10:33:41,353 - WARNING - Server returned 429
+2026-10-05 10:33:45,598 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:33:48,425 - WARNING - Server returned 429
+2026-10-05 10:33:57,727 - WARNING - Server returned 429
+2026-10-05 10:34:04,771 - WARNING - Server returned 429
+2026-10-05 10:34:14,095 - WARNING - Server returned 429
+2026-10-05 10:34:21,216 - WARNING - Server returned 429
+2026-10-05 10:34:30,524 - WARNING - Server returned 429
+2026-10-05 10:34:37,744 - WARNING - Server returned 429
+2026-10-05 10:34:45,605 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:34:47,092 - WARNING - Server returned 429
+2026-10-05 10:34:54,147 - WARNING - Server returned 429
+2026-10-05 10:35:03,661 - WARNING - Server returned 429
+2026-10-05 10:35:10,695 - WARNING - Server returned 429
+2026-10-05 10:35:19,992 - WARNING - Server returned 429
+2026-10-05 10:35:27,077 - WARNING - Server returned 429
+2026-10-05 10:35:36,379 - WARNING - Server returned 429
+2026-10-05 10:35:43,423 - WARNING - Server returned 429
+2026-10-05 10:35:45,612 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:35:52,699 - WARNING - Server returned 429
+2026-10-05 10:35:59,792 - WARNING - Server returned 429
+2026-10-05 10:36:09,091 - WARNING - Server returned 429
+2026-10-05 10:36:16,150 - WARNING - Server returned 429
+2026-10-05 10:36:25,525 - WARNING - Server returned 429
+2026-10-05 10:36:32,572 - WARNING - Server returned 429
+2026-10-05 10:36:41,825 - WARNING - Server returned 429
+2026-10-05 10:36:45,621 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:36:48,877 - WARNING - Server returned 429
+2026-10-05 10:36:58,226 - WARNING - Server returned 429
+2026-10-05 10:37:05,277 - WARNING - Server returned 429
+2026-10-05 10:37:14,527 - WARNING - Server returned 429
+2026-10-05 10:37:21,589 - WARNING - Server returned 429
+2026-10-05 10:37:30,923 - WARNING - Server returned 429
+2026-10-05 10:37:37,980 - WARNING - Server returned 429
+2026-10-05 10:37:45,622 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:37:47,264 - WARNING - Server returned 429
+2026-10-05 10:37:54,303 - WARNING - Server returned 429
+2026-10-05 10:38:03,619 - WARNING - Server returned 429
+2026-10-05 10:38:10,686 - WARNING - Server returned 429
+2026-10-05 10:38:20,277 - WARNING - Server returned 429
+2026-10-05 10:38:27,320 - WARNING - Server returned 429
+2026-10-05 10:38:36,593 - WARNING - Server returned 429
+2026-10-05 10:38:43,644 - WARNING - Server returned 429
+2026-10-05 10:38:45,634 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:38:52,982 - WARNING - Server returned 429
+2026-10-05 10:39:00,093 - WARNING - Server returned 429
+2026-10-05 10:39:09,405 - WARNING - Server returned 429
+2026-10-05 10:39:16,486 - WARNING - Server returned 429
+2026-10-05 10:39:25,763 - WARNING - Server returned 429
+2026-10-05 10:39:32,799 - WARNING - Server returned 429
+2026-10-05 10:39:42,082 - WARNING - Server returned 429
+2026-10-05 10:39:45,648 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:39:49,191 - WARNING - Server returned 429
+2026-10-05 10:39:58,461 - WARNING - Server returned 429
+2026-10-05 10:40:05,516 - WARNING - Server returned 429
+2026-10-05 10:40:14,853 - WARNING - Server returned 429
+2026-10-05 10:40:21,898 - WARNING - Server returned 429
+2026-10-05 10:40:31,221 - WARNING - Server returned 429
+2026-10-05 10:40:38,283 - WARNING - Server returned 429
+2026-10-05 10:40:45,658 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:40:47,628 - WARNING - Server returned 429
+2026-10-05 10:40:54,687 - WARNING - Server returned 429
+2026-10-05 10:41:03,975 - WARNING - Server returned 429
+2026-10-05 10:41:11,032 - WARNING - Server returned 429
+2026-10-05 10:41:20,371 - WARNING - Server returned 429
+2026-10-05 10:41:27,500 - WARNING - Server returned 429
+2026-10-05 10:41:36,844 - WARNING - Server returned 429
+2026-10-05 10:41:43,917 - WARNING - Server returned 429
+2026-10-05 10:41:45,663 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:41:53,216 - WARNING - Server returned 429
+2026-10-05 10:42:00,264 - WARNING - Server returned 429
+2026-10-05 10:42:09,574 - WARNING - Server returned 429
+2026-10-05 10:42:16,705 - WARNING - Server returned 429
+2026-10-05 10:42:26,025 - WARNING - Server returned 429
+2026-10-05 10:42:33,086 - WARNING - Server returned 429
+2026-10-05 10:42:42,400 - WARNING - Server returned 429
+2026-10-05 10:42:45,669 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:42:49,463 - WARNING - Server returned 429
+2026-10-05 10:42:58,698 - WARNING - Server returned 429
+2026-10-05 10:43:05,762 - WARNING - Server returned 429
+2026-10-05 10:43:15,117 - WARNING - Server returned 429
+2026-10-05 10:43:22,189 - WARNING - Server returned 429
+2026-10-05 10:43:31,459 - WARNING - Server returned 429
+2026-10-05 10:43:38,519 - WARNING - Server returned 429
+2026-10-05 10:43:45,685 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:43:47,830 - WARNING - Server returned 429
+2026-10-05 10:43:54,905 - WARNING - Server returned 429
+2026-10-05 10:44:04,385 - WARNING - Server returned 429
+2026-10-05 10:44:11,450 - WARNING - Server returned 429
+2026-10-05 10:44:20,732 - WARNING - Server returned 429
+2026-10-05 10:44:27,757 - WARNING - Server returned 429
+2026-10-05 10:44:35,055 - WARNING - Server returned 500
+2026-10-05 10:44:42,413 - WARNING - Server returned 500
+2026-10-05 10:44:45,693 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:44:49,667 - WARNING - Server returned 500
+2026-10-05 10:44:56,904 - WARNING - Server returned 500
+2026-10-05 10:45:04,146 - WARNING - Server returned 429
+2026-10-05 10:45:11,385 - WARNING - Server returned 500
+2026-10-05 10:45:18,653 - WARNING - Server returned 429
+2026-10-05 10:45:25,888 - WARNING - Server returned 500
+2026-10-05 10:45:33,352 - WARNING - Server returned 429
+2026-10-05 10:45:40,557 - WARNING - Server returned 429
+2026-10-05 10:45:45,703 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:45:47,809 - WARNING - Server returned 429
+2026-10-05 10:45:55,043 - WARNING - Server returned 500
+2026-10-05 10:46:02,273 - WARNING - Server returned 429
+2026-10-05 10:46:09,545 - WARNING - Server returned 429
+2026-10-05 10:46:16,769 - WARNING - Server returned 500
+2026-10-05 10:46:24,026 - WARNING - Server returned 500
+2026-10-05 10:46:31,323 - WARNING - Server returned 500
+2026-10-05 10:46:40,643 - WARNING - Server returned 429
+2026-10-05 10:46:45,720 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:46:47,712 - WARNING - Server returned 429
+2026-10-05 10:46:56,970 - WARNING - Server returned 429
+2026-10-05 10:47:04,037 - WARNING - Server returned 429
+2026-10-05 10:47:13,303 - WARNING - Server returned 429
+2026-10-05 10:47:20,351 - WARNING - Server returned 429
+2026-10-05 10:47:29,628 - WARNING - Server returned 429
+2026-10-05 10:47:36,682 - WARNING - Server returned 429
+2026-10-05 10:47:45,729 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:47:46,027 - WARNING - Server returned 429
+2026-10-05 10:47:53,061 - WARNING - Server returned 429
+2026-10-05 10:48:02,367 - WARNING - Server returned 429
+2026-10-05 10:48:09,421 - WARNING - Server returned 429
+2026-10-05 10:48:18,726 - WARNING - Server returned 429
+2026-10-05 10:48:25,791 - WARNING - Server returned 429
+2026-10-05 10:48:35,126 - WARNING - Server returned 429
+2026-10-05 10:48:42,188 - WARNING - Server returned 429
+2026-10-05 10:48:45,733 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:48:51,535 - WARNING - Server returned 429
+2026-10-05 10:48:58,582 - WARNING - Server returned 429
+2026-10-05 10:49:07,888 - WARNING - Server returned 429
+2026-10-05 10:49:14,937 - WARNING - Server returned 429
+2026-10-05 10:49:24,215 - WARNING - Server returned 429
+2026-10-05 10:49:31,269 - WARNING - Server returned 429
+2026-10-05 10:49:40,524 - WARNING - Server returned 429
+2026-10-05 10:49:45,740 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:49:47,566 - WARNING - Server returned 429
+2026-10-05 10:49:56,803 - WARNING - Server returned 429
+2026-10-05 10:50:03,864 - WARNING - Server returned 429
+2026-10-05 10:50:13,117 - WARNING - Server returned 429
+2026-10-05 10:50:20,156 - WARNING - Server returned 429
+2026-10-05 10:50:29,471 - WARNING - Server returned 429
+2026-10-05 10:50:36,527 - WARNING - Server returned 429
+2026-10-05 10:50:45,748 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:50:46,317 - WARNING - Server returned 429
+2026-10-05 10:50:53,379 - WARNING - Server returned 429
+2026-10-05 10:51:02,670 - WARNING - Server returned 429
+2026-10-05 10:51:09,741 - WARNING - Server returned 429
+2026-10-05 10:51:18,974 - WARNING - Server returned 429
+2026-10-05 10:51:26,058 - WARNING - Server returned 429
+2026-10-05 10:51:35,362 - WARNING - Server returned 429
+2026-10-05 10:51:42,417 - WARNING - Server returned 429
+2026-10-05 10:51:45,763 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:51:51,739 - WARNING - Server returned 429
+2026-10-05 10:51:58,802 - WARNING - Server returned 429
+2026-10-05 10:52:08,166 - WARNING - Server returned 429
+2026-10-05 10:52:15,255 - WARNING - Server returned 429
+2026-10-05 10:52:24,652 - WARNING - Server returned 429
+2026-10-05 10:52:31,711 - WARNING - Server returned 429
+2026-10-05 10:52:41,003 - WARNING - Server returned 429
+2026-10-05 10:52:45,773 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:52:48,079 - WARNING - Server returned 429
+2026-10-05 10:52:57,360 - WARNING - Server returned 429
+2026-10-05 10:53:04,401 - WARNING - Server returned 429
+2026-10-05 10:53:13,753 - WARNING - Server returned 429
+2026-10-05 10:53:20,788 - WARNING - Server returned 429
+2026-10-05 10:53:30,075 - WARNING - Server returned 429
+2026-10-05 10:53:37,143 - WARNING - Server returned 429
+2026-10-05 10:53:45,782 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:53:46,453 - WARNING - Server returned 429
+2026-10-05 10:53:53,510 - WARNING - Server returned 429
+2026-10-05 10:54:02,843 - WARNING - Server returned 429
+2026-10-05 10:54:09,887 - WARNING - Server returned 429
+2026-10-05 10:54:19,579 - WARNING - Server returned 429
+2026-10-05 10:54:26,631 - WARNING - Server returned 429
+2026-10-05 10:54:35,922 - WARNING - Server returned 429
+2026-10-05 10:54:42,973 - WARNING - Server returned 429
+2026-10-05 10:54:45,791 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:54:52,498 - WARNING - Server returned 429
+2026-10-05 10:54:59,581 - WARNING - Server returned 429
+2026-10-05 10:55:08,889 - WARNING - Server returned 429
+2026-10-05 10:55:15,947 - WARNING - Server returned 429
+2026-10-05 10:55:25,258 - WARNING - Server returned 429
+2026-10-05 10:55:32,294 - WARNING - Server returned 429
+2026-10-05 10:55:41,549 - WARNING - Server returned 429
+2026-10-05 10:55:45,797 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:55:48,619 - WARNING - Server returned 429
+2026-10-05 10:55:57,946 - WARNING - Server returned 429
+2026-10-05 10:56:05,026 - WARNING - Server returned 429
+2026-10-05 10:56:14,275 - WARNING - Server returned 429
+2026-10-05 10:56:21,291 - WARNING - Server returned 429
+2026-10-05 10:56:30,650 - WARNING - Server returned 429
+2026-10-05 10:56:37,695 - WARNING - Server returned 429
+2026-10-05 10:56:45,809 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:56:47,047 - WARNING - Server returned 429
+2026-10-05 10:56:54,088 - WARNING - Server returned 429
+2026-10-05 10:57:03,447 - WARNING - Server returned 429
+2026-10-05 10:57:10,513 - WARNING - Server returned 429
+2026-10-05 10:57:19,809 - WARNING - Server returned 429
+2026-10-05 10:57:26,853 - WARNING - Server returned 429
+2026-10-05 10:57:36,151 - WARNING - Server returned 429
+2026-10-05 10:57:43,207 - WARNING - Server returned 429
+2026-10-05 10:57:45,817 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:57:52,466 - WARNING - Server returned 429
+2026-10-05 10:57:59,539 - WARNING - Server returned 429
+2026-10-05 10:58:08,842 - WARNING - Server returned 429
+2026-10-05 10:58:15,911 - WARNING - Server returned 429
+2026-10-05 10:58:25,274 - WARNING - Server returned 429
+2026-10-05 10:58:32,391 - WARNING - Server returned 429
+2026-10-05 10:58:41,698 - WARNING - Server returned 429
+2026-10-05 10:58:45,826 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:58:48,758 - WARNING - Server returned 429
+2026-10-05 10:58:57,980 - WARNING - Server returned 429
+2026-10-05 10:59:05,036 - WARNING - Server returned 429
+2026-10-05 10:59:14,534 - WARNING - Server returned 429
+2026-10-05 10:59:21,628 - WARNING - Server returned 429
+2026-10-05 10:59:31,028 - WARNING - Server returned 429
+2026-10-05 10:59:38,105 - WARNING - Server returned 429
+2026-10-05 10:59:45,835 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 10:59:47,366 - WARNING - Server returned 429
+2026-10-05 10:59:54,432 - WARNING - Server returned 429
+2026-10-05 11:00:03,758 - WARNING - Server returned 429
+2026-10-05 11:00:10,819 - WARNING - Server returned 429
+2026-10-05 11:00:20,422 - WARNING - Server returned 429
+2026-10-05 11:00:27,525 - WARNING - Server returned 429
+2026-10-05 11:00:36,883 - WARNING - Server returned 429
+2026-10-05 11:00:43,949 - WARNING - Server returned 429
+2026-10-05 11:00:45,846 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:00:53,251 - WARNING - Server returned 429
+2026-10-05 11:01:00,321 - WARNING - Server returned 429
+2026-10-05 11:01:09,756 - WARNING - Server returned 429
+2026-10-05 11:01:16,847 - WARNING - Server returned 429
+2026-10-05 11:01:26,136 - WARNING - Server returned 429
+2026-10-05 11:01:33,189 - WARNING - Server returned 429
+2026-10-05 11:01:42,580 - WARNING - Server returned 429
+2026-10-05 11:01:45,852 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:01:49,661 - WARNING - Server returned 429
+2026-10-05 11:01:58,946 - WARNING - Server returned 429
+2026-10-05 11:02:06,002 - WARNING - Server returned 429
+2026-10-05 11:02:15,338 - WARNING - Server returned 429
+2026-10-05 11:02:22,418 - WARNING - Server returned 429
+2026-10-05 11:02:32,969 - WARNING - Server returned 429
+2026-10-05 11:02:40,045 - WARNING - Server returned 429
+2026-10-05 11:02:45,861 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:02:49,635 - WARNING - Server returned 429
+2026-10-05 11:02:56,724 - WARNING - Server returned 429
+2026-10-05 11:03:06,391 - WARNING - Server returned 429
+2026-10-05 11:03:13,426 - WARNING - Server returned 429
+2026-10-05 11:03:22,721 - WARNING - Server returned 429
+2026-10-05 11:03:29,785 - WARNING - Server returned 429
+2026-10-05 11:03:39,142 - WARNING - Server returned 429
+2026-10-05 11:03:45,870 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:03:46,225 - WARNING - Server returned 429
+2026-10-05 11:03:55,542 - WARNING - Server returned 429
+2026-10-05 11:04:02,616 - WARNING - Server returned 429
+2026-10-05 11:04:09,909 - WARNING - Server returned 500
+2026-10-05 11:04:17,148 - WARNING - Server returned 500
+2026-10-05 11:04:26,497 - WARNING - Server returned 429
+2026-10-05 11:04:33,561 - WARNING - Server returned 429
+2026-10-05 11:04:40,784 - WARNING - Server returned 500
+2026-10-05 11:04:45,874 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:04:48,052 - WARNING - Server returned 500
+2026-10-05 11:04:55,295 - WARNING - Server returned 429
+2026-10-05 11:05:04,646 - WARNING - Server returned 429
+2026-10-05 11:05:11,721 - WARNING - Server returned 429
+2026-10-05 11:05:21,023 - WARNING - Server returned 429
+2026-10-05 11:05:28,165 - WARNING - Server returned 429
+2026-10-05 11:05:37,432 - WARNING - Server returned 429
+2026-10-05 11:05:44,512 - WARNING - Server returned 429
+2026-10-05 11:05:45,888 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:05:53,808 - WARNING - Server returned 429
+2026-10-05 11:06:00,956 - WARNING - Server returned 429
+2026-10-05 11:06:10,219 - WARNING - Server returned 429
+2026-10-05 11:06:17,294 - WARNING - Server returned 429
+2026-10-05 11:06:26,733 - WARNING - Server returned 429
+2026-10-05 11:06:34,116 - WARNING - Server returned 429
+2026-10-05 11:06:43,475 - WARNING - Server returned 429
+2026-10-05 11:06:45,895 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:06:50,518 - WARNING - Server returned 429
+2026-10-05 11:06:59,864 - WARNING - Server returned 429
+2026-10-05 11:07:06,927 - WARNING - Server returned 429
+2026-10-05 11:07:16,175 - WARNING - Server returned 429
+2026-10-05 11:07:23,247 - WARNING - Server returned 429
+2026-10-05 11:07:32,580 - WARNING - Server returned 429
+2026-10-05 11:07:39,622 - WARNING - Server returned 429
+2026-10-05 11:07:45,902 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:07:48,936 - WARNING - Server returned 429
+2026-10-05 11:07:55,986 - WARNING - Server returned 429
+2026-10-05 11:08:05,210 - WARNING - Server returned 429
+2026-10-05 11:08:12,433 - WARNING - Server returned 429
+2026-10-05 11:08:21,700 - WARNING - Server returned 429
+2026-10-05 11:08:28,827 - WARNING - Server returned 429
+2026-10-05 11:08:38,194 - WARNING - Server returned 429
+2026-10-05 11:08:45,914 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:08:46,947 - WARNING - Server returned 429
+2026-10-05 11:08:56,263 - WARNING - Server returned 429
+2026-10-05 11:09:03,292 - WARNING - Server returned 429
+2026-10-05 11:09:12,669 - WARNING - Server returned 429
+2026-10-05 11:09:20,158 - WARNING - Server returned 429
+2026-10-05 11:09:29,449 - WARNING - Server returned 429
+2026-10-05 11:09:36,519 - WARNING - Server returned 429
+2026-10-05 11:09:45,928 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:09:46,094 - WARNING - Server returned 429
+2026-10-05 11:09:53,159 - WARNING - Server returned 429
+2026-10-05 11:10:02,496 - WARNING - Server returned 429
+2026-10-05 11:10:09,555 - WARNING - Server returned 429
+2026-10-05 11:10:18,831 - WARNING - Server returned 429
+2026-10-05 11:10:25,889 - WARNING - Server returned 429
+2026-10-05 11:10:35,156 - WARNING - Server returned 429
+2026-10-05 11:10:42,183 - WARNING - Server returned 429
+2026-10-05 11:10:45,936 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:10:51,499 - WARNING - Server returned 429
+2026-10-05 11:10:58,579 - WARNING - Server returned 429
+2026-10-05 11:11:07,882 - WARNING - Server returned 429
+2026-10-05 11:11:14,942 - WARNING - Server returned 429
+2026-10-05 11:11:24,211 - WARNING - Server returned 429
+2026-10-05 11:11:31,281 - WARNING - Server returned 429
+2026-10-05 11:11:40,536 - WARNING - Server returned 429
+2026-10-05 11:11:45,945 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:11:47,606 - WARNING - Server returned 429
+2026-10-05 11:11:56,928 - WARNING - Server returned 429
+2026-10-05 11:12:03,973 - WARNING - Server returned 429
+2026-10-05 11:12:13,900 - WARNING - Server returned 429
+2026-10-05 11:12:20,939 - WARNING - Server returned 429
+2026-10-05 11:12:30,227 - WARNING - Server returned 429
+2026-10-05 11:12:37,495 - WARNING - Server returned 429
+2026-10-05 11:12:45,956 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:12:46,896 - WARNING - Server returned 429
+2026-10-05 11:12:53,957 - WARNING - Server returned 429
+2026-10-05 11:13:03,558 - WARNING - Server returned 429
+2026-10-05 11:13:10,636 - WARNING - Server returned 429
+2026-10-05 11:13:20,103 - WARNING - Server returned 429
+2026-10-05 11:13:27,200 - WARNING - Server returned 429
+2026-10-05 11:13:36,525 - WARNING - Server returned 429
+2026-10-05 11:13:43,613 - WARNING - Server returned 429
+2026-10-05 11:13:45,965 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:13:52,909 - WARNING - Server returned 429
+2026-10-05 11:13:59,984 - WARNING - Server returned 429
+2026-10-05 11:14:09,321 - WARNING - Server returned 429
+2026-10-05 11:14:16,387 - WARNING - Server returned 429
+2026-10-05 11:14:25,678 - WARNING - Server returned 429
+2026-10-05 11:14:32,751 - WARNING - Server returned 429
+2026-10-05 11:14:42,035 - WARNING - Server returned 429
+2026-10-05 11:14:45,974 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:14:49,165 - WARNING - Server returned 429
+2026-10-05 11:14:58,458 - WARNING - Server returned 429
+2026-10-05 11:15:05,527 - WARNING - Server returned 429
+2026-10-05 11:15:15,229 - WARNING - Server returned 429
+2026-10-05 11:15:22,312 - WARNING - Server returned 429
+2026-10-05 11:15:31,620 - WARNING - Server returned 429
+2026-10-05 11:15:38,690 - WARNING - Server returned 429
+2026-10-05 11:15:45,988 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:15:48,179 - WARNING - Server returned 429
+2026-10-05 11:15:55,231 - WARNING - Server returned 429
+2026-10-05 11:16:04,596 - WARNING - Server returned 429
+2026-10-05 11:16:11,641 - WARNING - Server returned 429
+2026-10-05 11:16:20,938 - WARNING - Server returned 429
+2026-10-05 11:16:28,006 - WARNING - Server returned 429
+2026-10-05 11:16:37,338 - WARNING - Server returned 429
+2026-10-05 11:16:44,403 - WARNING - Server returned 429
+2026-10-05 11:16:45,989 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:16:53,737 - WARNING - Server returned 429
+2026-10-05 11:17:00,781 - WARNING - Server returned 429
+2026-10-05 11:17:10,058 - WARNING - Server returned 429
+2026-10-05 11:17:17,132 - WARNING - Server returned 429
+2026-10-05 11:17:26,462 - WARNING - Server returned 429
+2026-10-05 11:17:33,523 - WARNING - Server returned 429
+2026-10-05 11:17:42,853 - WARNING - Server returned 429
+2026-10-05 11:17:46,009 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:17:49,919 - WARNING - Server returned 429
+2026-10-05 11:17:59,168 - WARNING - Server returned 429
+2026-10-05 11:18:06,222 - WARNING - Server returned 429
+2026-10-05 11:18:15,519 - WARNING - Server returned 429
+2026-10-05 11:18:22,594 - WARNING - Server returned 429
+2026-10-05 11:18:31,900 - WARNING - Server returned 429
+2026-10-05 11:18:38,966 - WARNING - Server returned 429
+2026-10-05 11:18:46,018 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:18:48,252 - WARNING - Server returned 429
+2026-10-05 11:18:55,325 - WARNING - Server returned 429
+2026-10-05 11:19:04,642 - WARNING - Server returned 429
+2026-10-05 11:19:11,726 - WARNING - Server returned 429
+2026-10-05 11:19:21,066 - WARNING - Server returned 429
+2026-10-05 11:19:28,126 - WARNING - Server returned 429
+2026-10-05 11:19:37,449 - WARNING - Server returned 429
+2026-10-05 11:19:44,503 - WARNING - Server returned 429
+2026-10-05 11:19:46,027 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:19:53,785 - WARNING - Server returned 429
+2026-10-05 11:20:00,874 - WARNING - Server returned 429
+2026-10-05 11:20:10,321 - WARNING - Server returned 429
+2026-10-05 11:20:17,416 - WARNING - Server returned 429
+2026-10-05 11:20:26,803 - WARNING - Server returned 429
+2026-10-05 11:20:33,866 - WARNING - Server returned 429
+2026-10-05 11:20:43,203 - WARNING - Server returned 429
+2026-10-05 11:20:46,047 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:20:50,288 - WARNING - Server returned 429
+2026-10-05 11:20:59,565 - WARNING - Server returned 429
+2026-10-05 11:21:06,608 - WARNING - Server returned 429
+2026-10-05 11:21:15,905 - WARNING - Server returned 429
+2026-10-05 11:21:22,985 - WARNING - Server returned 429
+2026-10-05 11:21:32,317 - WARNING - Server returned 429
+2026-10-05 11:21:39,373 - WARNING - Server returned 429
+2026-10-05 11:21:46,058 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:21:48,649 - WARNING - Server returned 429
+2026-10-05 11:21:55,722 - WARNING - Server returned 429
+2026-10-05 11:22:05,057 - WARNING - Server returned 429
+2026-10-05 11:22:12,103 - WARNING - Server returned 429
+2026-10-05 11:22:21,399 - WARNING - Server returned 429
+2026-10-05 11:22:28,437 - WARNING - Server returned 429
+2026-10-05 11:22:37,699 - WARNING - Server returned 429
+2026-10-05 11:22:44,773 - WARNING - Server returned 429
+2026-10-05 11:22:46,071 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:22:54,108 - WARNING - Server returned 429
+2026-10-05 11:23:01,181 - WARNING - Server returned 429
+2026-10-05 11:23:10,609 - WARNING - Server returned 429
+2026-10-05 11:23:17,692 - WARNING - Server returned 429
+2026-10-05 11:23:27,270 - WARNING - Server returned 429
+2026-10-05 11:23:34,348 - WARNING - Server returned 429
+2026-10-05 11:23:43,700 - WARNING - Server returned 429
+2026-10-05 11:23:46,074 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:23:50,773 - WARNING - Server returned 429
+2026-10-05 11:24:00,065 - WARNING - Server returned 429
+2026-10-05 11:24:07,148 - WARNING - Server returned 429
+2026-10-05 11:24:17,119 - WARNING - Server returned 429
+2026-10-05 11:24:24,182 - WARNING - Server returned 429
+2026-10-05 11:24:33,702 - WARNING - Server returned 429
+2026-10-05 11:24:40,742 - WARNING - Server returned 429
+2026-10-05 11:24:46,097 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:24:50,027 - WARNING - Server returned 429
+2026-10-05 11:24:57,121 - WARNING - Server returned 429
+2026-10-05 11:25:06,500 - WARNING - Server returned 429
+2026-10-05 11:25:13,556 - WARNING - Server returned 429
+2026-10-05 11:25:22,911 - WARNING - Server returned 429
+2026-10-05 11:25:29,958 - WARNING - Server returned 429
+2026-10-05 11:25:39,405 - WARNING - Server returned 429
+2026-10-05 11:25:46,107 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:25:46,486 - WARNING - Server returned 429
+2026-10-05 11:25:56,768 - WARNING - Server returned 429
+2026-10-05 11:26:03,824 - WARNING - Server returned 429
+2026-10-05 11:26:11,456 - WARNING - Server returned 429
+2026-10-05 11:26:20,756 - WARNING - Server returned 429
+2026-10-05 11:26:27,824 - WARNING - Server returned 429
+2026-10-05 11:26:37,398 - WARNING - Server returned 429
+2026-10-05 11:26:44,442 - WARNING - Server returned 429
+2026-10-05 11:26:46,112 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:26:53,939 - WARNING - Server returned 429
+2026-10-05 11:27:01,378 - WARNING - Server returned 429
+2026-10-05 11:27:10,654 - WARNING - Server returned 429
+2026-10-05 11:27:17,707 - WARNING - Server returned 429
+2026-10-05 11:27:27,195 - WARNING - Server returned 429
+2026-10-05 11:27:34,224 - WARNING - Server returned 429
+2026-10-05 11:27:43,515 - WARNING - Server returned 429
+2026-10-05 11:27:46,128 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:27:50,584 - WARNING - Server returned 429
+2026-10-05 11:27:59,884 - WARNING - Server returned 429
+2026-10-05 11:28:06,988 - WARNING - Server returned 429
+2026-10-05 11:28:16,594 - WARNING - Server returned 429
+2026-10-05 11:28:23,683 - WARNING - Server returned 429
+2026-10-05 11:28:33,152 - WARNING - Server returned 429
+2026-10-05 11:28:40,212 - WARNING - Server returned 429
+2026-10-05 11:28:46,135 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:28:49,888 - WARNING - Server returned 429
+2026-10-05 11:28:56,960 - WARNING - Server returned 429
+2026-10-05 11:29:06,719 - WARNING - Server returned 429
+2026-10-05 11:29:13,782 - WARNING - Server returned 429
+2026-10-05 11:29:23,075 - WARNING - Server returned 429
+2026-10-05 11:29:30,128 - WARNING - Server returned 429
+2026-10-05 11:29:39,732 - WARNING - Server returned 429
+2026-10-05 11:29:46,145 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:29:46,800 - WARNING - Server returned 429
+2026-10-05 11:29:56,123 - WARNING - Server returned 429
+2026-10-05 11:30:03,192 - WARNING - Server returned 429
+2026-10-05 11:30:12,777 - WARNING - Server returned 429
+2026-10-05 11:30:19,861 - WARNING - Server returned 429
+2026-10-05 11:30:29,568 - WARNING - Server returned 429
+2026-10-05 11:30:36,623 - WARNING - Server returned 429
+2026-10-05 11:30:46,095 - WARNING - Server returned 429
+2026-10-05 11:30:46,154 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:30:53,144 - WARNING - Server returned 429
+2026-10-05 11:31:02,698 - WARNING - Server returned 429
+2026-10-05 11:31:09,753 - WARNING - Server returned 429
+2026-10-05 11:31:19,030 - WARNING - Server returned 429
+2026-10-05 11:31:26,078 - WARNING - Server returned 429
+2026-10-05 11:31:35,395 - WARNING - Server returned 429
+2026-10-05 11:31:42,429 - WARNING - Server returned 429
+2026-10-05 11:31:46,173 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:31:51,770 - WARNING - Server returned 429
+2026-10-05 11:31:59,238 - WARNING - Server returned 429
+2026-10-05 11:32:08,540 - WARNING - Server returned 429
+2026-10-05 11:32:15,631 - WARNING - Server returned 429
+2026-10-05 11:32:25,017 - WARNING - Server returned 429
+2026-10-05 11:32:32,066 - WARNING - Server returned 429
+2026-10-05 11:32:41,382 - WARNING - Server returned 429
+2026-10-05 11:32:46,187 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 11:32:48,447 - WARNING - Server returned 429
+2026-10-05 11:32:57,808 - WARNING - Server returned 429
+2026-10-05 11:33:04,870 - WARNING - Server returned 429
+2026-10-05 11:33:14,243 - WARNING - Server returned 429
+2026-10-05 11:33:21,320 - WARNING - Server returned 429
+2026-10-05 13:34:42,033 - WARNING - Server returned 429
+2026-10-05 13:34:49,079 - WARNING - Server returned 429
+2026-10-05 13:34:57,158 - ERROR - Error: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+2026-10-05 13:34:57,491 - WARNING - Server returned 429
+2026-10-05 13:35:06,738 - WARNING - Server returned 429

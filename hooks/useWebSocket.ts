@@ -9,6 +9,8 @@ export function useWebSocket() {
   const [alerts, setAlerts] = useState<any[]>([]); // New state
   const [ssid, setSsid] = useState<string>('Initializing...');
   const [loading, setLoading] = useState<boolean>(true);
+  const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
+  const [hasReceivedData, setHasReceivedData] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<number | null>(null);
@@ -20,7 +22,7 @@ export function useWebSocket() {
 
     ws.current.onopen = () => {
       console.log("✅ WS Connected to Python Backend");
-      setLoading(false);
+      setIsWsConnected(true);
       setError(null);
     };
 
@@ -30,6 +32,9 @@ export function useWebSocket() {
         console.log("📩 Received WS Data:", data);
 
         if (data && typeof data === 'object') {
+          setHasReceivedData(true);
+          setLoading(false); // Finished initial loading
+
           if (data.type === 'DEVICE_UPDATE' || data.type === 'UPDATE') {
             // Pass full device list without filtering — backend already validates IPs
             if (Array.isArray(data.devices)) setDevices(data.devices);
@@ -51,10 +56,12 @@ export function useWebSocket() {
       console.error('WebSocket error:', err);
       setError('Connection error');
       setLoading(false);
+      setIsWsConnected(false);
     };
 
     ws.current.onclose = () => {
       setSsid('Connection Error');
+      setIsWsConnected(false);
       if (reconnectTimeout.current) {
         clearTimeout(reconnectTimeout.current);
       }
@@ -74,5 +81,5 @@ export function useWebSocket() {
     };
   }, [connect]);
 
-  return { devices, metrics, alerts, ssid, loading, error };
+  return { devices, metrics, alerts, ssid, loading, error, isWsConnected, hasReceivedData };
 }

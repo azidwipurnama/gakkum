@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from "react";
 
 interface CyberGlobeBgProps {
   wifiName?: string;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 // Warm Paper Design Tokens (read from CSS variables when available)
@@ -19,7 +21,7 @@ const COLORS = {
   line: "#DDD7C8",
 };
 
-export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlobeBgProps) {
+export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, style }: CyberGlobeBgProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -46,8 +48,9 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
     };
 
     const size = () => {
-      W = window.innerWidth;
-      H = window.innerHeight;
+      const rect = cv.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
       cv.width = W * dpr;
       cv.height = H * dpr;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -465,6 +468,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
   return (
     <canvas
       ref={canvasRef}
+      className={className}
       style={{
         position: "fixed",
         inset: 0,
@@ -472,6 +476,7 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM" }: CyberGlob
         height: "100vh",
         zIndex: 0,
         pointerEvents: "none",
+        ...style
       }}
       role="img"
       aria-label="Network visualization globe"
