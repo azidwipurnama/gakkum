@@ -139,16 +139,12 @@ export default function DashboardPage() {
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
     if (sortConfig.key !== columnKey) {
       return (
-        <span className="ml-2 inline-flex flex-col text-[8px] opacity-30">
-          <span>▲</span>
-          <span>▼</span>
-        </span>
+        <span className="ml-1.5 inline-flex items-center text-[12px] opacity-20">▲</span>
       );
     }
     return (
-      <span className="ml-2 inline-flex flex-col text-[8px]">
-        <span className={sortConfig.direction === 'asc' ? 'text-[var(--accent)]' : 'opacity-30'}>▲</span>
-        <span className={sortConfig.direction === 'desc' ? 'text-[var(--accent)]' : 'opacity-30'}>▼</span>
+      <span className={`ml-1.5 inline-flex items-center text-[12px] text-[var(--accent)] transition-transform duration-300 ${sortConfig.direction === 'desc' ? 'rotate-180' : 'rotate-0'}`}>
+        ▲
       </span>
     );
   };
@@ -202,8 +198,8 @@ export default function DashboardPage() {
       </section>
 
       {/* SEKSI 3: DEVICE INSPECTOR */}
-      <section className="relative z-10 h-screen w-full flex flex-col justify-center px-10 pointer-events-none">
-        <div className="max-w-7xl w-full border border-[var(--line)] rounded-[var(--radius-card)] p-8 space-y-5 pointer-events-auto mx-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
+      <section className="relative z-10 h-screen w-full flex flex-col justify-center px-4 pointer-events-none">
+        <div className="w-full max-w-[95vw] border border-[var(--line)] rounded-[var(--radius-card)] p-6 space-y-5 pointer-events-auto mx-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
           <div className="flex justify-between items-center border-b border-[var(--line)] pb-4">
             <div>
               <h2 className="text-[15px] font-sans font-medium text-[var(--ink)]" style={{ color: COLORS.ink }}>
@@ -223,24 +219,24 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="max-h-[60vh] overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+          <div className="max-h-[60vh] overflow-x-auto overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
             {loading ? (
               <div className="text-center py-10 text-[var(--ink-soft)] font-sans" style={{ color: COLORS.inkSoft }}>Connecting to scanner...</div>
             ) : validDevices.length === 0 ? (
               <div className="text-center py-10 text-[var(--ink-soft)] font-sans" style={{ color: COLORS.inkSoft }}>No devices found.</div>
             ) : (
-              <table className="w-full text-left" style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' }}>
+              <table className="w-full min-w-[1000px] text-left" style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' }}>
                 <thead>
                   <tr className="text-[var(--ink-soft)] border-b border-[var(--line)] uppercase text-[11px] sticky top-0" style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft, borderColor: COLORS.line }}>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('ip')}>IP address <SortIndicator columnKey="ip" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('mac')}>MAC address <SortIndicator columnKey="mac" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('hostname')}>Device name <SortIndicator columnKey="hostname" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('category')}>Category <SortIndicator columnKey="category" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('vendor')}>Vendor <SortIndicator columnKey="vendor" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('location')}>Location <SortIndicator columnKey="location" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('latency')}>Latency <SortIndicator columnKey="latency" /></th>
-                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('status')}>Status <SortIndicator columnKey="status" /></th>
-                    <th className="px-4 py-3 text-right cursor-pointer" onClick={() => handleSort('last_seen')}>Last seen <SortIndicator columnKey="last_seen" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('ip')}>IP address <SortIndicator columnKey="ip" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('mac')}>MAC address <SortIndicator columnKey="mac" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('hostname')}>Device name <SortIndicator columnKey="hostname" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('category')}>Category <SortIndicator columnKey="category" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('vendor')}>Vendor <SortIndicator columnKey="vendor" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('location')}>Location <SortIndicator columnKey="location" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('latency')}>Latency <SortIndicator columnKey="latency" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('status')}>Status <SortIndicator columnKey="status" /></th>
+                    <th className="px-4 py-3 text-right cursor-pointer whitespace-nowrap" onClick={() => handleSort('last_seen')}>Last seen <SortIndicator columnKey="last_seen" /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: COLORS.line }}>
