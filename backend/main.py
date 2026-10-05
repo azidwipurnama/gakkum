@@ -84,6 +84,34 @@ async def broadcast_loop():
         # Add SSID to payload
         payload["ssid"] = get_active_ssid()
 
+        # Sync devices to Supabase
+        devices_to_upsert = payload.get("devices", [])
+        if devices_to_upsert:
+            try:
+                # Prepare data for Supabase: map 'mac' to 'id' for upsert
+                # Remove fields that DO NOT exist in Supabase table
+                allowed_fields = {'id', 'ip', 'hostname', 'category', 'vendor', 'location'}
+
+                prepared_devices = []
+                for dev in devices_to_upsert:
+                    dev_data = {}
+                    dev_data["id"] = dev.get("mac") # Use MAC address as the unique ID
+
+                    # Map fields explicitly based on actual Supabase table columns
+                    dev_data["ip"] = dev.get("ip")
+                    dev_data["hostname"] = dev.get("hostname")
+                    dev_data["category"] = dev.get("category")
+                    dev_data["vendor"] = dev.get("vendor")
+                    dev_data["location"] = dev.get("location")
+
+                    prepared_devices.append(dev_data)
+
+                # Upsert devices to Supabase based on ID
+                supabase.table("devices").upsert(prepared_devices).execute()
+                print(f"[SUCCESS] {len(prepared_devices)} devices upserted to Supabase")
+            except Exception as e:
+                print(f"[ERROR] Failed to upsert devices to Supabase: {e}")
+
         print(f"[DEBUG WS] Broadcasting to {len(manager.active_connections)} client(s): {payload['type']}, devices={len(payload.get('devices', []))}, up={payload['metrics'].get('total_up', 0)}, down={payload['metrics'].get('total_down', 0)}")
         await manager.broadcast_json(payload)
         await asyncio.sleep(BROADCAST_INTERVAL_SECONDS)

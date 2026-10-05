@@ -113,8 +113,45 @@ function RadarCanvas() {
 export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useNetwork();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'ip', direction: 'asc' });
 
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
+
+  const sortedDevices = [...validDevices].sort((a, b) => {
+    let aVal = a[sortConfig.key as keyof typeof a];
+    let bVal = b[sortConfig.key as keyof typeof b];
+
+    if (aVal === undefined || bVal === undefined) return 0;
+
+    // Sort logic
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const SortIndicator = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key !== columnKey) {
+      return (
+        <span className="ml-2 inline-flex flex-col text-[8px] opacity-30">
+          <span>▲</span>
+          <span>▼</span>
+        </span>
+      );
+    }
+    return (
+      <span className="ml-2 inline-flex flex-col text-[8px]">
+        <span className={sortConfig.direction === 'asc' ? 'text-[var(--accent)]' : 'opacity-30'}>▲</span>
+        <span className={sortConfig.direction === 'desc' ? 'text-[var(--accent)]' : 'opacity-30'}>▼</span>
+      </span>
+    );
+  };
 
   // Use metrics.server_ip for dynamic subnet detection
   const subnetPrefix = metrics?.server_ip
@@ -195,19 +232,19 @@ export default function DashboardPage() {
               <table className="w-full text-left" style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' }}>
                 <thead>
                   <tr className="text-[var(--ink-soft)] border-b border-[var(--line)] uppercase text-[11px] sticky top-0" style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft, borderColor: COLORS.line }}>
-                    <th className="px-4 py-3 text-left">IP address</th>
-                    <th className="px-4 py-3 text-left">MAC address</th>
-                    <th className="px-4 py-3 text-left">Device name</th>
-                    <th className="px-4 py-3 text-left">Category</th>
-                    <th className="px-4 py-3 text-left">Vendor</th>
-                    <th className="px-4 py-3 text-left">Location</th>
-                    <th className="px-4 py-3 text-left">Latency</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                    <th className="px-4 py-3 text-right">Last seen</th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('ip')}>IP address <SortIndicator columnKey="ip" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('mac')}>MAC address <SortIndicator columnKey="mac" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('hostname')}>Device name <SortIndicator columnKey="hostname" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('category')}>Category <SortIndicator columnKey="category" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('vendor')}>Vendor <SortIndicator columnKey="vendor" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('location')}>Location <SortIndicator columnKey="location" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('latency')}>Latency <SortIndicator columnKey="latency" /></th>
+                    <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort('status')}>Status <SortIndicator columnKey="status" /></th>
+                    <th className="px-4 py-3 text-right cursor-pointer" onClick={() => handleSort('last_seen')}>Last seen <SortIndicator columnKey="last_seen" /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: COLORS.line }}>
-                  {validDevices.map((dev, idx) => (
+                  {sortedDevices.map((dev, idx) => (
                     <tr key={idx} className="hover:transition-colors" style={{ backgroundColor: 'transparent' }}>
                       <td className="px-4 py-3 font-medium" style={{ color: COLORS.ink, fontFamily: 'ui-monospace, Consolas, monospace' }}>{dev.ip || "-"}</td>
                       <td className="px-4 py-3" style={{ color: COLORS.inkSoft, fontFamily: 'ui-monospace, Consolas, monospace' }}>{dev.mac}</td>
