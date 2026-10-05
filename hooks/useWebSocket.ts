@@ -6,6 +6,7 @@ const WS_URL = 'ws://localhost:8000/ws/network-monitor?api_key=GAKKUM_SECRET_KEY
 export function useWebSocket() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [metrics, setMetrics] = useState({ total_up: 0, total_down: 0, server_ip: 'Unknown' });
+  const [alerts, setAlerts] = useState<any[]>([]); // New state
   const [ssid, setSsid] = useState<string>('Initializing...');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +15,7 @@ export function useWebSocket() {
   const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
+    console.log("Mencoba koneksi ke:", WS_URL);
     ws.current = new WebSocket(WS_URL);
 
     ws.current.onopen = () => {
@@ -33,6 +35,8 @@ export function useWebSocket() {
             if (Array.isArray(data.devices)) setDevices(data.devices);
             if (data.metrics) setMetrics(data.metrics);
             if (data.ssid) setSsid(data.ssid);
+          } else if (data.type === 'ALERT') {
+            setAlerts((prev) => [data.data, ...prev].slice(0, 50));
           } else if (Array.isArray(data)) {
             setDevices(data);
           }
@@ -70,5 +74,5 @@ export function useWebSocket() {
     };
   }, [connect]);
 
-  return { devices, metrics, ssid, loading, error };
+  return { devices, metrics, alerts, ssid, loading, error };
 }

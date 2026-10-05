@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
+import AlertsPanel from "@/components/AlertsPanel";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 const COLORS = {
@@ -146,17 +147,16 @@ export default function DashboardPage() {
 
       {/* SEKSI 2: RADAR VISUALIZER */}
       <section className="relative z-10 h-screen w-full flex flex-col justify-center pt-10 px-10 pointer-events-none">
-        <div className="max-w-sm w-full border border-[var(--line)] rounded-[var(--radius-card)] p-5 space-y-4 pointer-events-auto ml-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
-          <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
-            <h2 className="text-[13px] font-sans font-medium text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
-              Radar
-            </h2>
-            <span className="text-[12px] font-sans text-[var(--ink-soft)] flex items-center gap-1" style={{ color: COLORS.inkSoft }}>
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.accent }}></span>
-              Sweeping
-            </span>
+        <div className="flex gap-4">
+          <div className="max-w-sm w-full border border-[var(--line)] rounded-[var(--radius-card)] p-5 space-y-4 pointer-events-auto ml-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
+            <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
+              <h2 className="text-[13px] font-sans font-medium text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
+                Radar
+              </h2>
+            </div>
+            <RadarCanvas />
           </div>
-          <RadarCanvas />
+          <AlertsPanel />
         </div>
       </section>
 

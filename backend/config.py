@@ -3,6 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Debug: verify loading
+print(f"[DEBUG] SUPABASE_URL loaded: {bool(os.getenv('SUPABASE_URL'))}")
+print(f"[DEBUG] SUPABASE_KEY loaded: {bool(os.getenv('SUPABASE_KEY'))}")
+
 # API Key
 API_KEY = "GAKKUM_SECRET_KEY"
 
