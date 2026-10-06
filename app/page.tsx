@@ -229,7 +229,7 @@ export default function DashboardPage() {
       </section>
 
       {/* SEKSI 2: RADAR VISUALIZER */}
-      <section ref={radarSectionRef} className="relative z-10 h-screen w-full flex items-center justify-center p-10 pointer-events-none">
+      <section ref={radarSectionRef} className="relative z-10 h-screen w-full flex items-center justify-end p-10 pointer-events-none">
         {/* Radar */}
         <div className="max-w-sm w-full border border-[var(--line)] rounded-[var(--radius-card)] p-5 space-y-4 pointer-events-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
           <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
@@ -242,9 +242,8 @@ export default function DashboardPage() {
       </section>
 
       {/* SEKSI 3: ALERTS PAGE */}
-      <section className="relative z-10 h-screen w-full flex flex-col items-center justify-center p-10 pointer-events-none">
-         <div className="pointer-events-auto w-full max-w-2xl">
-           <h2 className="text-[18px] font-sans font-medium text-[var(--ink)] mb-6">Security Alerts</h2>
+      <section className="relative z-10 h-screen w-full flex flex-col items-start justify-center p-10 pointer-events-none">
+         <div className="pointer-events-auto w-full max-w-sm">
            <AlertsPanel />
          </div>
       </section>
