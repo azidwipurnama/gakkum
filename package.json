@@ -21,6 +21,7 @@
     "three-globe": "^2.45.2"
   },
   "devDependencies": {
+    "@playwright/test": "1.63",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

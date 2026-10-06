@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { scrollMotionConfig as cfg } from "@/lib/scrollMotion.config";
 
 interface CyberGlobeBgProps {
   wifiName?: string;
   className?: string;
   style?: React.CSSProperties;
 }
+
+// Memoize computed transform+opacity for the globe based on CSS var --scroll-progress.
+// Reads live from documentElement each animation frame (no React re-render per frame).
 
 // Warm Paper Design Tokens (read from CSS variables when available)
 const COLORS = {
@@ -21,8 +25,55 @@ const COLORS = {
   line: "#DDD7C8",
 };
 
-export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, style }: CyberGlobeBgProps) {
+export default function CyberGlobeBg({
+  wifiName = "WING C - GAKKUM",
+  className,
+  style,
+}: CyberGlobeBgProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Helper: read --scroll-progress from :root and derive globe transform/opacity.
+  // Re-evaluated each frame inside the canvas loop (no React state/prop updates per frame).
+  const computeGlobeMotion = (): { transform: string; opacity: number } => {
+    if (typeof window === "undefined" || !containerRef.current) {
+      return { transform: "translate(0,0) scale(1)", opacity: 1 };
+    }
+    // Only apply motion when data-motion="on" is set (fallback to static when absent)
+    if (!document.documentElement.hasAttribute("data-motion")) {
+      return { transform: "translate(0,0) scale(1)", opacity: 1 };
+    }
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue("--scroll-progress")
+      .trim();
+    const p = parseFloat(raw);
+    if (!Number.isFinite(p)) {
+      return { transform: "translate(0,0) scale(1)", opacity: 1 };
+    }
+
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) {
+      return { transform: "translate(0,0) scale(1)", opacity: 1 };
+    }
+
+    const clamped = Math.max(0, Math.min(1, p));
+    const a1 = cfg.smoothstep(cfg.seg(clamped, cfg.segments.globeStage1.a, cfg.segments.globeStage1.b));
+    const a2 = cfg.smoothstep(cfg.seg(clamped, cfg.segments.globeStage2.a, cfg.segments.globeStage2.b));
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const isMobile = vw < cfg.breakpoints.mobileWidth;
+    const x = -a1 * cfg.globe.moveXStep1 * vw + a2 * (isMobile ? cfg.globe.moveXStep2MobileFactor : 1) * cfg.globe.moveXStep2Desktop * vw;
+    const y = -a2 * cfg.globe.moveYStep2 * vh;
+    const scaleStep2 = isMobile ? cfg.globe.scaleStep2Mobile : cfg.globe.scaleStep2Desktop;
+    const scale = 1 - a1 * cfg.globe.scaleStep1 - a2 * scaleStep2;
+    const opacityVal = 1 - a2 * cfg.globe.opacityStep2;
+
+    return {
+      transform: `translate(${x}px, ${y}px) scale(${scale})`,
+      opacity: opacityVal,
+    };
+  };
 
   useEffect(() => {
     const cv = canvasRef.current;
@@ -71,6 +122,14 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, 
     // VARIABEL DRAG HANYA DIDEFINISIKAN 1 KALI DI SINI
     let drag = false;
     let lx = 0;
+
+    // Visibility pause: stop animating when tab is hidden to save CPU.
+    let hidden = document.hidden;
+
+    const onVisibilityChange = () => {
+      hidden = document.hidden;
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     // 1. Hybrid Event Listener (Kursor Drag Globe + Scroll Web Berjalan)
     const onPointerDown = (e: PointerEvent) => {
@@ -247,6 +306,19 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, 
 
     function frame() {
       if (!g) return;
+      // Pause rendering entirely when tab is not visible (save CPU).
+      if (hidden) {
+        animId = requestAnimationFrame(frame);
+        return;
+      }
+
+      // Apply globe motion transform/opacity from scroll progress (no React re-render)
+      if (containerRef.current) {
+        const m = computeGlobeMotion();
+        containerRef.current.style.transform = m.transform;
+        containerRef.current.style.opacity = String(m.opacity);
+      }
+
       if (!drag) yaw += ROTATION_SPEED;
       const now = performance.now();
       g.clearRect(0, 0, W, H);
@@ -455,7 +527,15 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, 
 
     frame();
 
+    // Apply initial motion state if progress var is present.
+    const motion = computeGlobeMotion();
+    if (containerRef.current) {
+      containerRef.current.style.transform = motion.transform;
+      containerRef.current.style.opacity = String(motion.opacity);
+    }
+
     return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("resize", size);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("pointerdown", onPointerDown);
@@ -466,8 +546,8 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, 
   }, [wifiName]);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
+      ref={containerRef}
       className={className}
       style={{
         position: "fixed",
@@ -476,10 +556,21 @@ export default function CyberGlobeBg({ wifiName = "WING C - GAKKUM", className, 
         height: "100vh",
         zIndex: 0,
         pointerEvents: "none",
-        ...style
+        ...style,
       }}
-      role="img"
-      aria-label="Network visualization globe"
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+        }}
+        role="img"
+        aria-label="Network visualization globe"
+      />
+    </div>
   );
 }

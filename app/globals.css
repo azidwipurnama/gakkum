@@ -68,3 +68,40 @@ body {
     scroll-behavior: auto;
   }
 }
+
+/* TAHAP 2/3 — Scroll-driven motion.
+   Layout: sections use normal flow (h-screen each), stacking vertically — all visible at all times.
+   Motion: applied visual-only via onProgress (transform/opacity) — does NOT affect document flow.
+   data-motion="on" is set by useScrollProgress so motion helpers and globe can read --scroll-progress.
+   Without data-motion, everything stays static (flow layout, all cards visible). */
+[data-motion="on"] .motion-section {
+  will-change: transform, opacity;
+}
+
+/* Globe container motion (only when motion active) */
+[data-motion="on"] .globe-motion {
+  will-change: transform, opacity;
+}
+
+/* Animated scroll-hint arrow (cheapest paint-only animation) */
+@keyframes slideUpDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.scroll-pill-icon {
+  animation: slideUpDown 1.8s ease-in-out infinite;
+}
+
+/* Reduced motion: disable all non-essential motion */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-pill-icon {
+    animation: none;
+  }
+}
+
+/* Mobile: inspector table horizontal scroll */
+@media (max-width: 800px) {
+  .mobile-table {
+    min-width: 600px;
+  }
+}
