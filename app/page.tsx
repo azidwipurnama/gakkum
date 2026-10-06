@@ -114,6 +114,20 @@ export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useNetwork();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'ip', direction: 'asc' });
+  const [showIndicator, setShowIndicator] = useState(true);
+  const radarSectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowIndicator(window.scrollY < 80);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToRadar = () => {
+    radarSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
 
@@ -176,28 +190,66 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <p className="text-[12px] font-sans text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
-            Scroll down for radar & inspector
-          </p>
+
+
+          {/* Scroll Indicator */}
+          <button
+            onClick={scrollToRadar}
+            aria-label="Scroll ke radar dan inspector"
+            className={`flex flex-col items-center mt-6 transition-opacity duration-300 w-full max-w-xs ${showIndicator ? 'opacity-100' : 'opacity-0'}`}
+          >
+            <span className="text-[18px] font-sans font-medium" style={{ color: COLORS.inkSoft }}>
+              Scroll down for radar
+            </span>
+            <div className="mt-6 h-[400px] max-h-[46vh] w-6 flex flex-col items-center">
+              {/* Fading Line */}
+              <div
+                className="w-[1px] h-full"
+                style={{
+                  background: `linear-gradient(to bottom, transparent, ${COLORS.line})`
+                }}
+              />
+              {/* Double Arrow */}
+              <div className="animate-bounce motion-reduce:animate-none -mt-1.5 translate-y-2">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={COLORS.inkSoft}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5"
+                >
+                  <path d="M7 13l5 5 5-5M7 6l5 5 5-5" />
+                </svg>
+              </div>
+            </div>
+          </button>
         </div>
       </section>
 
       {/* SEKSI 2: RADAR VISUALIZER */}
-      <section className="relative z-10 h-screen w-full flex flex-col justify-center pt-10 px-10 pointer-events-none">
-        <div className="flex gap-4">
-          <div className="max-w-sm w-full border border-[var(--line)] rounded-[var(--radius-card)] p-5 space-y-4 pointer-events-auto ml-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
-            <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
-              <h2 className="text-[13px] font-sans font-medium text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
-                Radar
-              </h2>
-            </div>
-            <RadarCanvas />
+      <section ref={radarSectionRef} className="relative z-10 h-screen w-full flex items-center justify-center p-10 pointer-events-none">
+        {/* Radar */}
+        <div className="max-w-sm w-full border border-[var(--line)] rounded-[var(--radius-card)] p-5 space-y-4 pointer-events-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
+          <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
+            <h2 className="text-[13px] font-sans font-medium text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
+              Radar
+            </h2>
           </div>
-          <AlertsPanel />
+          <RadarCanvas />
         </div>
       </section>
 
-      {/* SEKSI 3: DEVICE INSPECTOR */}
+      {/* SEKSI 3: ALERTS PAGE */}
+      <section className="relative z-10 h-screen w-full flex flex-col items-center justify-center p-10 pointer-events-none">
+         <div className="pointer-events-auto w-full max-w-2xl">
+           <h2 className="text-[18px] font-sans font-medium text-[var(--ink)] mb-6">Security Alerts</h2>
+           <AlertsPanel />
+         </div>
+      </section>
+
+      {/* SEKSI 4: DEVICE INSPECTOR */}
       <section className="relative z-10 h-screen w-full flex flex-col justify-center px-4 pointer-events-none">
         <div className="w-full max-w-[95vw] border border-[var(--line)] rounded-[var(--radius-card)] p-6 space-y-5 pointer-events-auto mx-auto" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: 'var(--radius-card, 12px)' }}>
           <div className="flex justify-between items-center border-b border-[var(--line)] pb-4">

@@ -159,14 +159,17 @@ async def agent_report(
     agent = response.data
 
     if not agent:
+        print(f"[DEBUG] 401 Unauthorized: Invalid agent ID: {report.agent_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid agent")
 
     # 2. Check active status
     if not agent.get("active"):
+        print(f"[DEBUG] 401 Unauthorized: Agent inactive: {report.agent_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Agent inactive")
 
     # 3. Verify key
-    if not verify_api_key(x_api_key, agent["key_hash"]):
+    if not verify_api_key(x_api_key, agent.get("key_hash", "")):
+        print(f"[DEBUG] 401 Unauthorized: API Key mismatch for agent ID: {report.agent_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     # 4. IP Check (Origin)
