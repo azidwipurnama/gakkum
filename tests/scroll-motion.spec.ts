@@ -18,9 +18,9 @@ test('inspector hidden at p=0, visible later; cards distinct; no double border',
   // Inspect CARD opacity (not section)
   const cardsState = await page.evaluate(() => {
     const sel = {
-      radarCard: document.querySelector('.radar-section > div'),
-      alertsCard: document.querySelector('.alerts-section > div'),
-      inspectorCard: document.querySelector('.inspector-section > div'),
+      radarCard: document.querySelector('[data-testid="radar-card"]'),
+      alertsCard: document.querySelector('[data-testid="alerts-card"]'),
+      inspectorCard: document.querySelector('[data-testid="inspector-card"]'),
     };
     const out: Record<string, any> = {};
     Object.entries(sel).forEach(([k, el]) => {
@@ -54,7 +54,7 @@ test('inspector hidden at p=0, visible later; cards distinct; no double border',
   await page.screenshot({ path: 'motion-mid-inspector.png' });
 
   const inspectorMid = await page.evaluate(() => {
-    const r = document.querySelector('.inspector-section > div') as HTMLElement;
+    const r = document.querySelector('[data-testid="inspector-card"]') as HTMLElement;
     return r ? { opacity: getComputedStyle(r).opacity, transform: getComputedStyle(r).transform } : { found:true };
   });
   console.log('inspector card at p~0.85:', JSON.stringify(inspectorMid));
@@ -74,14 +74,14 @@ test('inspector hidden at p=0, visible later; cards distinct; no double border',
   await page.screenshot({ path: 'motion-full-scroll.png', fullPage: true });
 
   const inspectorEnd = await page.evaluate(() => {
-    const r = document.querySelector('.inspector-section > div') as HTMLElement;
+    const r = document.querySelector('[data-testid="inspector-card"]') as HTMLElement;
     return r ? { opacity: parseFloat(getComputedStyle(r).opacity) } : { found:false };
   });
   console.log('inspector card at end:', JSON.stringify(inspectorEnd));
 
   // Alerts double border - check for 2 nested bordered divs
   const alertsStructure = await page.evaluate(() => {
-    const outer = document.querySelector('.alerts-section > div');
+    const outer = document.querySelector('[data-testid="alerts-card"]') as HTMLElement | null;
     const inner = outer?.querySelector('div');
     return {
       outerBorder: outer ? getComputedStyle(outer).borderWidth : null,
@@ -108,7 +108,8 @@ test('inspector hidden at p=0, visible later; cards distinct; no double border',
   // Directive 6 assertion: no leftover dark bars (bounce animation / 3px width)
   expect(leftoverDarkBar).toBe(0);
 
-  // Directive 1 & 2: 4 distinct section positions at p=0 (no stacking)
+  // Directive 1 & 2: distinct section positions at p=0 (no stacking)
+  // Layout: Section 1 (landing/globe), Section 2 (grid: server+alerts | radar), Section 3 (inspector)
   const sections = await page.evaluate(() => {
     return Array.from(document.querySelectorAll('section')).map(s => {
       const el = s as HTMLElement;
@@ -119,7 +120,7 @@ test('inspector hidden at p=0, visible later; cards distinct; no double border',
   const tops = sections.map(s => s.top);
   const distinctTops = new Set(tops).size;
   console.log('section tops:', tops, 'distinct:', distinctTops);
-  expect(distinctTops).toBe(4); // 4 sections with distinct vertical positions
+  expect(distinctTops).toBe(3); // 3 sections with distinct vertical positions
 
   // pNum end sanity
   expect(pNum).toBeGreaterThanOrEqual(0.95);

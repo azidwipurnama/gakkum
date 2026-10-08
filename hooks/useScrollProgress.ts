@@ -8,7 +8,7 @@
 // Usage: pass a ref to the wrapper element that has height ~wrapperHeightVh.
 //        Sets data-motion="on" on the provided container ref once first frame runs.
 
-import { useEffect, useRef, RefObject } from "react";
+import { useEffect, useRef, useState, RefObject } from "react";
 
 interface UseScrollProgressResult {
   p: number; // latest smoothed progress (also exposed via CSS var on target)
@@ -26,7 +26,7 @@ type Options = {
   debug?: boolean;
 };
 
-export function useScrollProgress({ wrapperRef, targetRef, onProgress }: Options): UseScrollProgressResult {
+export function useScrollProgress({ wrapperRef, targetRef, onProgress, debug = false }: Options): UseScrollProgressResult {
   const pRef = useRef(0);
   const targetPRef = useRef(0);
   const isReduced = useRef(false);
@@ -39,6 +39,17 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress }: Options
   }>({ wrapperHeight: 0, vh: 0, lastScrollY: 0, diffAccum: 0 });
 
   const isReadyRef = useRef(false);
+
+  // State for consumer-read values (avoids reading refs during render).
+  // Updated from the rAF loop via setP — only when debug is enabled to avoid per-frame re-renders.
+  const [p, setP] = useState(0);
+  const [isReady, setIsReady] = useState(false);
+
+  // Keep latest onProgress in a ref so the effect doesn't need to depend on it.
+  const onProgressRef = useRef(onProgress);
+  useEffect(() => {
+    onProgressRef.current = onProgress;
+  }, [onProgress]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -65,6 +76,9 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress }: Options
       }
       target.style.setProperty("--scroll-progress", String(progress));
       document.documentElement.style.setProperty("--scroll-progress", String(progress));
+      // Update reactive state for consumers (debug overlay only — avoids per-frame re-renders
+      // when debug is not enabled).
+      if (debug) setP(progress);
     };
 
     // Main animation loop.
@@ -77,6 +91,7 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress }: Options
 
       if (!isReadyRef.current) {
         isReadyRef.current = true;
+        setIsReady(true);
         apply(0, true);
       }
 
@@ -92,8 +107,8 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress }: Options
       apply(targetPRef.current, true);
 
       // Invoke consumer callback for element transforms (no setState per frame)
-      if (onProgress) {
-        onProgress(targetPRef.current);
+      if (onProgressRef.current) {
+        onProgressRef.current(targetPRef.current);
       }
 
       rafRef.current = requestAnimationFrame(tick);
@@ -128,7 +143,7 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress }: Options
         document.documentElement.style.removeProperty("--scroll-progress");
       }
     };
-  }, [wrapperRef, targetRef]);
+  }, [wrapperRef, targetRef, debug]);
 
-  return { p: pRef.current, isReady: isReadyRef.current };
+  return { p, isReady };
 }

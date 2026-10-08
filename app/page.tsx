@@ -148,14 +148,14 @@ export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useNetwork();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "ip", direction: "asc" });
-  const [showIndicator, setShowIndicator] = useState(true);
   const radarSectionRef = useRef<HTMLElement>(null);
 
-  // Scroll-motion refs (flow layout: all sections h-screen, stacked vertically, always visible).
+  // Scroll-motion refs. Layout: Section 1 (landing/globe 100vh), Section 2 (grid 200vh),
+  // Section 3 (inspector 100vh) — all in normal flow, always visible.
   // Motion is applied visual-only (transform/opacity) via onProgress - never changes layout flow.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const scrollHintRef = useRef<HTMLButtonElement>(null);
+  const scrollHintRef = useRef<HTMLDivElement>(null);
   const radarCardRef = useRef<HTMLDivElement>(null);
   const alertsCardRef = useRef<HTMLDivElement>(null);
   const inspectorCardRef = useRef<HTMLDivElement>(null);
@@ -207,11 +207,8 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowIndicator(window.scrollY < 80);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    // Scroll hint fades out early (0-0.1) via scrollHintMotion.
+    // Two-dot indicator position handled in Phase 3.
   }, []);
 
   const scrollToRadar = () => {
@@ -267,76 +264,76 @@ export default function DashboardPage() {
         {/* stageRef anchors --scroll-progress writes (not a layout element) */}
         <div ref={stageRef} className="absolute invisible" aria-hidden="true" />
 
-        {/* SEKSI 1: SERVER CONNECTION */}
-        <section className="connection-section relative z-10 h-screen w-full flex items-start justify-start pt-8 pl-8 pointer-events-none">
-          <div className="max-w-xs w-full space-y-3 pointer-events-auto">
-            <div
-              className="bg-[var(--bg-panel--50)] backdrop-blur-md border border-[var(--line)] rounded-[14px] p-[14px_16px] shadow-none"
-              style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
-            >
-              <h2 className="text-[12px] font-sans font-medium text-[var(--ink-soft--70)] mb-3" style={{ color: COLORS.inkSoft }}>
-                Server connection
-              </h2>
-              <div className="space-y-2 font-mono text-xs">
-                <p className="text-[var(--ink--80)] flex justify-between">
-                  <span>IP:</span>{" "}
-                  <span
-                    className="text-[var(--ink)] font-medium monospace"
-                    style={{ fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {metrics.server_ip}
-                  </span>
-                </p>
-                <p className="text-[var(--ink--80)] pt-2 border-t border-[var(--line--50)] flex justify-between items-center">
-                  <span>SSID:</span>{" "}
-                  <span className="text-[var(--ink)] font-medium" style={{ color: COLORS.ink }}>
-                    {ssid}
-                  </span>
-                </p>
+        {/* SEKSI 1: LANDING — globe-only full screen + "Scroll down" hint */}
+        <section className="connection-section relative z-10 h-screen w-full flex flex-col items-center justify-center pointer-events-none">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center cursor-pointer" onClick={scrollToRadar}>
+            <p className="text-[var(--ink-soft)] text-[12px] font-sans mb-3 opacity-60">
+              Scroll down
+            </p>
+            <ChevronDown className="w-4 h-4 scroll-pill-icon mx-auto" style={{ color: COLORS.inkSoft }} />
+          </div>
+        </section>
+
+        {/* SEKSI 2: GRID AREA (2 screens) — left column (Server conn + Alerts), right column (Radar) */}
+        <section
+          ref={radarSectionRef}
+          className="relative z-10 h-[200vh] w-full flex items-center justify-center pointer-events-none"
+        >
+          <div className="w-full max-w-[1200px] grid grid-cols-[320px_1fr] items-start gap-[12px]">
+            {/* Left column: Server connection card (top) + Alerts card (below, 12px gap) */}
+            <div className="flex flex-col gap-[12px] items-stretch">
+              <div
+                data-testid="server-connection-card"
+                className="border rounded-[14px] p-[14px_16px] w-full pointer-events-auto"
+                style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
+              >
+                <h2 className="text-[12px] font-sans font-medium text-[var(--ink-soft--70)] mb-3" style={{ color: COLORS.inkSoft }}>
+                  Server connection
+                </h2>
+                <div className="space-y-2 font-mono text-xs">
+                  <p className="text-[var(--ink--80)] flex justify-between">
+                    <span>IP:</span>{" "}
+                    <span
+                      className="text-[var(--ink)] font-medium monospace"
+                      style={{ fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums" }}
+                    >
+                      {metrics.server_ip}
+                    </span>
+                  </p>
+                  <p className="text-[var(--ink--80)] pt-2 border-t border-[var(--line--50)] flex justify-between items-center">
+                    <span>SSID:</span>{" "}
+                    <span className="text-[var(--ink)] font-medium" style={{ color: COLORS.ink }}>
+                      {ssid}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Alerts card */}
+              <div
+                ref={alertsCardRef}
+                data-testid="alerts-card"
+                className="border rounded-[14px] p-[14px_16px] w-full pointer-events-auto"
+                style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
+              >
+                <AlertsPanel />
               </div>
             </div>
 
-            {/* Scroll Indicator Pill */}
-            <button
-              ref={scrollHintRef}
-              onClick={scrollToRadar}
-              aria-label="Scroll ke radar dan inspector"
-              className="inline-flex items-center gap-[8px] px-[14px] py-[7px] text-[12px] font-sans font-medium uppercase tracking-wider rounded-[999px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-              style={{ color: COLORS.inkSoft, borderColor: COLORS.line, borderWidth: "1px" }}
+            {/* Right column: Radar card */}
+            <div
+              ref={radarCardRef}
+              data-testid="radar-card"
+              className="border rounded-[14px] p-[14px_16px] space-y-4 w-full pointer-events-auto"
+              style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
             >
-              <span>Scroll for radar</span>
-              <ChevronDown className="w-3 h-3 scroll-pill-icon" />
-            </button>
-          </div>
-        </section>
-
-        {/* SEKSI 2: RADAR VISUALIZER */}
-        <section
-          ref={radarSectionRef}
-          className="radar-section relative z-10 h-screen w-full flex items-center justify-end p-10 pointer-events-none"
-        >
-          <div
-            ref={radarCardRef}
-            className="max-w-sm w-full border border-[var(--line)] rounded-[14px] p-[14px_16px] space-y-4 pointer-events-auto"
-            style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
-          >
-            <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
-              <h2 className="text-[13px] font-sans font-medium text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
-                Radar
-              </h2>
+              <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
+                <h2 className="text-[13px] font-sans font-medium text-[var(--ink-soft)]" style={{ color: COLORS.inkSoft }}>
+                  Radar
+                </h2>
+              </div>
+              <RadarCanvas />
             </div>
-            <RadarCanvas />
-          </div>
-        </section>
-
-        {/* SEKSI 3: ALERTS PAGE */}
-        <section className="alerts-section relative z-10 h-screen w-full flex flex-col items-start justify-center p-10 pointer-events-none">
-          <div
-            ref={alertsCardRef}
-            className="pointer-events-auto w-full max-w-sm border rounded-[14px] p-[14px_16px]"
-            style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
-          >
-            <AlertsPanel />
           </div>
         </section>
 
@@ -344,6 +341,7 @@ export default function DashboardPage() {
         <section className="inspector-section relative z-10 h-screen w-full flex flex-col justify-center px-4 pointer-events-none">
           <div
             ref={inspectorCardRef}
+            data-testid="inspector-card"
             className="w-full border border-[var(--line)] rounded-[14px] p-6 space-y-5 pointer-events-auto mx-auto"
             style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px", maxWidth: "min(940px, calc(100vw - 32px))" }}
           >
