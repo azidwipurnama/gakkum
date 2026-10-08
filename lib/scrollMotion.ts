@@ -130,6 +130,35 @@ export function scrollHintMotion(p: number): ElementMotionState {
 }
 
 /**
+ * Two-dot scroll progress indicator on the right edge.
+ * A single active dot fills from 0→1, second dot acts as the "end" marker.
+ * Active dot height = p × full height; fills bottom-up from the bottom dot position.
+ */
+export function scrollProgressDotsMotion(p: number): { activeOpacity: number; fillHeight: string; activeDotTop: string } {
+  // Both dots visible from p=0.0 to 0.16 (fade in over that range, then stay 1)
+  const enter = seg(p, cfg.segments.scrollProgressDots.a, cfg.segments.scrollProgressDots.b);
+  const enterEase = smoothstep(enter);
+  const activeOpacity = enterEase < 0.01 ? 0 : enterEase > 0.99 ? 1 : enterEase;
+
+  // Filled segment grows from 0 → full height as p goes 0 → 1
+  const clampedP = Math.max(0, Math.min(1, p));
+  const fillHeight = `${clampedP * 100}%`;
+
+  // Active (top) dot slides down from top dot to bottom dot position as p goes 0 → 1
+  // Top dot at ~24px from top of container, bottom dot at ~24px from bottom
+  // Interpolate: at p=0 the "active" marker is at the top dot; at p=1 it's at bottom dot
+  const trackHeight = 100; // relative % units of the dots container
+  const dotOffset = 6; // 6% from top/bottom to center dots in track
+  const activeDotTop = `${dotOffset + clampedP * (trackHeight - 2 * dotOffset)}%`;
+
+  return {
+    activeOpacity,
+    fillHeight,
+    activeDotTop,
+  };
+}
+
+/**
  * Table row staggered entry.
  * row i appears starting at start + i*perRow, fully visible at start + i*perRow + (fadeInEnd-start).
  * Max first 10 rows get staggered; beyond that, still show but no stagger timing beyond.

@@ -105,3 +105,76 @@ body {
     min-width: 600px;
   }
 }
+
+/* Phase 5 — Accessibility focus ring */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a:focus-visible,
+  button:focus-visible,
+  th:focus-visible,
+  th[role="button"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Skip-link (visible on focus only) */
+.skip-link {
+  position: absolute;
+  top: -2.5rem;
+  left: 0.5rem;
+  z-index: 9999;
+  padding: 0.5rem 0.75rem;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-ctl);
+  text-decoration: none;
+}
+.skip-link:focus-visible {
+  top: 0.5rem;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion: suppress all non-essential motion (glob, scrolls) */
+@media (prefers-reduced-motion: reduce) {
+  [data-motion="on"] .motion-section,
+  [data-motion="on"] .globe-motion {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Mobile: tighten grid layout for small viewports */
+@media (max-width: 640px) {
+  [data-testid="scroll-progress-dots"] {
+    right: 0.5rem;
+  }
+  .grid-cols-\[320px_1fr\] {
+    grid-template-columns: 1fr;
+  }
+  .gap-\[12px\] {
+    gap: 8px;
+  }
+  .inspector-section .px-4 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .inspector-section [data-testid="inspector-card"] {
+    padding: 14px 12px;
+  }
+}
+
+/* Screen-reader-only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

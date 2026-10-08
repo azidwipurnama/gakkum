@@ -10,6 +10,7 @@ export interface ScrollMotionConfig {
   reducedMotionFactor: number;
   segments: {
     scrollHint: Segment;
+    scrollProgressDots: Segment;
     radar: Segment;
     radarOut: Segment;
     alerts: Segment;
@@ -55,6 +56,7 @@ export const scrollMotionConfig: ScrollMotionConfig = {
   reducedMotionFactor: 1,
   segments: {
     scrollHint: { a: 0.0, b: 0.1 },
+    scrollProgressDots: { a: 0.0, b: 0.16 }, // fade in during landing, stay through full scroll
     radar: { a: 0.16, b: 0.32 },
     radarOut: { a: 0.5, b: 0.62 },
     alerts: { a: 0.3, b: 0.42 },

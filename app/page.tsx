@@ -12,6 +12,7 @@ import {
   alertsMotion,
   deviceInspectorMotion,
   scrollHintMotion,
+  scrollProgressDotsMotion,
   tableRowMotion,
 } from "@/lib/scrollMotion";
 
@@ -156,6 +157,7 @@ export default function DashboardPage() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
+  const scrollDotsRef = useRef<HTMLDivElement>(null);
   const radarCardRef = useRef<HTMLDivElement>(null);
   const alertsCardRef = useRef<HTMLDivElement>(null);
   const inspectorCardRef = useRef<HTMLDivElement>(null);
@@ -194,6 +196,24 @@ export default function DashboardPage() {
       };
 
       applyEl(scrollHintRef.current, scrollHintMotion(p));
+
+      // Two-dot scroll-progress indicator on right edge: fill grows + active dot slides
+      if (scrollDotsRef.current) {
+        const dots = scrollProgressDotsMotion(p);
+        const fillEl = scrollDotsRef.current.querySelector('.scroll-dots-track-fill') as HTMLElement | null;
+        const activeEl = scrollDotsRef.current.querySelector('.scroll-dots-active') as HTMLElement | null;
+        if (fillEl) fillEl.style.height = dots.fillHeight;
+        if (activeEl) {
+          activeEl.style.top = dots.activeDotTop;
+          activeEl.style.opacity = String(dots.activeOpacity);
+        }
+        if (reduced) {
+          scrollDotsRef.current.style.opacity = "1";
+        } else {
+          scrollDotsRef.current.style.opacity = String(dots.activeOpacity === 0 ? 0 : 1);
+        }
+      }
+
       applyEl(radarCardRef.current, radarMotion(p));
       applyEl(alertsCardRef.current, alertsMotion(p));
       applyEl(inspectorCardRef.current, deviceInspectorMotion(p));
@@ -208,7 +228,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Scroll hint fades out early (0-0.1) via scrollHintMotion.
-    // Two-dot indicator position handled in Phase 3.
+    // Two-dot scroll-progress indicator motion applied in onProgress (Phase 3).
   }, []);
 
   const scrollToRadar = () => {
@@ -264,19 +284,37 @@ export default function DashboardPage() {
         {/* stageRef anchors --scroll-progress writes (not a layout element) */}
         <div ref={stageRef} className="absolute invisible" aria-hidden="true" />
 
+        {/* Skip-link for keyboard users: jump to radar section */}
+        <a href="#radar-section" className="skip-link">
+          Skip to radar
+        </a>
+
         {/* SEKSI 1: LANDING — globe-only full screen + "Scroll down" hint */}
-        <section className="connection-section relative z-10 h-screen w-full flex flex-col items-center justify-center pointer-events-none">
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center cursor-pointer" onClick={scrollToRadar}>
-            <p className="text-[var(--ink-soft)] text-[12px] font-sans mb-3 opacity-60">
-              Scroll down
-            </p>
-            <ChevronDown className="w-4 h-4 scroll-pill-icon mx-auto" style={{ color: COLORS.inkSoft }} />
+        <section
+          id="landing-section"
+          aria-label="Landing: network globe overview"
+          className="connection-section relative z-10 h-screen w-full flex flex-col items-center justify-center pointer-events-none"
+        >
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center pointer-events-auto">
+            <button
+              onClick={scrollToRadar}
+              aria-label="Scroll down to radar and alerts"
+              className="inline-flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+              style={{ color: COLORS.inkSoft }}
+            >
+              <p className="text-[var(--ink-soft)] text-[12px] font-sans mb-1 opacity-60">
+                Scroll down
+              </p>
+              <ChevronDown className="w-4 h-4 scroll-pill-icon mx-auto" style={{ color: COLORS.inkSoft }} />
+            </button>
           </div>
         </section>
 
         {/* SEKSI 2: GRID AREA (2 screens) — left column (Server conn + Alerts), right column (Radar) */}
         <section
+          id="radar-section"
           ref={radarSectionRef}
+          aria-label="Radar and alerts monitoring"
           className="relative z-10 h-[200vh] w-full flex items-center justify-center pointer-events-none"
         >
           <div className="w-full max-w-[1200px] grid grid-cols-[320px_1fr] items-start gap-[12px]">
@@ -337,8 +375,12 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* SEKSI 4: DEVICE INSPECTOR */}
-        <section className="inspector-section relative z-10 h-screen w-full flex flex-col justify-center px-4 pointer-events-none">
+        {/* SEKSI 3: DEVICE INSPECTOR */}
+        <section
+          id="inspector-section"
+          aria-label="Device inspector table"
+          className="inspector-section relative z-10 h-screen w-full flex flex-col justify-center px-4 pointer-events-none"
+        >
           <div
             ref={inspectorCardRef}
             data-testid="inspector-card"
@@ -383,7 +425,11 @@ export default function DashboardPage() {
                 <table
                   className="w-full mobile-table text-left"
                   style={{ fontFamily: "ui-monospace, Consolas, monospace", fontSize: "12px" }}
+                  aria-label="Network device scan results"
                 >
+                  <caption className="sr-only">
+                    Network device scan results — {validDevices.length} devices detected on {subnetPrefix}
+                  </caption>
                   <thead>
                     <tr
                       className="text-[var(--ink-soft)] border-b border-[var(--line)] uppercase text-[11px] sticky top-0"
@@ -515,6 +561,48 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* Two-dot scroll-progress indicator (right edge, outside flow) */}
+        <div
+          ref={scrollDotsRef}
+          data-testid="scroll-progress-dots"
+          className="fixed top-1/2 -translate-y-1/2 right-6 z-40 flex flex-col items-center gap-1 pointer-events-none"
+          aria-hidden="true"
+        >
+          {/* Track rail */}
+          <div className="relative w-px h-40" style={{ backgroundColor: "transparent" }}>
+            {/* Top anchor dot (always visible, subtle) */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-[4px] h-[4px] rounded-full"
+              style={{ backgroundColor: COLORS.inkFaint, top: "0%" }}
+            />
+            {/* Bottom anchor dot (always visible, subtle) */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-[4px] h-[4px] rounded-full"
+              style={{ backgroundColor: COLORS.inkFaint, bottom: "0%" }}
+            />
+            {/* Filled track (grows bottom-up as progress advances) */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-px scroll-dots-track-fill"
+              style={{
+                backgroundColor: COLORS.accent,
+                bottom: "0%",
+                height: "0%",
+                opacity: 0.6,
+              }}
+            />
+            {/* Active indicator dot (slides from top to bottom as p goes 0→1) */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-[6px] h-[6px] rounded-full scroll-dots-active"
+              style={{
+                backgroundColor: COLORS.accent,
+                top: "6%",
+                opacity: 0,
+                transition: "none",
+              }}
+            />
+          </div>
+        </div>
 
         {/* Debug overlay: progress value (dev + ?motion=debug) */}
         {showProgressDebug && (
