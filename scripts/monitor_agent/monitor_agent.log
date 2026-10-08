@@ -3268,3 +3268,129 @@
 2026-10-08 16:48:15,328 - WARNING - Server returned 429
 2026-10-08 16:48:24,758 - WARNING - Server returned 429
 2026-10-08 16:48:34,320 - WARNING - Server returned 429
+2026-10-08 16:48:43,750 - WARNING - Server returned 429
+2026-10-08 16:48:55,821 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:49:01,975 - WARNING - Server returned 429
+2026-10-08 16:49:14,070 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:49:17,838 - WARNING - Server returned 429
+2026-10-08 16:49:35,055 - WARNING - Server returned 429
+2026-10-08 16:49:47,121 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:49:57,836 - WARNING - Server returned 429
+2026-10-08 16:50:09,908 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:50:17,955 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:50:24,378 - WARNING - Server returned 429
+2026-10-08 16:50:43,244 - WARNING - Server returned 429
+2026-10-08 16:50:53,201 - WARNING - Server returned 429
+2026-10-08 16:51:03,875 - WARNING - Server returned 429
+2026-10-08 16:51:14,293 - WARNING - Server returned 429
+2026-10-08 16:51:26,362 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:51:32,893 - WARNING - Server returned 429
+2026-10-08 16:51:55,061 - WARNING - Server returned 429
+2026-10-08 16:52:05,680 - WARNING - Server returned 429
+2026-10-08 16:52:17,751 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:52:25,856 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:52:29,913 - WARNING - Server returned 429
+2026-10-08 16:52:39,273 - WARNING - Server returned 429
+2026-10-08 16:52:48,993 - WARNING - Server returned 429
+2026-10-08 16:52:58,455 - WARNING - Server returned 429
+2026-10-08 16:53:08,918 - WARNING - Server returned 429
+2026-10-08 16:53:26,061 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:53:34,138 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:53:43,200 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:53:59,226 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:54:07,296 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:54:16,369 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:54:27,447 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:54:42,505 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:55:10,106 - WARNING - Server returned 429
+2026-10-08 16:55:22,161 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:55:34,920 - WARNING - Server returned 429
+2026-10-08 16:55:48,906 - WARNING - Server returned 429
+2026-10-08 16:56:09,632 - WARNING - Server returned 429
+2026-10-08 16:56:21,720 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:56:27,742 - WARNING - Server returned 429
+2026-10-08 16:56:37,831 - WARNING - Server returned 429
+2026-10-08 16:56:48,003 - WARNING - Server returned 429
+2026-10-08 16:56:58,752 - WARNING - Server returned 429
+2026-10-08 16:57:27,725 - WARNING - Server returned 429
+2026-10-08 16:57:39,792 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:57:47,866 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:57:56,934 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:58:07,968 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:58:23,023 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:58:46,076 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 16:59:28,941 - WARNING - Server returned 429
+2026-10-08 16:59:39,459 - WARNING - Server returned 429
+2026-10-08 16:59:49,335 - WARNING - Server returned 429
+2026-10-08 16:59:59,286 - WARNING - Server returned 429
+2026-10-08 17:00:10,060 - WARNING - Server returned 429
+2026-10-08 17:00:29,973 - WARNING - Server returned 429
+2026-10-08 17:00:40,359 - WARNING - Server returned 429
+2026-10-08 17:00:50,816 - WARNING - Server returned 429
+2026-10-08 17:01:05,366 - WARNING - Server returned 429
+2026-10-08 17:01:15,591 - WARNING - Server returned 429
+2026-10-08 17:01:25,240 - WARNING - Server returned 429
+2026-10-08 17:01:43,572 - WARNING - Server returned 429
+2026-10-08 17:01:53,655 - WARNING - Server returned 429
+2026-10-08 17:02:03,979 - WARNING - Server returned 429
+2026-10-08 17:02:14,122 - WARNING - Server returned 429
+2026-10-08 17:02:24,335 - WARNING - Server returned 429
+2026-10-08 17:02:34,101 - WARNING - Server returned 429
+2026-10-08 17:02:44,462 - WARNING - Server returned 429
+2026-10-08 17:02:54,863 - WARNING - Server returned 429
+2026-10-08 17:03:05,749 - WARNING - Server returned 429
+2026-10-08 17:03:15,616 - WARNING - Server returned 429
+2026-10-08 17:03:27,692 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 17:03:36,151 - WARNING - Server returned 429
+2026-10-08 17:03:52,196 - WARNING - Server returned 429
+2026-10-08 17:04:07,055 - WARNING - Server returned 429
+2026-10-08 17:04:34,323 - WARNING - Server returned 429
+2026-10-08 17:04:46,411 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 17:04:58,752 - WARNING - Server returned 429
+2026-10-08 17:06:48,821 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 17:06:56,906 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 17:07:00,950 - WARNING - Server returned 429
+2026-10-08 17:07:11,227 - WARNING - Server returned 429
+2026-10-08 17:07:20,971 - WARNING - Server returned 429
+2026-10-08 17:07:30,925 - WARNING - Server returned 429
+2026-10-08 17:07:40,552 - WARNING - Server returned 429
+2026-10-08 17:07:50,687 - WARNING - Server returned 429
+2026-10-08 17:08:00,397 - WARNING - Server returned 429
+2026-10-08 17:08:10,193 - WARNING - Server returned 429
+2026-10-08 17:08:19,873 - WARNING - Server returned 429
+2026-10-08 17:08:29,511 - WARNING - Server returned 429
+2026-10-08 17:08:39,258 - WARNING - Server returned 429
+2026-10-08 17:08:48,966 - WARNING - Server returned 429
+2026-10-08 17:08:58,670 - WARNING - Server returned 429
+2026-10-08 17:09:08,294 - WARNING - Server returned 429
+2026-10-08 17:09:18,161 - WARNING - Server returned 429
+2026-10-08 17:09:28,340 - WARNING - Server returned 429
+2026-10-08 17:09:38,164 - WARNING - Server returned 429
+2026-10-08 17:09:48,118 - WARNING - Server returned 429
+2026-10-08 17:09:57,861 - WARNING - Server returned 429
+2026-10-08 17:10:07,757 - WARNING - Server returned 429
+2026-10-08 17:10:17,772 - WARNING - Server returned 429
+2026-10-08 17:10:27,889 - WARNING - Server returned 429
+2026-10-08 17:10:37,944 - WARNING - Server returned 429
+2026-10-08 17:10:48,633 - WARNING - Server returned 429
+2026-10-08 17:11:02,544 - WARNING - Server returned 429
+2026-10-08 17:11:12,537 - WARNING - Server returned 429
+2026-10-08 17:11:22,291 - WARNING - Server returned 429
+2026-10-08 17:11:32,132 - WARNING - Server returned 429
+2026-10-08 17:11:41,826 - WARNING - Server returned 429
+2026-10-08 17:11:51,706 - WARNING - Server returned 429
+2026-10-08 17:12:01,424 - WARNING - Server returned 429
+2026-10-08 17:12:11,023 - WARNING - Server returned 429
+2026-10-08 17:12:20,784 - WARNING - Server returned 429
+2026-10-08 17:12:30,673 - WARNING - Server returned 429
+2026-10-08 17:12:40,290 - WARNING - Server returned 429
+2026-10-08 17:12:50,171 - WARNING - Server returned 429
+2026-10-08 17:13:05,730 - WARNING - Server returned 429
+2026-10-08 17:13:16,051 - WARNING - Server returned 429
+2026-10-08 17:13:26,177 - WARNING - Server returned 429
+2026-10-08 17:13:36,059 - WARNING - Server returned 429
+2026-10-08 17:13:45,904 - WARNING - Server returned 429
+2026-10-08 17:13:55,591 - WARNING - Server returned 429
+2026-10-08 17:14:05,344 - WARNING - Server returned 429
+2026-10-08 17:14:15,454 - WARNING - Server returned 429
+2026-10-08 17:14:25,421 - WARNING - Server returned 429
