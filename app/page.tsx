@@ -281,7 +281,7 @@ export default function DashboardPage() {
             className="fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 pointer-events-auto"
             style={{ bottom: "6vh", color: COLORS.inkSoft }}
           >
-            <p className="text-[12px] font-sans mb-1" style={{ color: COLORS.inkSoft }}>
+            <p className="text-[15px] font-sans mb-1" style={{ color: COLORS.inkSoft }}>
               Scroll down
             </p>
             <ChevronDown className="w-4 h-4 scroll-pill-icon" style={{ color: COLORS.inkSoft }} />
@@ -296,236 +296,280 @@ export default function DashboardPage() {
           className="relative z-10 h-[160vh] w-full"
         >
           <div
-            className="flex flex-col h-full"
-            style={{ padding: INSET }}
-          >
-            {/* Header row: Server Connection + Alerts (12px gap) */}
-            <div className="flex flex-col gap-[12px] mb-4">
-              {/* Server Connection Card */}
-              <div
-                ref={serverConnRef}
-                data-testid="server-connection-card"
-                className="border rounded-[14px] p-[14px_16px] w-full pointer-events-auto"
-                style={{
-                  backgroundColor: COLORS.bgPanel,
-                  borderColor: COLORS.line,
-                  borderRadius: "14px",
-                }}
-              >
-                <h2 className="text-[12px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
-                  Server connection
-                </h2>
-                <div className="space-y-2 font-mono text-xs">
-                  <p className="flex justify-between">
-                    <span>IP:</span>{" "}
-                    <span style={{ fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums", color: COLORS.ink }}>
-                      {metrics.server_ip}
-                    </span>
-                  </p>
-                  <p className="pt-2 border-t" style={{ borderColor: COLORS.line }}>
-                    <span>SSID:</span>{" "}
-                    <span style={{ color: COLORS.ink }}>{ssid}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Alerts Card */}
-              <div
-                ref={alertsCardRef}
-                data-testid="alerts-card"
-                className="border rounded-[14px] p-[14px_16px] w-full pointer-events-auto"
-                style={{
-                  backgroundColor: COLORS.bgPanel,
-                  borderColor: COLORS.line,
-                  borderRadius: "14px",
-                }}
-              >
-                <AlertsPanel />
-              </div>
-            </div>
-
-            {/* Main grid: Radar + empty column */}
-            <div className="flex gap-[12px] items-start flex-1">
-              {/* Column 1: Radar (max 260px) */}
-              <div
-                ref={radarCardRef}
-                data-testid="radar-card"
-                className="border rounded-[14px] p-[14px_16px] w-full max-w-[260px] space-y-4 pointer-events-auto"
-                style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
-              >
-                <h2 className="text-[13px] font-sans font-medium" style={{ color: COLORS.inkSoft }}>
-                  Radar
-                </h2>
-                <RadarCanvas />
-              </div>
-
-              {/* Column 2: Empty space for globe visibility */}
-              <div className="flex-1" />
-            </div>
-          </div>
-
-          {/* Device Inspector - full width at bottom */}
-          <div
-            ref={inspectorCardRef}
-            data-testid="inspector-card"
-            className="border rounded-[14px] p-6 space-y-5 pointer-events-auto mx-auto"
+            className="h-full"
             style={{
-              backgroundColor: COLORS.bgPanel,
-              borderColor: COLORS.line,
-              maxWidth: "min(940px, calc(100vw - 32px))",
+              padding: INSET,
+              display: "grid",
+              gridTemplateColumns: "minmax(220px, 300px) minmax(200px, 260px) 1fr",
+              gap: "12px",
             }}
           >
-            <div className="flex justify-between items-center border-b pb-4" style={{ borderColor: COLORS.line }}>
-              <div>
-                <h2 className="text-[15px] font-sans font-medium" style={{ color: COLORS.ink }}>
-                  Device inspector ({subnetPrefix})
-                </h2>
-                <p className="text-[12px] font-sans mt-0.5" style={{ color: COLORS.inkSoft }}>
-                  Scapy ARP scanner aktif
+            {/* Col 1, Row 1: Server Connection */}
+            <div
+              ref={serverConnRef}
+              data-testid="server-connection-card"
+              className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
+              style={{
+                backgroundColor: COLORS.bgPanel,
+                borderColor: COLORS.line,
+                borderRadius: "14px",
+                gridColumn: "1",
+                gridRow: "1",
+              }}
+            >
+              <h2 className="text-[12px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
+                Server connection
+              </h2>
+              <div className="space-y-2 font-mono text-xs">
+                <p className="flex justify-between">
+                  <span>IP:</span>{" "}
+                  <span style={{ fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums", color: COLORS.ink }}>
+                    {metrics.server_ip}
+                  </span>
                 </p>
-              </div>
-              <div className="flex gap-4 font-sans text-xs">
-                <span className="flex items-center gap-2" style={{ color: COLORS.statusOn }}>
-                  <span className="font-medium" style={{ fontSize: "16px" }}>
-                    {metrics.total_up}
-                  </span>
-                  <span>online</span>
-                </span>
-                <span className="flex items-center gap-2" style={{ color: COLORS.statusOff }}>
-                  <span className="font-medium" style={{ fontSize: "16px" }}>
-                    {metrics.total_down}
-                  </span>
-                  <span>offline</span>
-                </span>
+                <p className="pt-2 border-t" style={{ borderColor: COLORS.line }}>
+                  <span>SSID:</span>{" "}
+                  <span style={{ color: COLORS.ink }}>{ssid}</span>
+                </p>
               </div>
             </div>
 
+            {/* Col 1, Row 2: Alerts */}
             <div
-              ref={tableContainerRef}
-              className="flex-1 min-h-0 overflow-x-auto overflow-y-auto"
-              style={{ minHeight: 0, overscrollBehavior: "auto" }}
+              ref={alertsCardRef}
+              data-testid="alerts-card"
+              className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
+              style={{
+                backgroundColor: COLORS.bgPanel,
+                borderColor: COLORS.line,
+                borderRadius: "14px",
+                gridColumn: "1",
+                gridRow: "2",
+              }}
             >
-              {loading ? (
-                <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
-                  Connecting to scanner...
+              <AlertsPanel />
+            </div>
+
+            {/* Col 2, Row 1-2: Radar */}
+            <div
+              ref={radarCardRef}
+              data-testid="radar-card"
+              className="border rounded-[14px] p-[14px_16px] space-y-4 pointer-events-auto"
+              style={{
+                backgroundColor: COLORS.bgPanel,
+                borderColor: COLORS.line,
+                borderRadius: "14px",
+                gridColumn: "2",
+                gridRow: "1 / span 2",
+                maxWidth: "260px",
+              }}
+            >
+              <h2 className="text-[13px] font-sans font-medium" style={{ color: COLORS.inkSoft }}>
+                Radar
+              </h2>
+              <RadarCanvas />
+            </div>
+
+            {/* Col 3: Empty space for globe visibility */}
+            <div style={{ gridColumn: "3", gridRow: "1 / span 2" }} />
+
+            {/* Device Inspector - full width span, bottom of page 2 */}
+            <div
+              ref={inspectorCardRef}
+              data-testid="inspector-card"
+              className="border rounded-[14px] p-6 pointer-events-auto"
+              style={{
+                backgroundColor: COLORS.bgPanel,
+                borderColor: COLORS.line,
+                gridColumn: "1 / -1",
+                gridRow: "3",
+              }}
+            >
+              <div className="flex justify-between items-center border-b pb-4 mb-4" style={{ borderColor: COLORS.line }}>
+                <div>
+                  <h2 className="text-[15px] font-sans font-medium" style={{ color: COLORS.ink }}>
+                    Device inspector ({subnetPrefix})
+                  </h2>
+                  <p className="text-[12px] font-sans mt-0.5" style={{ color: COLORS.inkSoft }}>
+                    Scapy ARP scanner aktif
+                  </p>
                 </div>
-              ) : validDevices.length === 0 ? (
-                <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
-                  No devices found.
+                <div className="flex gap-4 font-sans text-xs">
+                  <span className="flex items-center gap-2" style={{ color: COLORS.statusOn }}>
+                    <span className="font-medium" style={{ fontSize: "16px" }}>
+                      {metrics.total_up}
+                    </span>
+                    <span>online</span>
+                  </span>
+                  <span className="flex items-center gap-2" style={{ color: COLORS.statusOff }}>
+                    <span className="font-medium" style={{ fontSize: "16px" }}>
+                      {metrics.total_down}
+                    </span>
+                    <span>offline</span>
+                  </span>
                 </div>
-              ) : (
-                <table
-                  className="w-full mobile-table text-left"
-                  style={{ fontFamily: "ui-monospace, Consolas, monospace", fontSize: "12px", minWidth: "900px" }}
-                  aria-label="Network device scan results"
-                >
-                  <caption className="sr-only">
-                    Network device scan results — {validDevices.length} devices detected
-                  </caption>
-                  <thead>
-                    <tr
-                      className="uppercase text-[11px]"
-                      style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft, borderColor: COLORS.line }}
-                    >
-                      <th
-                        className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                        onClick={() => handleSort("ip")}
-                      >
-                        IP address <SortIndicator columnKey="ip" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("mac")}>
-                        MAC address <SortIndicator columnKey="mac" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("hostname")}>
-                        Device name <SortIndicator columnKey="hostname" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("category")}>
-                        Category <SortIndicator columnKey="category" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("vendor")}>
-                        Vendor <SortIndicator columnKey="vendor" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("location")}>
-                        Location <SortIndicator columnKey="location" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("latency")}>
-                        Latency <SortIndicator columnKey="latency" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort("status")}>
-                        Status <SortIndicator columnKey="status" sortConfig={sortConfig} />
-                      </th>
-                      <th className="px-4 py-3 text-right cursor-pointer whitespace-nowrap" onClick={() => handleSort("last_seen")}>
-                        Last seen <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y" style={{ borderColor: COLORS.line }}>
-                    {sortedDevices.map((dev, idx) => (
+              </div>
+
+              <div
+                ref={tableContainerRef}
+                className="overflow-x-auto overflow-y-auto"
+                style={{ flex: "1 1 0%", minHeight: 0, overscrollBehavior: "auto" }}
+              >
+                {loading ? (
+                  <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
+                    Connecting to scanner...
+                  </div>
+                ) : validDevices.length === 0 ? (
+                  <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
+                    No devices found.
+                  </div>
+                ) : (
+                  <table
+                    className="w-full mobile-table text-left"
+                    style={{ fontFamily: "ui-monospace, Consolas, monospace", fontSize: "12px", minWidth: "900px" }}
+                    aria-label="Network device scan results"
+                  >
+                    <caption className="sr-only">
+                      Network device scan results — {validDevices.length} devices detected
+                    </caption>
+                    <thead>
                       <tr
-                        key={idx}
-                        ref={(el) => {
-                          if (el) tableRowRefs.current.set(idx, el);
-                          else tableRowRefs.current.delete(idx);
-                        }}
-                        className="hover:transition-colors"
-                        style={{ backgroundColor: "transparent" }}
+                        className="uppercase text-[11px]"
+                        style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft }}
                       >
-                        <td
-                          className="px-4 py-3 font-medium"
-                          style={{ color: COLORS.ink, fontFamily: "ui-monospace, Consolas, monospace" }}
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("ip")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          {dev.ip || "-"}
-                        </td>
-                        <td
-                          className="px-4 py-3"
-                          style={{ color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}
+                          IP address <SortIndicator columnKey="ip" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("mac")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          {dev.mac}
-                        </td>
-                        <td className="px-4 py-3" style={{ color: COLORS.ink }}>
-                          {dev.hostname}
-                        </td>
-                        <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.category}</td>
-                        <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.vendor}</td>
-                        <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.location}</td>
-                        <td
-                          className="px-4 py-3"
-                          style={{ color: COLORS.accent, fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums" }}
+                          MAC address <SortIndicator columnKey="mac" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("hostname")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {dev.status === "UP" ? (
-                              <>
-                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.statusOn }} />
-                                <span style={{ color: COLORS.ink }}>Online</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.statusOff }} />
-                                <span style={{ color: COLORS.inkSoft }}>Offline</span>
-                              </>
-                            )}
-                            {dev.is_blacklisted && (
-                              <span className="flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.accent }} />
-                                <span style={{ color: COLORS.inkSoft }}>Blocked</span>
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td
-                          className="px-4 py-3 text-right"
-                          style={{ color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}
+                          Device name <SortIndicator columnKey="hostname" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("category")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          {new Date(dev.last_seen).toLocaleTimeString()}
-                        </td>
+                          Category <SortIndicator columnKey="category" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("vendor")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
+                        >
+                          Vendor <SortIndicator columnKey="vendor" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("location")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
+                        >
+                          Location <SortIndicator columnKey="location" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("latency")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
+                        >
+                          Latency <SortIndicator columnKey="latency" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("status")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
+                        >
+                          Status <SortIndicator columnKey="status" sortConfig={sortConfig} />
+                        </th>
+                        <th
+                          className="px-4 py-3 text-right cursor-pointer whitespace-nowrap"
+                          onClick={() => handleSort("last_seen")}
+                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
+                        >
+                          Last seen <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    </thead>
+                    <tbody className="divide-y" style={{ borderColor: COLORS.line }}>
+                      {sortedDevices.map((dev, idx) => (
+                        <tr
+                          key={idx}
+                          ref={(el) => {
+                            if (el) tableRowRefs.current.set(idx, el);
+                            else tableRowRefs.current.delete(idx);
+                          }}
+                          className="hover:transition-colors"
+                          style={{ backgroundColor: "transparent" }}
+                        >
+                          <td
+                            className="px-4 py-3 font-medium"
+                            style={{ color: COLORS.ink, fontFamily: "ui-monospace, Consolas, monospace" }}
+                          >
+                            {dev.ip || "-"}
+                          </td>
+                          <td
+                            className="px-4 py-3"
+                            style={{ color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}
+                          >
+                            {dev.mac}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: COLORS.ink }}>
+                            {dev.hostname}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.category}</td>
+                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.vendor}</td>
+                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.location}</td>
+                          <td
+                            className="px-4 py-3"
+                            style={{ color: COLORS.accent, fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums" }}
+                          >
+                            {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {dev.status === "UP" ? (
+                                <>
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.statusOn }} />
+                                  <span style={{ color: COLORS.ink }}>Online</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.statusOff }} />
+                                  <span style={{ color: COLORS.inkSoft }}>Offline</span>
+                                </>
+                              )}
+                              {dev.is_blacklisted && (
+                                <span className="flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.accent }} />
+                                  <span style={{ color: COLORS.inkSoft }}>Blocked</span>
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td
+                            className="px-4 py-3 text-right"
+                            style={{ color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}
+                          >
+                            {new Date(dev.last_seen).toLocaleTimeString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           </div>
         </section>
