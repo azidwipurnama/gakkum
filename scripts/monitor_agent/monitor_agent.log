@@ -3687,3 +3687,15 @@
 2026-10-08 18:18:51,373 - WARNING - Server returned 429
 2026-10-08 18:19:01,085 - WARNING - Server returned 429
 2026-10-08 18:19:10,869 - WARNING - Server returned 429
+2026-10-08 18:19:20,878 - WARNING - Server returned 429
+2026-10-08 18:19:31,035 - WARNING - Server returned 429
+2026-10-08 18:19:41,021 - WARNING - Server returned 429
+2026-10-08 18:19:51,074 - WARNING - Server returned 429
+2026-10-08 18:20:00,738 - WARNING - Server returned 429
+2026-10-08 18:20:10,465 - WARNING - Server returned 429
+2026-10-08 18:20:20,245 - WARNING - Server returned 429
+2026-10-08 18:20:30,257 - WARNING - Server returned 429
+2026-10-08 18:20:39,936 - WARNING - Server returned 429
+2026-10-08 18:20:49,959 - WARNING - Server returned 429
+2026-10-08 18:21:06,590 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-08 18:21:14,686 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
