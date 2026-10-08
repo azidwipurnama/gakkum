@@ -9,85 +9,89 @@ export interface ScrollMotionConfig {
   smoothingEpsilon: number;
   reducedMotionFactor: number;
   segments: {
-    scrollHint: Segment;
-    scrollProgressDots: Segment;
-    radar: Segment;
-    radarOut: Segment;
-    alerts: Segment;
-    deviceInspector: Segment;
-    tableRows: { start: number; perRow: number; maxVisible: number; fadeInEnd: number };
-    globeStage1: Segment;
-    globeStage2: Segment;
+    scrollHint: Segment;           // 0.00-0.10: "Scroll down" hint fades out
+    scrollProgressDots: Segment;   // 0.00-0.16: two-dot indicator fades in
+    globeMove: Segment;            // 0.12-0.50: globe moves to top-right corner
+    serverConn: Segment;           // 0.26-0.42: Server connection card enters (from left)
+    alerts: Segment;               // 0.31-0.47: Alerts card enters (from left-up)
+    radar: Segment;                // 0.36-0.52: Radar card enters (from bottom)
+    deviceInspector: Segment;      // 0.41-0.60: Device inspector enters (from bottom)
+    tableRows: {
+      start: number;               // 0.50: first row begins
+      perRow: number;              // 0.012: stagger per row
+      maxVisible: number;          // max rows to stagger
+    };
   };
   offsets: {
     scrollHint: { y: number };
-    radarIn: { x: number };
-    radarOut: { x: number };
-    alertsIn: { x: number; y: number };
+    serverConn: { x: number };
+    alerts: { x: number; y: number };
+    radar: { y: number };
     deviceInspector: { y: number };
     tableRow: { x: number };
-  };
-  globe: {
-    baseRotationSpeed: number;
-    scrollBoostMin: number;
-    scrollBoostExtra: number;
-    scaleStep1: number;
-    scaleStep2Desktop: number;
-    scaleStep2Mobile: number;
-    opacityStep2: number;
-    moveXStep1: number;
-    moveXStep2Desktop: number;
-    moveXStep2MobileFactor: number;
-    moveYStep2: number;
+    globe: {
+      scaleTarget: number;         // 0.52 — target scale
+      opacityTarget: number;      // 0.35 — target opacity
+      moveX: number;               // 40px from right edge
+      moveY: number;               // 40px from top edge
+      sizePx: number;              // 300px diameter
+    };
   };
   breakpoints: { mobileWidth: number };
-  layout: { cardRadiusPx: number; cardPaddingPx: [number, number]; columnGapPx: number; leftColumnInsetPx: number };
+  layout: {
+    cardRadiusPx: number;
+    cardPaddingPx: [number, number];
+    columnGapPx: number;
+    gridInset: string;             // clamp(16px, 3vw, 36px)
+    col1Minmax: string;            // minmax(220px, 300px)
+    col2Minmax: string;            // minmax(200px, 260px)
+  };
 }
 
 const smoothstep = (p: number): number => Math.max(0, Math.min(1, p * p * (3 - 2 * p)));
 const seg = (p: number, a: number, b: number): number => Math.max(0, Math.min(1, (p - a) / (b - a)));
 
 export const scrollMotionConfig: ScrollMotionConfig = {
-  wrapperHeightVh: 420,
+  wrapperHeightVh: 260,
   smoothstep,
   seg,
   smoothingFactor: 0.1,
   smoothingEpsilon: 0.0002,
   reducedMotionFactor: 1,
   segments: {
-    scrollHint: { a: 0.0, b: 0.1 },
-    scrollProgressDots: { a: 0.0, b: 0.16 }, // fade in during landing, stay through full scroll
-    radar: { a: 0.16, b: 0.32 },
-    radarOut: { a: 0.5, b: 0.62 },
-    alerts: { a: 0.3, b: 0.42 },
-    deviceInspector: { a: 0.58, b: 0.76 },
-    tableRows: { start: 0.64, perRow: 0.012, maxVisible: 10, fadeInEnd: 0.74 },
-    globeStage1: { a: 0.14, b: 0.34 },
-    globeStage2: { a: 0.56, b: 0.78 },
+    scrollHint: { a: 0.0, b: 0.10 },
+    scrollProgressDots: { a: 0.0, b: 0.16 },
+    globeMove: { a: 0.12, b: 0.50 },
+    serverConn: { a: 0.26, b: 0.42 },
+    alerts: { a: 0.31, b: 0.47 },
+    radar: { a: 0.36, b: 0.52 },
+    deviceInspector: { a: 0.41, b: 0.60 },
+    tableRows: { start: 0.50, perRow: 0.012, maxVisible: 10 },
   },
   offsets: {
     scrollHint: { y: -10 },
-    radarIn: { x: 40 },
-    radarOut: { x: -24 },
-    alertsIn: { x: -30, y: 16 },
-    deviceInspector: { y: 60 },
+    serverConn: { x: -30 },
+    alerts: { x: -30, y: 14 },
+    radar: { y: 26 },
+    deviceInspector: { y: 50 },
     tableRow: { x: 10 },
-  },
-  globe: {
-    baseRotationSpeed: 0.004,
-    scrollBoostMin: 0.03,
-    scrollBoostExtra: 3,
-    scaleStep1: 0.08,
-    scaleStep2Desktop: 0.42,
-    scaleStep2Mobile: 0.50,
-    opacityStep2: 0.3,
-    moveXStep1: 0.16,
-    moveXStep2Desktop: 0.42,
-    moveXStep2MobileFactor: 0.3,
-    moveYStep2: 0.20,
+    globe: {
+      scaleTarget: 0.52,
+      opacityTarget: 0.35,
+      moveX: 40,   // px from right edge
+      moveY: 40,   // px from top edge
+      sizePx: 300,
+    },
   },
   breakpoints: { mobileWidth: 800 },
-  layout: { cardRadiusPx: 14, cardPaddingPx: [14, 16], columnGapPx: 12, leftColumnInsetPx: 0 },
+  layout: {
+    cardRadiusPx: 14,
+    cardPaddingPx: [14, 16],
+    columnGapPx: 12,
+    gridInset: "clamp(16px, 3vw, 36px)",
+    col1Minmax: "minmax(220px, 300px)",
+    col2Minmax: "minmax(200px, 260px)",
+  },
 };
 
 export const CSS_VARS = {

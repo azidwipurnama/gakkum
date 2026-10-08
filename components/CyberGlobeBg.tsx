@@ -2,15 +2,13 @@
 
 import React, { useEffect, useRef } from "react";
 import { scrollMotionConfig as cfg } from "@/lib/scrollMotion.config";
+import { globeMotion } from "@/lib/scrollMotion";
 
 interface CyberGlobeBgProps {
   wifiName?: string;
   className?: string;
   style?: React.CSSProperties;
 }
-
-// Memoize computed transform+opacity for the globe based on CSS var --scroll-progress.
-// Reads live from documentElement each animation frame (no React re-render per frame).
 
 // Warm Paper Design Tokens (read from CSS variables when available)
 const COLORS = {
@@ -43,6 +41,11 @@ export default function CyberGlobeBg({
     if (!document.documentElement.hasAttribute("data-motion")) {
       return { transform: "translate(0,0) scale(1)", opacity: 1 };
     }
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isReduced) {
+      return { transform: "translate(0,0) scale(1)", opacity: 1 };
+    }
+
     const raw = getComputedStyle(document.documentElement)
       .getPropertyValue("--scroll-progress")
       .trim();
@@ -51,28 +54,7 @@ export default function CyberGlobeBg({
       return { transform: "translate(0,0) scale(1)", opacity: 1 };
     }
 
-    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (isReduced) {
-      return { transform: "translate(0,0) scale(1)", opacity: 1 };
-    }
-
-    const clamped = Math.max(0, Math.min(1, p));
-    const a1 = cfg.smoothstep(cfg.seg(clamped, cfg.segments.globeStage1.a, cfg.segments.globeStage1.b));
-    const a2 = cfg.smoothstep(cfg.seg(clamped, cfg.segments.globeStage2.a, cfg.segments.globeStage2.b));
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const isMobile = vw < cfg.breakpoints.mobileWidth;
-    const x = -a1 * cfg.globe.moveXStep1 * vw + a2 * (isMobile ? cfg.globe.moveXStep2MobileFactor : 1) * cfg.globe.moveXStep2Desktop * vw;
-    const y = -a2 * cfg.globe.moveYStep2 * vh;
-    const scaleStep2 = isMobile ? cfg.globe.scaleStep2Mobile : cfg.globe.scaleStep2Desktop;
-    const scale = 1 - a1 * cfg.globe.scaleStep1 - a2 * scaleStep2;
-    const opacityVal = 1 - a2 * cfg.globe.opacityStep2;
-
-    return {
-      transform: `translate(${x}px, ${y}px) scale(${scale})`,
-      opacity: opacityVal,
-    };
+    return globeMotion(Math.max(0, Math.min(1, p)));
   };
 
   useEffect(() => {
@@ -82,7 +64,9 @@ export default function CyberGlobeBg({
     const g = cv.getContext("2d")!;
     if (!g) return;
 
-    let W = 0, H = 0, R = 0, cx = 0, cy = 0;
+    // Fixed globe size per config (300px), centered in canvas
+    const GLOBE_SIZE = cfg.offsets.globe.sizePx;
+    let W = GLOBE_SIZE, H = GLOBE_SIZE, R = GLOBE_SIZE * 0.38, cx = GLOBE_SIZE / 2, cy = GLOBE_SIZE / 2;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     // Read CSS variables for theme consistency
@@ -99,9 +83,8 @@ export default function CyberGlobeBg({
     };
 
     const size = () => {
-      const rect = cv.getBoundingClientRect();
-      W = rect.width;
-      H = rect.height;
+      W = GLOBE_SIZE;
+      H = GLOBE_SIZE;
       cv.width = W * dpr;
       cv.height = H * dpr;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -561,11 +544,13 @@ export default function CyberGlobeBg({
     >
       <canvas
         ref={canvasRef}
+        width={cfg.offsets.globe.sizePx}
+        height={cfg.offsets.globe.sizePx}
         style={{
           position: "absolute",
           inset: 0,
-          width: "100%",
-          height: "100%",
+          width: `${cfg.offsets.globe.sizePx}px`,
+          height: `${cfg.offsets.globe.sizePx}px`,
           pointerEvents: "none",
         }}
         role="img"

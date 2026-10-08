@@ -1,27 +1,26 @@
 // Scroll-motion derivation helpers.
 // Reads the CSS variable --scroll-progress from the stage element (set by useScrollProgress)
-// and returns { transform, opacity, visibility, inert/aria } for each element.
+// and returns { transform, opacity, ariaHidden, inert } for each element.
 //
 // Per ATURAN KERAS: transform & opacity only.
 // Elements fall back to static layout when data-motion="on" is absent (the hook removes it
-// on unmount / when p is invalid).
+// on unmount / when p is invalid). All elements stay visible and usable without JS.
 
 import { scrollMotionConfig as cfg, Segment } from "./scrollMotion.config";
 
 const { smoothstep, seg, offsets } = cfg;
 
 export interface ElementMotionState {
-  transform: string;           // CSS transform string (translate / scale) — opacity only
+  transform: string;           // CSS transform string (translate / scale)
   opacity: number;             // 0..1
-  // Accessibility gating
   ariaHidden: boolean;         // true when opacity ~ 0 (screen readers skip)
-  inert: boolean;              // JS-applied; set via style.inert in React (polyfill if needed)
+  inert: boolean;              // set via attribute (polyfill if needed)
 }
 
 /** Read raw progress from stage element's CSS variable. Returns clamped 0..1. */
 export function readProgress(stageEl: HTMLElement | null): number {
   if (!stageEl) return 0;
-  const raw = stageEl.style.getPropertyValue("--scroll-progress");
+  let raw = stageEl.style.getPropertyValue("--scroll-progress");
   if (!raw) return 0;
   const n = parseFloat(raw);
   if (!Number.isFinite(n)) return 0;
@@ -29,93 +28,53 @@ export function readProgress(stageEl: HTMLElement | null): number {
 }
 
 /**
- * Motion state for an element that enters and leaves during scroll.
- * enter: visible inside [a..b], fully visible at midpoint.
- * exit:  fades out inside [a..b] after enter completes.
+ * Standard enter-only motion: element is at rest (translated out) before segment, at zero after.
+ * translateStart: offset at segment start (e.g. -30px); translateEnd: final (0,0).
+ * fadeIn: true = opacity ramps 0→1 across segment.
  */
-export function enterExitMotion(
+function enterMotion(
   p: number,
-  enter: Segment,
-  exit?: Segment
+  seg_: Segment,
+  translateStart: { x: number; y: number },
+  fadeIn = true
 ): ElementMotionState {
-  const e = seg(p, enter.a, enter.b);
+  const e = seg(p, seg_.a, seg_.b);
   const eEase = smoothstep(e);
 
-  let opacity = eEase;
-
-  if (exit && p > exit.a) {
-    const x = seg(p, exit.a, exit.b);
-    const xEase = smoothstep(x);
-    opacity = 1 - xEase; // fade out toward exit.b
-    // Optionally translate further out by exit offset — not specified per element, keep default
-  }
+  // Translate from start offset toward (0,0)
+  const tx = (1 - eEase) * translateStart.x;
+  const ty = (1 - eEase) * translateStart.y;
+  const opacity = fadeIn ? eEase : 1;
 
   return {
-    transform: `none`,
+    transform: `translate(${tx}px, ${ty}px)`,
     opacity,
     ariaHidden: opacity < 0.01,
     inert: opacity < 0.01,
   };
 }
 
-/** Radar: enters 0.16-0.32 via +40px translateX, exits 0.50-0.62 with -24px + fade */
-export function radarMotion(p: number): ElementMotionState {
-  const enter = seg(p, cfg.segments.radar.a, cfg.segments.radar.b);
-  const enterEase = smoothstep(enter);
-  const enterTranslate = (1 - enterEase) * offsets.radarIn.x;
-
-  let opacity = enterEase;
-  let translateX = enterTranslate;
-
-  // Exit: 0.50-0.62
-  if (p > cfg.segments.radarOut.a) {
-    const x = seg(p, cfg.segments.radarOut.a, cfg.segments.radarOut.b);
-    const xEase = smoothstep(x);
-    opacity = 1 - xEase;
-    translateX = -offsets.radarOut.x * xEase; // slide to -24px as it fades
-  }
-
-  // Real opacity (0 outside segment); aria-hidden/inert handles accessibility fallback.
-  return {
-    transform: `translateX(${translateX}px)`,
-    opacity,
-    ariaHidden: opacity < 0.01,
-    inert: opacity < 0.01,
-  };
+/** Server connection card: enters 0.26-0.42 from left (-30px translateX) */
+export function serverConnMotion(p: number): ElementMotionState {
+  return enterMotion(p, cfg.segments.serverConn, { x: -30, y: 0 });
 }
 
-/** Alerts: enters 0.30-0.42 via -30px translateX, +16px translateY */
+/** Alerts card: enters 0.31-0.47 from left-up (-30px x, +14px y) */
 export function alertsMotion(p: number): ElementMotionState {
-  const e = seg(p, cfg.segments.alerts.a, cfg.segments.alerts.b);
-  const eEase = smoothstep(e);
-  const translateX = (1 - eEase) * offsets.alertsIn.x;   // -30 -> 0
-  const translateY = (1 - eEase) * offsets.alertsIn.y;   // +16 -> 0
-  const opacity = eEase; // real opacity; clamped-to-0 via segment gating
-
-  return {
-    transform: `translate(${translateX}px, ${translateY}px)`,
-    opacity,
-    ariaHidden: opacity < 0.01,
-    inert: opacity < 0.01,
-  };
+  return enterMotion(p, cfg.segments.alerts, { x: offsets.alerts.x, y: offsets.alerts.y });
 }
 
-/** Device inspector: enters 0.58-0.76 via +60px translateY */
+/** Radar card: enters 0.36-0.52 from bottom (+26px translateY) */
+export function radarMotion(p: number): ElementMotionState {
+  return enterMotion(p, cfg.segments.radar, { x: 0, y: offsets.radar.y });
+}
+
+/** Device inspector: enters 0.41-0.60 from bottom (+50px translateY) */
 export function deviceInspectorMotion(p: number): ElementMotionState {
-  const e = seg(p, cfg.segments.deviceInspector.a, cfg.segments.deviceInspector.b);
-  const eEase = smoothstep(e);
-  const translateY = (1 - eEase) * offsets.deviceInspector.y; // +60 -> 0
-  const opacity = eEase; // real opacity; clamped-to-0 via segment gating
-
-  return {
-    transform: `translateY(${translateY}px)`,
-    opacity,
-    ariaHidden: opacity < 0.01,
-    inert: opacity < 0.01,
-  };
+  return enterMotion(p, cfg.segments.deviceInspector, { x: 0, y: offsets.deviceInspector.y });
 }
 
-/** Scroll hint text: fades out 0.00-0.10 via translateY */
+/** Scroll hint text: fades out 0.00-0.10 via translateY, slides up slightly */
 export function scrollHintMotion(p: number): ElementMotionState {
   const e = seg(p, cfg.segments.scrollHint.a, cfg.segments.scrollHint.b);
   const eEase = smoothstep(e);
@@ -130,50 +89,64 @@ export function scrollHintMotion(p: number): ElementMotionState {
 }
 
 /**
- * Two-dot scroll progress indicator on the right edge.
- * A single active dot fills from 0→1, second dot acts as the "end" marker.
- * Active dot height = p × full height; fills bottom-up from the bottom dot position.
+ * Two-dot scroll-progress indicator for the right edge.
+ * - Top dot: active indicator, slides down as progress 0→1
+ * - Bottom dot: static end marker
+ * Both fade in over 0.00-0.16, then stay visible (opacity 1) until end.
  */
-export function scrollProgressDotsMotion(p: number): { activeOpacity: number; fillHeight: string; activeDotTop: string } {
-  // Both dots visible from p=0.0 to 0.16 (fade in over that range, then stay 1)
-  const enter = seg(p, cfg.segments.scrollProgressDots.a, cfg.segments.scrollProgressDots.b);
-  const enterEase = smoothstep(enter);
-  const activeOpacity = enterEase < 0.01 ? 0 : enterEase > 0.99 ? 1 : enterEase;
+export function scrollProgressDotsMotion(p: number): { opacity: number } {
+  const e = seg(p, cfg.segments.scrollProgressDots.a, cfg.segments.scrollProgressDots.b);
+  const eEase = smoothstep(e);
+  return { opacity: eEase };
+}
 
-  // Filled segment grows from 0 → full height as p goes 0 → 1
-  const clampedP = Math.max(0, Math.min(1, p));
-  const fillHeight = `${clampedP * 100}%`;
+/**
+ * Globe motion: 0.12-0.50 moves to top-right corner at scale 0.52, opacity 0.35.
+ * Rotation continues throughout.
+ */
+export function globeMotion(p: number): { transform: string; opacity: number } {
+  const e = seg(p, cfg.segments.globeMove.a, cfg.segments.globeMove.b);
+  const eEase = smoothstep(e);
 
-  // Active (top) dot slides down from top dot to bottom dot position as p goes 0 → 1
-  // Top dot at ~24px from top of container, bottom dot at ~24px from bottom
-  // Interpolate: at p=0 the "active" marker is at the top dot; at p=1 it's at bottom dot
-  const trackHeight = 100; // relative % units of the dots container
-  const dotOffset = 6; // 6% from top/bottom to center dots in track
-  const activeDotTop = `${dotOffset + clampedP * (trackHeight - 2 * dotOffset)}%`;
+  // Scale: 1 → 0.52
+  const scale = 1 - eEase * (1 - offsets.globe.scaleTarget);
+  // Opacity: 1 → 0.35
+  const opacity = 1 - eEase * (1 - offsets.globe.opacityTarget);
+
+  // Move to top-right: x positive = right, y negative = up
+  // At full progress: translate right by (vw/2 - 300/2 - 40) and up by (-(vh/2 - 300/2 - 40))
+  // Use vw/vh for viewport-relative positioning
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 720;
+  const halfGlobe = offsets.globe.sizePx / 2;
+  const targetX = vw / 2 - halfGlobe - offsets.globe.moveX;     // right edge offset
+  const targetY = -(vh / 2 - halfGlobe - offsets.globe.moveY);   // up, negative
+
+  const tx = eEase * targetX;
+  const ty = eEase * targetY;
 
   return {
-    activeOpacity,
-    fillHeight,
-    activeDotTop,
+    transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+    opacity,
   };
 }
 
 /**
  * Table row staggered entry.
- * row i appears starting at start + i*perRow, fully visible at start + i*perRow + (fadeInEnd-start).
- * Max first 10 rows get staggered; beyond that, still show but no stagger timing beyond.
+ * Row i begins entering at start + i*perRow, each with a left-translate fade.
+ * Max maxVisible rows stagger; beyond that still visible.
  */
 export function tableRowMotion(rowIndex: number, p: number): ElementMotionState {
   if (rowIndex >= cfg.segments.tableRows.maxVisible) {
-    // Rows beyond max still visible (opacity 1) — only first 10 stagger
     return { transform: "none", opacity: 1, ariaHidden: false, inert: false };
   }
+  // Each row: enter from -10px translateX, starts at 0.50 + i*0.012
   const enterStart = cfg.segments.tableRows.start + rowIndex * cfg.segments.tableRows.perRow;
-  const enterEnd = enterStart + (cfg.segments.tableRows.fadeInEnd - cfg.segments.tableRows.start);
+  const enterEnd = enterStart + 0.12; // ~0.12 progress for each row to fully appear
   const e = seg(p, enterStart, enterEnd);
   const eEase = smoothstep(e);
-  const translateX = (1 - eEase) * offsets.tableRow.x; // -10 -> 0
-  const opacity = eEase; // real opacity; clamped-to-0 via segment gating
+  const translateX = (1 - eEase) * offsets.tableRow.x; // -10 → 0
+  const opacity = eEase;
   return {
     transform: `translateX(${translateX}px)`,
     opacity,
