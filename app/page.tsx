@@ -30,6 +30,20 @@ const COLORS = {
   line: "#DDD7C8",
 };
 
+// Sort indicator for table headers (hoisted to module level to satisfy react-hooks/static-components)
+function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfig: { key: string; direction: "asc" | "desc" } }) {
+  if (sortConfig.key !== columnKey) {
+    return <span className="ml-1.5 inline-flex items-center text-[12px] opacity-20">^</span>;
+  }
+  return (
+    <span
+      className={`ml-1.5 inline-flex items-center text-[12px] text-[var(--accent)] transition-transform duration-300 ${sortConfig.direction === "desc" ? "rotate-180" : "rotate-0"}`}
+    >
+      ^
+    </span>
+  );
+}
+
 // Sub-component Canvas Radar Visualizer
 function RadarCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -207,8 +221,8 @@ export default function DashboardPage() {
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
 
   const sortedDevices = [...validDevices].sort((a, b) => {
-    let aVal = a[sortConfig.key as keyof typeof a];
-    let bVal = b[sortConfig.key as keyof typeof a];
+    const aVal = a[sortConfig.key as keyof typeof a];
+    const bVal = b[sortConfig.key as keyof typeof a];
 
     if (aVal === undefined || bVal === undefined) return 0;
 
@@ -222,19 +236,6 @@ export default function DashboardPage() {
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
-  };
-
-  const SortIndicator = ({ columnKey }: { columnKey: string }) => {
-    if (sortConfig.key !== columnKey) {
-      return <span className="ml-1.5 inline-flex items-center text-[12px] opacity-20">^</span>;
-    }
-    return (
-      <span
-        className={`ml-1.5 inline-flex items-center text-[12px] text-[var(--accent)] transition-transform duration-300 ${sortConfig.direction === "desc" ? "rotate-180" : "rotate-0"}`}
-      >
-        ^
-      </span>
-    );
   };
 
   // Use metrics.server_ip for dynamic subnet detection
@@ -332,8 +333,8 @@ export default function DashboardPage() {
         <section className="alerts-section relative z-10 h-screen w-full flex flex-col items-start justify-center p-10 pointer-events-none">
           <div
             ref={alertsCardRef}
-            className="pointer-events-auto w-full max-w-sm border-0 rounded-[14px] p-[14px_16px]"
-            style={{ backgroundColor: COLORS.bgPanel }}
+            className="pointer-events-auto w-full max-w-sm border rounded-[14px] p-[14px_16px]"
+            style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
           >
             <AlertsPanel />
           </div>
@@ -394,55 +395,55 @@ export default function DashboardPage() {
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("ip")}
                       >
-                        IP address <SortIndicator columnKey="ip" />
+                        IP address <SortIndicator columnKey="ip" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("mac")}
                       >
-                        MAC address <SortIndicator columnKey="mac" />
+                        MAC address <SortIndicator columnKey="mac" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("hostname")}
                       >
-                        Device name <SortIndicator columnKey="hostname" />
+                        Device name <SortIndicator columnKey="hostname" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("category")}
                       >
-                        Category <SortIndicator columnKey="category" />
+                        Category <SortIndicator columnKey="category" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("vendor")}
                       >
-                        Vendor <SortIndicator columnKey="vendor" />
+                        Vendor <SortIndicator columnKey="vendor" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("location")}
                       >
-                        Location <SortIndicator columnKey="location" />
+                        Location <SortIndicator columnKey="location" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("latency")}
                       >
-                        Latency <SortIndicator columnKey="latency" />
+                        Latency <SortIndicator columnKey="latency" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("status")}
                       >
-                        Status <SortIndicator columnKey="status" />
+                        Status <SortIndicator columnKey="status" sortConfig={sortConfig} />
                       </th>
                       <th
                         className="px-4 py-3 text-right cursor-pointer whitespace-nowrap"
                         onClick={() => handleSort("last_seen")}
                       >
-                        Last seen <SortIndicator columnKey="last_seen" />
+                        Last seen <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
                       </th>
                     </tr>
                   </thead>

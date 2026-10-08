@@ -22,7 +22,7 @@ export default function AlertsPanel() {
   };
 
   return (
-    <div className="bg-[var(--bg-panel)] border border-[var(--line)] rounded-[var(--radius-card)] p-6 space-y-4" style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line }}>
+    <div className="space-y-4">
       <h2 className="text-[15px] font-sans font-medium text-[var(--ink)]">Alerts ({alerts.length})</h2>
       <div className="max-h-[40vh] overflow-y-auto space-y-2">
         {alerts.length === 0 ? (

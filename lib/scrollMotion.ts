@@ -9,7 +9,6 @@
 import { scrollMotionConfig as cfg, Segment } from "./scrollMotion.config";
 
 const { smoothstep, seg, offsets } = cfg;
-const tableRows = cfg.segments.tableRows;
 
 export interface ElementMotionState {
   transform: string;           // CSS transform string (translate / scale) — opacity only
@@ -22,7 +21,7 @@ export interface ElementMotionState {
 /** Read raw progress from stage element's CSS variable. Returns clamped 0..1. */
 export function readProgress(stageEl: HTMLElement | null): number {
   if (!stageEl) return 0;
-  let raw = stageEl.style.getPropertyValue("--scroll-progress");
+  const raw = stageEl.style.getPropertyValue("--scroll-progress");
   if (!raw) return 0;
   const n = parseFloat(raw);
   if (!Number.isFinite(n)) return 0;
@@ -43,8 +42,6 @@ export function enterExitMotion(
   const eEase = smoothstep(e);
 
   let opacity = eEase;
-  let translateY = 0;
-  let translateX = 0;
 
   if (exit && p > exit.a) {
     const x = seg(p, exit.a, exit.b);

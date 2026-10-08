@@ -19,7 +19,7 @@
   --status-on:    #4A7A57; /* online, hijau lumut */
   --status-off:   #A5432B; /* offline, merah bata */
 
-  --radius-card:  12px;
+  --radius-card:  14px;
   --radius-ctl:   8px;
 
   /* Tailwind v4 token mappings */
