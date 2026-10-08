@@ -145,6 +145,7 @@ export default function DashboardPage() {
   const radarCardRef = useRef<HTMLDivElement>(null);
   const alertsCardRef = useRef<HTMLDivElement>(null);
   const inspectorCardRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableRowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
 
   const { p: progressP } = useScrollProgress({
@@ -168,7 +169,7 @@ export default function DashboardPage() {
           return;
         }
         el.style.transform = s.transform;
-        el.style.opacity = String(Math.max(0.7, s.opacity)); // clamp for guaranteed visibility
+        el.style.opacity = String(s.opacity); // real opacity from motion helper
         if (s.opacity < 0.01) {
           el.setAttribute("inert", "");
           el.setAttribute("aria-hidden", "true");
@@ -183,6 +184,11 @@ export default function DashboardPage() {
       applyEl(alertsCardRef.current, alertsMotion(p));
       applyEl(inspectorCardRef.current, deviceInspectorMotion(p));
       tableRowRefs.current.forEach((row, idx) => applyEl(row, tableRowMotion(idx, p)));
+
+      // Table container: only allow vertical scroll after p > 0.78 (inspector fully revealed)
+      if (tableContainerRef.current) {
+        tableContainerRef.current.style.overflowY = p > 0.78 ? "auto" : "hidden";
+      }
     },
   });
 
@@ -248,7 +254,7 @@ export default function DashboardPage() {
       {/* TAHAP 2/3: 420vh scroll wrapper. Flow layout - all sections h-screen stack vertically, all visible. */}
       <div
         ref={wrapperRef}
-        className="relative bg-[var(--bg-page)] text-[var(--ink)] overflow-y-auto scroll-smooth touch-pan-y"
+        className="relative bg-[var(--bg-page)] text-[var(--ink)] scroll-smooth touch-pan-y"
         style={{
           backgroundColor: COLORS.bgPage,
           color: COLORS.ink,
@@ -326,8 +332,8 @@ export default function DashboardPage() {
         <section className="alerts-section relative z-10 h-screen w-full flex flex-col items-start justify-center p-10 pointer-events-none">
           <div
             ref={alertsCardRef}
-            className="pointer-events-auto w-full max-w-sm border border-[var(--line)] rounded-[14px] p-[14px_16px]"
-            style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
+            className="pointer-events-auto w-full max-w-sm border-0 rounded-[14px] p-[14px_16px]"
+            style={{ backgroundColor: COLORS.bgPanel }}
           >
             <AlertsPanel />
           </div>
@@ -337,8 +343,8 @@ export default function DashboardPage() {
         <section className="inspector-section relative z-10 h-screen w-full flex flex-col justify-center px-4 pointer-events-none">
           <div
             ref={inspectorCardRef}
-            className="w-full max-w-[95vw] border border-[var(--line)] rounded-[14px] p-6 space-y-5 pointer-events-auto mx-auto"
-            style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px" }}
+            className="w-full border border-[var(--line)] rounded-[14px] p-6 space-y-5 pointer-events-auto mx-auto"
+            style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, borderRadius: "14px", maxWidth: "min(940px, calc(100vw - 32px))" }}
           >
             <div className="flex justify-between items-center border-b border-[var(--line)] pb-4">
               <div>
@@ -365,7 +371,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="max-h-[60vh] overflow-x-auto overflow-y-auto" style={{ overscrollBehavior: "auto" }}>
+            <div ref={tableContainerRef} className="max-h-[44vh] overflow-x-auto overflow-y-auto" style={{ overscrollBehavior: "auto" }}>
               {loading ? (
                 <div className="text-center py-10 text-[var(--ink-soft)] font-sans" style={{ color: COLORS.inkSoft }}>
                   Connecting to scanner...

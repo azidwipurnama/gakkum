@@ -78,9 +78,7 @@ export function radarMotion(p: number): ElementMotionState {
     translateX = -offsets.radarOut.x * xEase; // slide to -24px as it fades
   }
 
-  // Clamp so card is always at least semi-visible (prevents fully-invisible state at p=0)
-  opacity = Math.max(0.7, opacity);
-
+  // Real opacity (0 outside segment); aria-hidden/inert handles accessibility fallback.
   return {
     transform: `translateX(${translateX}px)`,
     opacity,
@@ -95,7 +93,7 @@ export function alertsMotion(p: number): ElementMotionState {
   const eEase = smoothstep(e);
   const translateX = (1 - eEase) * offsets.alertsIn.x;   // -30 -> 0
   const translateY = (1 - eEase) * offsets.alertsIn.y;   // +16 -> 0
-  const opacity = Math.max(0.7, eEase); // always visible fallback
+  const opacity = eEase; // real opacity; clamped-to-0 via segment gating
 
   return {
     transform: `translate(${translateX}px, ${translateY}px)`,
@@ -110,7 +108,7 @@ export function deviceInspectorMotion(p: number): ElementMotionState {
   const e = seg(p, cfg.segments.deviceInspector.a, cfg.segments.deviceInspector.b);
   const eEase = smoothstep(e);
   const translateY = (1 - eEase) * offsets.deviceInspector.y; // +60 -> 0
-  const opacity = Math.max(0.7, eEase); // always visible fallback
+  const opacity = eEase; // real opacity; clamped-to-0 via segment gating
 
   return {
     transform: `translateY(${translateY}px)`,
@@ -149,7 +147,7 @@ export function tableRowMotion(rowIndex: number, p: number): ElementMotionState 
   const e = seg(p, enterStart, enterEnd);
   const eEase = smoothstep(e);
   const translateX = (1 - eEase) * offsets.tableRow.x; // -10 -> 0
-  const opacity = Math.max(0.8, eEase); // always visible fallback
+  const opacity = eEase; // real opacity; clamped-to-0 via segment gating
   return {
     transform: `translateX(${translateX}px)`,
     opacity,
