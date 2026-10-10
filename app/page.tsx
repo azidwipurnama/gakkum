@@ -6,19 +6,6 @@ import CyberGlobeBg from "@/components/CyberGlobeBg";
 import AlertsPanel from "@/components/AlertsPanel";
 import { useNetwork } from "@/contexts/NetworkContext";
 import LoadingUI from "@/components/LoadingUI";
-import { useScrollProgress } from "@/hooks/useScrollProgress";
-import {
-  radarMotion,
-  alertsMotion,
-  deviceInspectorMotion,
-  scrollHintMotion,
-  scrollProgressDotsMotion,
-  serverConnMotion,
-  tableRowMotion,
-  globeMotion,
-} from "@/lib/scrollMotion";
-
-const WRAPPER_HEIGHT_VH = 260;
 
 const COLORS = {
   ink: "#1F1D1A",
@@ -35,7 +22,7 @@ const COLORS = {
 
 const INSET = "clamp(16px, 3vw, 36px)";
 
-// Sort indicator for table headers
+// Indikator pengurutan untuk header tabel
 function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfig: { key: string; direction: "asc" | "desc" } }) {
   if (sortConfig.key !== columnKey) {
     return <span className="ml-1.5 inline-flex items-center text-[12px] opacity-20">^</span>;
@@ -49,7 +36,7 @@ function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfi
   );
 }
 
-// Radar canvas component
+// Komponen canvas radar
 function RadarCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -131,31 +118,8 @@ function RadarCanvas() {
       ref={canvasRef}
       className="mx-auto block"
       role="img"
-      aria-label="Radar visualizer"
+      aria-label="Visualisasi radar"
     />
-  );
-}
-
-// Scroll-progress dots: two dots on right edge, opacity fades in 0-0.16, stays visible
-function ScrollProgressDots({ ref }: { ref: React.Ref<HTMLDivElement> }) {
-  return (
-    <div
-      ref={ref}
-      data-testid="scroll-progress-dots"
-      className="fixed top-1/2 -translate-y-1/2 right-6 z-40 flex items-center pointer-events-none"
-      aria-hidden="true"
-    >
-      <div className="flex flex-col items-center gap-1">
-        <div
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: COLORS.inkFaint }}
-        />
-        <div
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: COLORS.accent }}
-        />
-      </div>
-    </div>
   );
 }
 
@@ -163,67 +127,73 @@ export default function DashboardPage() {
   const { devices, metrics, ssid, loading } = useNetwork();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "ip", direction: "asc" });
-  const page2Ref = useRef<HTMLElement>(null);
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const scrollHintRef = useRef<HTMLButtonElement>(null);
-  const scrollDotsRef = useRef<HTMLDivElement>(null);
-  const serverConnRef = useRef<HTMLDivElement>(null);
-  const alertsCardRef = useRef<HTMLDivElement>(null);
-  const radarCardRef = useRef<HTMLDivElement>(null);
-  const inspectorCardRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-  const tableRowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
+  // Ref untuk scroll ke slide 2
+  const slide2Ref = useRef<HTMLDivElement>(null);
 
-  const { p: progressP } = useScrollProgress({
-    wrapperRef,
-    targetRef: stageRef,
-    debug: process.env.NODE_ENV === "development",
-    onProgress: (p) => {
-      if (!stageRef.current) return;
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Ref untuk page indicator dots
+  const dotsContainerRef = useRef<HTMLDivElement>(null);
 
-      const applyEl = (
-        el: HTMLElement | null,
-        s: { transform: string; opacity: number },
-      ) => {
-        if (!el) return;
-        if (reduced) {
-          el.style.transform = "none";
-          el.style.opacity = "1";
-          el.removeAttribute("inert");
-          el.setAttribute("aria-hidden", "false");
-          return;
-        }
-        el.style.transform = s.transform;
-        el.style.opacity = String(s.opacity);
-        if (s.opacity < 0.01) {
-          el.setAttribute("inert", "");
-          el.setAttribute("aria-hidden", "true");
-        } else {
-          el.removeAttribute("inert");
-          el.setAttribute("aria-hidden", "false");
-        }
-      };
+  // State untuk tracking slide visible di viewport (untuk animasi kartu dan kontrol globe)
+  const [activeSlide, setActiveSlide] = useState(0);
 
-      applyEl(scrollHintRef.current, scrollHintMotion(p));
-      const dots = scrollProgressDotsMotion(p);
-      if (scrollDotsRef.current) {
-        if (reduced) scrollDotsRef.current.style.opacity = "1";
-        else scrollDotsRef.current.style.opacity = String(dots.opacity);
-      }
+  // IntersectionObserver untuk mendeteksi slide 2 masuk viewport dan trigger card animations
+  useEffect(() => {
+    if (!slide2Ref.current) return;
 
-      applyEl(serverConnRef.current, serverConnMotion(p));
-      applyEl(alertsCardRef.current, alertsMotion(p));
-      applyEl(radarCardRef.current, radarMotion(p));
-      applyEl(inspectorCardRef.current, deviceInspectorMotion(p));
-      tableRowRefs.current.forEach((row, idx) => applyEl(row, tableRowMotion(idx, p)));
-    },
-  });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === slide2Ref.current) {
+            setActiveSlide(entry.isIntersecting ? 1 : 0);
 
-  const scrollToPage2 = () => {
-    page2Ref.current?.scrollIntoView({ behavior: "smooth" });
+            // Trigger card animations ketika slide 2 masuk viewport
+            if (entry.isIntersecting) {
+              const cards = [
+                slide2Ref.current?.querySelector('[data-testid="server-conn-card"]'),
+                slide2Ref.current?.querySelector('[data-testid="radar-card"]'),
+                slide2Ref.current?.querySelector('[data-testid="alerts-card"]'),
+                slide2Ref.current?.querySelector('[data-testid="inspector-card"]'),
+              ];
+
+              cards.forEach((card, index) => {
+                if (card instanceof HTMLElement) {
+                  card.style.animation = 'none';
+                  setTimeout(() => {
+                    card.style.animation = `cardEntry 600ms cubic-bezier(.22,.8,.2,1) forwards`;
+                    card.style.animationDelay = `${index * 80}ms`;
+                  }, 10);
+                }
+              });
+            } else {
+              // Reset animasi ketika keluar viewport
+              const cards = slide2Ref.current?.querySelectorAll('[data-card-animated]');
+              cards?.forEach((card) => {
+                if (card instanceof HTMLElement) {
+                  card.style.animation = 'none';
+                }
+              });
+            }
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(slide2Ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToSlide2 = () => {
+    slide2Ref.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToSlide = (slideIndex: number) => {
+    if (slideIndex === 0) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (slideIndex === 1) {
+      scrollToSlide2();
+    }
   };
 
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
@@ -235,166 +205,197 @@ export default function DashboardPage() {
       ? (aVal < bVal ? -1 : aVal > bVal ? 1 : 0)
       : (aVal > bVal ? -1 : aVal < bVal ? 1 : 0);
   });
+
   const handleSort = (key: string) => {
     setSortConfig((prev) => ({ key, direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc" }));
   };
-  const subnetPrefix = metrics?.server_ip ? metrics.server_ip.split(".").slice(0, 3).join(".") + ".x" : "Localhost";
 
-  const showProgressDebug =
-    typeof window !== "undefined" &&
-    process.env.NODE_ENV === "development" &&
-    new URLSearchParams(window.location.search).has("motion=debug");
+  const subnetPrefix = metrics?.server_ip ? metrics.server_ip.split(".").slice(0, 3).join(".") + ".x" : "Localhost";
 
   return (
     <>
       {!isLoaded && <LoadingUI onFinished={() => setIsLoaded(true)} />}
 
-      {/* PAGE 1: Landing (100vh) - Globe + Scroll Hint + Two-dot indicator */}
+      {/* Container scroll-snap dengan dua slide penuh layar */}
       <div
-        ref={wrapperRef}
-        className="relative bg-[var(--bg-page)] text-[var(--ink)] scroll-smooth touch-pan-y"
-        style={{ backgroundColor: COLORS.bgPage, color: COLORS.ink, height: `${WRAPPER_HEIGHT_VH}vh` }}
-        suppressHydrationWarning
+        className="bg-[var(--bg-page)] text-[var(--ink)]"
+        style={{
+          backgroundColor: COLORS.bgPage,
+          color: COLORS.ink,
+          height: "200dvh",
+          scrollSnapType: "y mandatory",
+          scrollBehavior: "smooth",
+          overflow: "auto",
+        }}
       >
-        {/* Globe positioned in top-right corner, behind everything */}
-        <CyberGlobeBg wifiName={ssid} />
-
-        <div ref={stageRef} className="absolute invisible" aria-hidden="true" />
-
-        <ScrollProgressDots ref={scrollDotsRef} />
-
-        {/* Skip-link */}
-        <a href="#page2" className="skip-link">
-          Skip to content
-        </a>
-
-        {/* Landing Section - 100vh */}
+        {/* SLIDE 1: Landing dengan Globe */}
         <section
-          aria-label="Landing page"
-          className="relative z-10 h-screen w-full pointer-events-none"
+          aria-label="Halaman landing"
+          className="relative w-full"
+          style={{
+            height: "100dvh",
+            scrollSnapAlign: "start",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          {/* Scroll hint: bottom center, ~6vh from bottom, fades 0-0.10 */}
+          {/* Globe centered di tengah slide */}
+          <CyberGlobeBg wifiName={ssid} />
+
+          {/* Tombol scroll down dengan panah beranimasi */}
           <button
-            ref={scrollHintRef}
-            onClick={scrollToPage2}
-            aria-label="Scroll down to content"
-            className="fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 pointer-events-auto"
-            style={{ bottom: "6vh", color: COLORS.inkSoft }}
+            onClick={scrollToSlide2}
+            aria-label="Gulir ke dashboard"
+            className="fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
+            style={{
+              bottom: "6dvh",
+              color: COLORS.inkSoft,
+              "--tw-ring-color": COLORS.accent,
+            } as React.CSSProperties}
           >
             <p className="text-[15px] font-sans mb-1" style={{ color: COLORS.inkSoft }}>
-              Scroll down
+              Gulir ke bawah
             </p>
             <ChevronDown className="w-4 h-4 scroll-pill-icon" style={{ color: COLORS.inkSoft }} />
           </button>
+
+          {/* Skip-link */}
+          <a href="#slide2" className="skip-link">
+            Lompat ke konten
+          </a>
         </section>
 
-        {/* PAGE 2: Grid Content (160vh) */}
+        {/* SLIDE 2: Dashboard dengan Grid Kartu */}
         <section
-          id="page2"
-          ref={page2Ref}
-          aria-label="Network dashboard"
-          className="relative z-10 h-[160vh] w-full"
+          id="slide2"
+          ref={slide2Ref}
+          aria-label="Dashboard jaringan"
+          className="relative w-full"
+          style={{
+            height: "100dvh",
+            scrollSnapAlign: "start",
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
           <div
             className="h-full"
             style={{
               padding: INSET,
               display: "grid",
-              gridTemplateColumns: "minmax(220px, 300px) minmax(200px, 260px) 1fr",
+              gridTemplateColumns: "repeat(3, minmax(0,1fr))",
+              gridTemplateRows: "auto 1fr",
               gap: "12px",
             }}
           >
-            {/* Col 1, Row 1: Server Connection */}
+            {/* Baris 1: Kartu Server Connection, Radar, Alerts */}
+            {/* Kolom 1: Server Connection */}
             <div
-              ref={serverConnRef}
-              data-testid="server-connection-card"
+              data-testid="server-conn-card"
+              data-card-animated="true"
               className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
               style={{
                 backgroundColor: COLORS.bgPanel,
                 borderColor: COLORS.line,
-                borderRadius: "14px",
-                gridColumn: "1",
-                gridRow: "1",
+                minHeight: "clamp(220px, 30dvh, 300px)",
+                opacity: 0,
+                transform: "translateY(24px)",
               }}
             >
-              <h2 className="text-[12px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
+              <h2 className="text-[13px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
                 Server connection
               </h2>
               <div className="space-y-2 font-mono text-xs">
                 <p className="flex justify-between">
-                  <span>IP:</span>{" "}
+                  <span style={{ color: COLORS.inkSoft }}>IP:</span>
                   <span style={{ fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums", color: COLORS.ink }}>
                     {metrics.server_ip}
                   </span>
                 </p>
                 <p className="pt-2 border-t" style={{ borderColor: COLORS.line }}>
-                  <span>SSID:</span>{" "}
-                  <span style={{ color: COLORS.ink }}>{ssid}</span>
+                  <span style={{ color: COLORS.inkSoft }}>SSID:</span>
+                  <span
+                    className="block mt-1 truncate"
+                    title={ssid}
+                    style={{
+                      color: COLORS.ink,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {ssid}
+                  </span>
                 </p>
               </div>
             </div>
 
-            {/* Col 1, Row 2: Alerts */}
+            {/* Kolom 2: Radar */}
             <div
-              ref={alertsCardRef}
-              data-testid="alerts-card"
+              data-testid="radar-card"
+              data-card-animated="true"
               className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
               style={{
                 backgroundColor: COLORS.bgPanel,
                 borderColor: COLORS.line,
-                borderRadius: "14px",
-                gridColumn: "1",
-                gridRow: "2",
+                minHeight: "clamp(220px, 30dvh, 300px)",
+                opacity: 0,
+                transform: "translateY(24px)",
+              }}
+            >
+              <h2 className="text-[13px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
+                Radar
+              </h2>
+              <div className="flex justify-center">
+                <RadarCanvas />
+              </div>
+            </div>
+
+            {/* Kolom 3: Alerts */}
+            <div
+              data-testid="alerts-card"
+              data-card-animated="true"
+              className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
+              style={{
+                backgroundColor: COLORS.bgPanel,
+                borderColor: COLORS.line,
+                minHeight: "clamp(220px, 30dvh, 300px)",
+                opacity: 0,
+                transform: "translateY(24px)",
               }}
             >
               <AlertsPanel />
             </div>
 
-            {/* Col 2, Row 1-2: Radar */}
+            {/* Baris 2: Device Inspector (full width) */}
             <div
-              ref={radarCardRef}
-              data-testid="radar-card"
-              className="border rounded-[14px] p-[14px_16px] space-y-4 pointer-events-auto"
-              style={{
-                backgroundColor: COLORS.bgPanel,
-                borderColor: COLORS.line,
-                borderRadius: "14px",
-                gridColumn: "2",
-                gridRow: "1 / span 2",
-                maxWidth: "260px",
-              }}
-            >
-              <h2 className="text-[13px] font-sans font-medium" style={{ color: COLORS.inkSoft }}>
-                Radar
-              </h2>
-              <RadarCanvas />
-            </div>
-
-            {/* Col 3: Empty space for globe visibility */}
-            <div style={{ gridColumn: "3", gridRow: "1 / span 2" }} />
-
-            {/* Device Inspector - full width span, bottom of page 2 */}
-            <div
-              ref={inspectorCardRef}
               data-testid="inspector-card"
+              data-card-animated="true"
               className="border rounded-[14px] p-6 pointer-events-auto"
               style={{
                 backgroundColor: COLORS.bgPanel,
                 borderColor: COLORS.line,
                 gridColumn: "1 / -1",
-                gridRow: "3",
+                opacity: 0,
+                transform: "translateY(24px)",
               }}
             >
-              <div className="flex justify-between items-center border-b pb-4 mb-4" style={{ borderColor: COLORS.line }}>
-                <div>
+              {/* Header: Judul, IP/SSID, Online/Offline count */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 border-b pb-4" style={{ borderColor: COLORS.line }}>
+                {/* Kiri: Judul + Deskripsi */}
+                <div className="flex flex-col min-w-0">
                   <h2 className="text-[15px] font-sans font-medium" style={{ color: COLORS.ink }}>
-                    Device inspector ({subnetPrefix})
+                    Inspektur perangkat ({subnetPrefix})
                   </h2>
                   <p className="text-[12px] font-sans mt-0.5" style={{ color: COLORS.inkSoft }}>
-                    Scapy ARP scanner aktif
+                    Scanner ARP Scapy aktif
                   </p>
                 </div>
-                <div className="flex gap-4 font-sans text-xs">
+
+                {/* Kanan: Online/Offline counts */}
+                <div className="flex items-center gap-4 font-sans text-xs md:flex-none">
                   <span className="flex items-center gap-2" style={{ color: COLORS.statusOn }}>
                     <span className="font-medium" style={{ fontSize: "16px" }}>
                       {metrics.total_up}
@@ -410,27 +411,31 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Area tabel: flex:1, min-height:0, overflow auto */}
               <div
-                ref={tableContainerRef}
                 className="overflow-x-auto overflow-y-auto"
                 style={{ flex: "1 1 0%", minHeight: 0, overscrollBehavior: "auto" }}
               >
                 {loading ? (
                   <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
-                    Connecting to scanner...
+                    Menghubungkan ke pemindai...
                   </div>
                 ) : validDevices.length === 0 ? (
                   <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
-                    No devices found.
+                    Tidak ada perangkat yang ditemukan.
                   </div>
                 ) : (
                   <table
-                    className="w-full mobile-table text-left"
-                    style={{ fontFamily: "ui-monospace, Consolas, monospace", fontSize: "12px", minWidth: "900px" }}
-                    aria-label="Network device scan results"
+                    className="w-full text-left"
+                    style={{
+                      fontFamily: "ui-monospace, Consolas, monospace",
+                      fontSize: "12px",
+                      minWidth: "900px",
+                    }}
+                    aria-label="Hasil pemindaian perangkat jaringan"
                   >
                     <caption className="sr-only">
-                      Network device scan results — {validDevices.length} devices detected
+                      Hasil pemindaian perangkat jaringan — {validDevices.length} perangkat terdeteksi
                     </caption>
                     <thead>
                       <tr
@@ -442,28 +447,28 @@ export default function DashboardPage() {
                           onClick={() => handleSort("ip")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          IP address <SortIndicator columnKey="ip" sortConfig={sortConfig} />
+                          Alamat IP <SortIndicator columnKey="ip" sortConfig={sortConfig} />
                         </th>
                         <th
                           className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                           onClick={() => handleSort("mac")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          MAC address <SortIndicator columnKey="mac" sortConfig={sortConfig} />
+                          Alamat MAC <SortIndicator columnKey="mac" sortConfig={sortConfig} />
                         </th>
                         <th
                           className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                           onClick={() => handleSort("hostname")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          Device name <SortIndicator columnKey="hostname" sortConfig={sortConfig} />
+                          Nama perangkat <SortIndicator columnKey="hostname" sortConfig={sortConfig} />
                         </th>
                         <th
                           className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                           onClick={() => handleSort("category")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          Category <SortIndicator columnKey="category" sortConfig={sortConfig} />
+                          Kategori <SortIndicator columnKey="category" sortConfig={sortConfig} />
                         </th>
                         <th
                           className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
@@ -477,14 +482,14 @@ export default function DashboardPage() {
                           onClick={() => handleSort("location")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          Location <SortIndicator columnKey="location" sortConfig={sortConfig} />
+                          Lokasi <SortIndicator columnKey="location" sortConfig={sortConfig} />
                         </th>
                         <th
                           className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
                           onClick={() => handleSort("latency")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          Latency <SortIndicator columnKey="latency" sortConfig={sortConfig} />
+                          Latensi <SortIndicator columnKey="latency" sortConfig={sortConfig} />
                         </th>
                         <th
                           className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
@@ -498,7 +503,7 @@ export default function DashboardPage() {
                           onClick={() => handleSort("last_seen")}
                           style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                         >
-                          Last seen <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
+                          Terakhir dilihat <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
                         </th>
                       </tr>
                     </thead>
@@ -506,10 +511,6 @@ export default function DashboardPage() {
                       {sortedDevices.map((dev, idx) => (
                         <tr
                           key={idx}
-                          ref={(el) => {
-                            if (el) tableRowRefs.current.set(idx, el);
-                            else tableRowRefs.current.delete(idx);
-                          }}
                           className="hover:transition-colors"
                           style={{ backgroundColor: "transparent" }}
                         >
@@ -528,12 +529,22 @@ export default function DashboardPage() {
                           <td className="px-4 py-3" style={{ color: COLORS.ink }}>
                             {dev.hostname}
                           </td>
-                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.category}</td>
-                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.vendor}</td>
-                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>{dev.location}</td>
+                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>
+                            {dev.category}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>
+                            {dev.vendor}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>
+                            {dev.location}
+                          </td>
                           <td
                             className="px-4 py-3"
-                            style={{ color: COLORS.accent, fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums" }}
+                            style={{
+                              color: COLORS.accent,
+                              fontFamily: "ui-monospace, Consolas, monospace",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
                           >
                             {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
                           </td>
@@ -553,7 +564,7 @@ export default function DashboardPage() {
                               {dev.is_blacklisted && (
                                 <span className="flex items-center gap-1">
                                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.accent }} />
-                                  <span style={{ color: COLORS.inkSoft }}>Blocked</span>
+                                  <span style={{ color: COLORS.inkSoft }}>Terblokir</span>
                                 </span>
                               )}
                             </div>
@@ -575,15 +586,35 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      {/* Debug overlay */}
-      {showProgressDebug && (
-        <div
-          className="fixed bottom-4 right-4 z-[9999] px-2 py-1 text-xs font-mono rounded"
-          style={{ backgroundColor: COLORS.bgPanel, borderColor: COLORS.line, color: COLORS.ink, borderWidth: 1 }}
-        >
-          p = {Math.min(1, Math.max(0, progressP)).toFixed(4)}
+      {/* Penanda halaman: dua titik di tepi kanan */}
+      <div
+        ref={dotsContainerRef}
+        className="fixed top-1/2 -translate-y-1/2 right-6 z-40 flex items-center pointer-events-none"
+        aria-hidden="true"
+      >
+        <div className="flex flex-col items-center gap-3">
+          {/* Dot slide 1 */}
+          <button
+            onClick={() => scrollToSlide(0)}
+            className="w-2 h-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
+            style={{
+              backgroundColor: activeSlide === 0 ? COLORS.accent : COLORS.inkFaint,
+              "--tw-ring-color": COLORS.accent,
+            } as React.CSSProperties}
+            aria-label="Gulir ke slide 1"
+          />
+          {/* Dot slide 2 */}
+          <button
+            onClick={() => scrollToSlide(1)}
+            className="w-2 h-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
+            style={{
+              backgroundColor: activeSlide === 1 ? COLORS.accent : COLORS.inkFaint,
+              "--tw-ring-color": COLORS.accent,
+            } as React.CSSProperties}
+            aria-label="Gulir ke slide 2"
+          />
         </div>
-      )}
+      </div>
     </>
   );
 }

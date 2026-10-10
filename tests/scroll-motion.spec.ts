@@ -1,133 +1,138 @@
 import { test, expect } from '@playwright/test';
 
-test('2-page layout: scroll hint, page2 grid, two-dot indicator, no double border, table nowrap', async ({ page }) => {
+test('fb43: Two-screen layout with scroll-snap, card animations, and page indicators', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('http://localhost:3000/?motion=debug', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+  await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(3500);
 
-  // Scroll behavior reset (LoadingUI may keep scroll-behavior:smooth from globals.css)
+  // Wait for LoadingUI to finish
+  await page.waitForFunction(() => {
+    const loadingUI = document.querySelector('.fixed.inset-0');
+    if (!loadingUI) return true;
+    const isTransitioning = loadingUI.classList.contains('scale-[0.25]');
+    return !isTransitioning;
+  }, { timeout: 10000 });
+
   await page.evaluate(() => {
     document.body.style.scrollBehavior = 'auto';
     document.documentElement.style.scrollBehavior = 'auto';
   });
   await page.waitForTimeout(500);
 
-  const hasMotion = await page.evaluate(() => document.documentElement.hasAttribute('data-motion'));
-  expect(hasMotion).toBe(true);
+  // 1. Check Slide 1 exists with aria-label and 100dvh height
+  const slide1 = await page.locator('section[aria-label="Halaman landing"]').count();
+  console.log('Slide 1 found:', slide1);
+  expect(slide1).toBe(1);
 
-  // Inspect CARD opacity at p=0 (cards should be entering/entering, some not yet visible)
-  const cardsState = await page.evaluate(() => {
-    const sel = {
-      serverConnCard: document.querySelector<HTMLElement>('[data-testid="server-connection-card"]'),
-      alertsCard: document.querySelector<HTMLElement>('[data-testid="alerts-card"]'),
-      radarCard: document.querySelector<HTMLElement>('[data-testid="radar-card"]'),
-      inspectorCard: document.querySelector<HTMLElement>('[data-testid="inspector-card"]'),
+  // 2. Check CyberGlobeBg canvas is present on Slide 1
+  const globeOnSlide1 = await page.evaluate(() => {
+    const slide1 = document.querySelector('section[aria-label="Halaman landing"]');
+    const globe = slide1?.querySelector('canvas[role="img"]');
+    return !!globe;
+  });
+  console.log('Globe canvas on Slide 1:', globeOnSlide1);
+  expect(globeOnSlide1).toBeTruthy();
+
+  // 3. Check "Scroll down" button is present
+  const scrollButton = await page.locator('button').filter({ hasText: /Gulir|Scroll/ }).count();
+  console.log('Scroll-related button count:', scrollButton);
+  expect(scrollButton).toBeGreaterThan(0);
+
+  // 4. Check Slide 2 exists with aria-label
+  const slide2 = await page.locator('section[aria-label="Dashboard jaringan"]').count();
+  console.log('Slide 2 found:', slide2);
+  expect(slide2).toBe(1);
+
+  // 5. Check all four cards are present with correct data-testid
+  const serverConnCard = await page.locator('[data-testid="server-conn-card"]').count();
+  const radarCard = await page.locator('[data-testid="radar-card"]').count();
+  const alertsCard = await page.locator('[data-testid="alerts-card"]').count();
+  const inspectorCard = await page.locator('[data-testid="inspector-card"]').count();
+
+  console.log('Cards found - Server Conn:', serverConnCard, 'Radar:', radarCard, 'Alerts:', alertsCard, 'Inspector:', inspectorCard);
+  expect(serverConnCard).toBe(1);
+  expect(radarCard).toBe(1);
+  expect(alertsCard).toBe(1);
+  expect(inspectorCard).toBe(1);
+
+  // 6. Check cards have initial animation state (opacity 0, translateY 24px) on page load
+  const cardsInitialState = await page.evaluate(() => {
+    const cards = {
+      serverConn: document.querySelector('[data-testid="server-conn-card"]'),
+      radar: document.querySelector('[data-testid="radar-card"]'),
+      alerts: document.querySelector('[data-testid="alerts-card"]'),
+      inspector: document.querySelector('[data-testid="inspector-card"]'),
     };
     const out: Record<string, any> = {};
-    Object.entries(sel).forEach(([k, el]) => {
-      if (!el) return (out[k] = { found: false });
-      const s = getComputedStyle(el as HTMLElement);
+    Object.entries(cards).forEach(([k, el]) => {
+      if (!el) return;
+      const style = (el as HTMLElement).getAttribute('style') || '';
       out[k] = {
-        opacity: s.opacity,
-        transform: s.transform,
-        inert: (el as any).hasAttribute?.('inert'),
-        ariaHidden: (el as any).getAttribute?.('aria-hidden'),
+        hasOpacity0: style.includes('opacity: 0'),
+        hasTransformY24: style.includes('translateY(24px)'),
       };
     });
     return out;
   });
-  console.log('cards at p=0:', JSON.stringify(cardsState, null, 2));
+  console.log('Cards initial animation state:', JSON.stringify(cardsInitialState, null, 2));
 
-  // Wrapper height sanity - should be 260vh
-  const wrapperH = await page.evaluate(() => {
-    const w = document.querySelector('body > div:first-child') as HTMLElement;
-    return w
-      ? { oh: w.offsetHeight, sh: w.scrollHeight, style: w.getAttribute('style') }
-      : 'not found';
+  // All cards should start with opacity 0 and translateY(24px)
+  expect(cardsInitialState.serverConn.hasOpacity0).toBeTruthy();
+  expect(cardsInitialState.radar.hasOpacity0).toBeTruthy();
+  expect(cardsInitialState.alerts.hasOpacity0).toBeTruthy();
+  expect(cardsInitialState.inspector.hasOpacity0).toBeTruthy();
+
+  // 7. Check page indicator dots exist (two buttons on right edge)
+  const pageIndicatorButtons = await page.evaluate(() => {
+    const dotsContainer = document.querySelector('div[aria-hidden="true"]');
+    if (!dotsContainer) return { found: false, count: 0 };
+    const buttons = dotsContainer.querySelectorAll('button');
+    return {
+      found: true,
+      count: buttons.length,
+      ariaLabels: Array.from(buttons).map(b => b.getAttribute('aria-label')),
+    };
   });
-  console.log('wrapper:', JSON.stringify(wrapperH));
+  console.log('Page indicator dots:', JSON.stringify(pageIndicatorButtons, null, 2));
+  expect(pageIndicatorButtons.found).toBeTruthy();
+  expect(pageIndicatorButtons.count).toBe(2);
 
-  // Two-dot indicator present at right edge
-  const dots = await page.$('[data-testid="scroll-progress-dots"]');
-  expect(dots).not.toBeNull();
-
-  // Scroll to bottom (ensure jump, no smooth animation)
-  await page.evaluate(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' });
+  // 8. Check Device Inspector card structure (table or loading message)
+  const inspectorStructure = await page.evaluate(() => {
+    const inspector = document.querySelector('[data-testid="inspector-card"]');
+    const hasHeader = !!inspector?.querySelector('h2');
+    const table = inspector?.querySelector('table');
+    const loadingMsg = inspector?.textContent?.includes('Menghubungkan') || inspector?.textContent?.includes('Tidak ada');
+    return {
+      hasHeader,
+      hasTable: !!table,
+      hasLoadingOrEmpty: loadingMsg,
+    };
   });
-  await page.waitForTimeout(300);
-  await page.evaluate(() => {
-    document.body.style.scrollBehavior = 'auto';
-    document.documentElement.style.scrollBehavior = 'auto';
-    const max = document.body.scrollHeight - window.innerHeight;
-    window.scrollTo({ top: max, behavior: 'auto' });
+  console.log('Device Inspector structure:', JSON.stringify(inspectorStructure, null, 2));
+  expect(inspectorStructure.hasHeader).toBeTruthy();
+  // Either has table or loading/empty message
+  expect(inspectorStructure.hasTable || inspectorStructure.hasLoadingOrEmpty).toBeTruthy();
+
+  // 9. Verify no old motion CSS elements (data-motion attribute should be absent)
+  const oldMotionElements = await page.evaluate(() => {
+    const all = Array.from(document.querySelectorAll('[data-motion]'));
+    return all.length;
   });
-  await page.waitForTimeout(2000);
+  console.log('Old motion elements with data-motion attribute:', oldMotionElements);
+  expect(oldMotionElements).toBe(0);
 
-  // Read progress BEFORE full-page screenshot (screenshot resets scroll position)
-  const scrollYAtEnd = await page.evaluate(() => window.scrollY);
-  const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
-  const pEnd = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--scroll-progress'));
-  const pNum = parseFloat(pEnd || '0');
-  console.log('scrollY:', scrollYAtEnd, 'maxScroll:', maxScroll, 'pNum:', pNum);
+  // 10. Verify scroll hint arrow animation is present
+  const scrollHintArrow = await page.evaluate(() => {
+    const button = document.querySelector('button[aria-label*="Gulir"]');
+    const arrow = button?.querySelector('.scroll-pill-icon');
+    return !!arrow;
+  });
+  console.log('Scroll hint arrow found:', scrollHintArrow);
+  expect(scrollHintArrow).toBeTruthy();
 
-  // Capture full page screenshot after reading state
+  // 11. Capture full page screenshot
   await page.screenshot({ path: 'motion-full-scroll.png', fullPage: true });
 
-  const inspectorEnd = await page.evaluate(() => {
-    const r = document.querySelector('[data-testid="inspector-card"]') as HTMLElement;
-    return r ? { opacity: parseFloat(getComputedStyle(r).opacity) } : { found: false };
-  });
-  console.log('inspector card at end:', JSON.stringify(inspectorEnd));
-
-  // Alerts single border - check for single bordered div (no nested border)
-  const alertsStructure = await page.evaluate(() => {
-    const outer = document.querySelector<HTMLElement>('[data-testid="alerts-card"]');
-    const inner = outer?.querySelector('div');
-    return {
-      outerBorder: outer ? getComputedStyle(outer).borderWidth : null,
-      outerRadius: outer ? getComputedStyle(outer).borderRadius : null,
-      innerPresent: !!inner,
-    };
-  });
-  console.log('alerts structure:', JSON.stringify(alertsStructure));
-
-  // No leftover dark bar (no animate-bounce class, no w-[3px] width)
-  const leftoverDarkBar = await page.evaluate(() => {
-    const all = Array.from(document.querySelectorAll('*'));
-    return all.filter((el) => {
-      const cn = (el as HTMLElement).className;
-      const c = typeof cn === 'string' ? cn : '';
-      return c.includes('animate-bounce') || /w-\[3px\]/.test(c);
-    }).length;
-  });
-  console.log('leftover dark bars:', leftoverDarkBar);
-
-  // Table cells: whitespace-nowrap, min-width 900px on table
-  const tableCheck = await page.evaluate(() => {
-    const t = document.querySelector('table');
-    if (!t) return { found: false };
-    const firstCell = t.querySelector<HTMLElement>('td, th');
-    const whiteSpace = firstCell ? getComputedStyle(firstCell).whiteSpace : null;
-    return {
-      found: true as const,
-      minWidth: getComputedStyle(t).minWidth,
-      whiteSpace,
-      overflowX: getComputedStyle(t.parentElement!).overflowX,
-    };
-  });
-  console.log('table check:', JSON.stringify(tableCheck));
-
-  // Directive 5 assertion: alerts card has single border, radius 14px
-  expect(alertsStructure.outerRadius).toBe('14px');
-
-  // Directive 6 assertion: no leftover dark bars (bounce animation / 3px width)
-  expect(leftoverDarkBar).toBe(0);
-
-  // Table assertions
-  expect(tableCheck.found).toBeTruthy();
-  expect(tableCheck.overflowX).toBe('auto');
-
-  // pNum end sanity - progress should reach near 1 at scroll end
-  expect(pNum).toBeGreaterThanOrEqual(0.95);
+  console.log('✓ All fb43 layout assertions passed');
 });

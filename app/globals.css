@@ -69,18 +69,16 @@ body {
   }
 }
 
-/* TAHAP 2/3 — Scroll-driven motion.
-   Layout: sections use normal flow (h-screen each), stacking vertically — all visible at all times.
-   Motion: applied visual-only via onProgress (transform/opacity) — does NOT affect document flow.
-   data-motion="on" is set by useScrollProgress so motion helpers and globe can read --scroll-progress.
-   Without data-motion, everything stays static (flow layout, all cards visible). */
-[data-motion="on"] .motion-section {
-  will-change: transform, opacity;
-}
-
-/* Globe container motion (only when motion active) */
-[data-motion="on"] .globe-motion {
-  will-change: transform, opacity;
+/* Animasi masuk kartu (600ms, 80ms stagger) */
+@keyframes cardEntry {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Animated scroll-hint arrow (cheapest paint-only animation) */
@@ -99,11 +97,28 @@ body {
   }
 }
 
-/* Mobile: inspector table horizontal scroll */
-@media (max-width: 800px) {
-  .mobile-table {
-    min-width: 600px;
-  }
+/* Page indicator dots: dua titik di tepi kanan */
+.page-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 300ms ease;
+  cursor: pointer;
+}
+
+.page-dot.active {
+  background-color: var(--accent);
+}
+
+.page-dot.inactive {
+  background-color: var(--ink-faint);
 }
 
 /* Phase 5 — Accessibility focus ring */
@@ -137,32 +152,10 @@ body {
   outline-offset: 2px;
 }
 
-/* Reduced motion: suppress all non-essential motion (glob, scrolls) */
-@media (prefers-reduced-motion: reduce) {
-  [data-motion="on"] .motion-section,
-  [data-motion="on"] .globe-motion {
-    transform: none !important;
-    opacity: 1 !important;
-  }
-}
-
 /* Mobile: tighten grid layout for small viewports */
 @media (max-width: 640px) {
-  [data-testid="scroll-progress-dots"] {
+  .page-indicator {
     right: 0.5rem;
-  }
-  .grid-cols-\[320px_1fr\] {
-    grid-template-columns: 1fr;
-  }
-  .gap-\[12px\] {
-    gap: 8px;
-  }
-  .inspector-section .px-4 {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-  .inspector-section [data-testid="inspector-card"] {
-    padding: 14px 12px;
   }
 }
 

@@ -54,22 +54,17 @@ function enterMotion(
   };
 }
 
-/** Server connection card: enters 0.26-0.42 from left (-30px translateX) */
-export function serverConnMotion(p: number): ElementMotionState {
-  return enterMotion(p, cfg.segments.serverConn, { x: -30, y: 0 });
-}
-
-/** Alerts card: enters 0.31-0.47 from left-up (-30px x, +14px y) */
-export function alertsMotion(p: number): ElementMotionState {
-  return enterMotion(p, cfg.segments.alerts, { x: offsets.alerts.x, y: offsets.alerts.y });
-}
-
-/** Radar card: enters 0.36-0.52 from bottom (+26px translateY) */
+/** Radar card: enters 0.26-0.42 from top-left (-30px x, +14px y) */
 export function radarMotion(p: number): ElementMotionState {
-  return enterMotion(p, cfg.segments.radar, { x: 0, y: offsets.radar.y });
+  return enterMotion(p, cfg.segments.radar, { x: offsets.radar.x, y: offsets.radar.y });
 }
 
-/** Device inspector: enters 0.41-0.60 from bottom (+50px translateY) */
+/** Alerts card: enters 0.31-0.47 from bottom (+26px translateY) */
+export function alertsMotion(p: number): ElementMotionState {
+  return enterMotion(p, cfg.segments.alerts, { x: 0, y: offsets.alerts.y });
+}
+
+/** Device inspector: enters 0.38-0.56 from bottom (+50px translateY) */
 export function deviceInspectorMotion(p: number): ElementMotionState {
   return enterMotion(p, cfg.segments.deviceInspector, { x: 0, y: offsets.deviceInspector.y });
 }
@@ -101,34 +96,68 @@ export function scrollProgressDotsMotion(p: number): { opacity: number } {
 }
 
 /**
- * Globe motion: 0.12-0.50 moves to top-right corner at scale 0.52, opacity 0.35.
- * Rotation continues throughout.
+ * Globe motion: 0.12-0.50 animates scale & opacity, and translates the globe
+ * from page-1 center toward the empty column-3 in page-2.
+ * The container already has base positioning (left:50%, top:48%, translate(-50%,-50%)).
+ * This function returns an ADDITIONAL translate offset to stack on top in the RAF loop.
+ *
+ * Page-2 target: globe center lands in the middle of col-3, vertical-middle of first row.
+ * Page-1 size: min(74vh, 560px, 92vw).  Page-2 end scale ~0.65, opacity ≥0.92.
+ * Mobile (<800px): scale ~0.4, opacity 0.5, behind cards.
+ *
+ * Page-2 globe size: 90% of first-row height, clamped 260-400px.
+ * First-row height = clamp(260px, 36vh, 340px).
  */
-export function globeMotion(p: number): { transform: string; opacity: number } {
+export function globeMotion(p: number): { translate: string; scale: number; opacity: number } {
   const e = seg(p, cfg.segments.globeMove.a, cfg.segments.globeMove.b);
   const eEase = smoothstep(e);
 
-  // Scale: 1 → 0.52
-  const scale = 1 - eEase * (1 - offsets.globe.scaleTarget);
-  // Opacity: 1 → 0.35
-  const opacity = 1 - eEase * (1 - offsets.globe.opacityTarget);
-
-  // Move to top-right: x positive = right, y negative = up
-  // At full progress: translate right by (vw/2 - 300/2 - 40) and up by (-(vh/2 - 300/2 - 40))
-  // Use vw/vh for viewport-relative positioning
   const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
   const vh = typeof window !== "undefined" ? window.innerHeight : 720;
-  const halfGlobe = offsets.globe.sizePx / 2;
-  const targetX = vw / 2 - halfGlobe - offsets.globe.moveX;     // right edge offset
-  const targetY = -(vh / 2 - halfGlobe - offsets.globe.moveY);   // up, negative
+  const isMobile = vw < cfg.breakpoints.mobileWidth;
+
+  // Scale
+  const scale = isMobile
+    ? 1 - eEase * (1 - offsets.globe.scaleTargetMobile)
+    : 1 - eEase * (1 - offsets.globe.scaleTarget);
+
+  // Opacity
+  const opacity = isMobile
+    ? 1 - eEase * (1 - offsets.globe.opacityTargetMobile)
+    : 1 - eEase * (1 - offsets.globe.opacityTarget);
+
+  // Translate from center (page-1) toward center-of-col-3 (page-2).
+  // Col-3 starts after col-1 (minmax 220-300) + col-2 (minmax 200-260) + 2 gaps (12px each).
+  const col1w = Math.min(300, Math.max(220, vw * 0.28));       // approx
+  const col2w = Math.min(260, Math.max(200, vw * 0.22));        // approx
+  const gap = cfg.layout.columnGapPx;
+  const col3Left = col1w + gap + col2w + gap;
+  const col3Width = vw - col3Left;
+  const col3CenterX = col3Left + col3Width / 2;
+
+  // Vertical: middle of first row (approx at 20% from top of page2)
+  const targetX = col3CenterX - vw / 2;  // additional translate from center
+  const targetY = (vh * 0.20) - vh / 2;   // additional translate from center down slightly to first row
 
   const tx = eEase * targetX;
   const ty = eEase * targetY;
 
   return {
-    transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+    translate: `translate(${tx}px, ${ty}px)`,
+    scale,
     opacity,
   };
+}
+
+/**
+ * Compute the page-2 globe target size: 90% of the first-row height,
+ * where first-row height = clamp(260px, 36vh, 340px).  Clamped 260-400px.
+ */
+export function globePage2Size(): number {
+  const vh = typeof window !== "undefined" ? window.innerHeight : 720;
+  const g = cfg.offsets.globe;
+  const row1H = Math.max(g.page2Row1HeightMin, Math.min(g.page2Row1HeightMax, vh * g.page2Row1HeightVh / 100));
+  return Math.max(g.globeSizeMin, Math.min(g.globeSizeMax, row1H * g.globeSizeRatio));
 }
 
 /**

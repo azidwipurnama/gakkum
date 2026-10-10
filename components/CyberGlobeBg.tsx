@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { scrollMotionConfig as cfg } from "@/lib/scrollMotion.config";
-import { globeMotion } from "@/lib/scrollMotion";
 
 interface CyberGlobeBgProps {
   wifiName?: string;
@@ -31,32 +29,6 @@ export default function CyberGlobeBg({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Helper: read --scroll-progress from :root and derive globe transform/opacity.
-  // Re-evaluated each frame inside the canvas loop (no React state/prop updates per frame).
-  const computeGlobeMotion = (): { transform: string; opacity: number } => {
-    if (typeof window === "undefined" || !containerRef.current) {
-      return { transform: "translate(0,0) scale(1)", opacity: 1 };
-    }
-    // Only apply motion when data-motion="on" is set (fallback to static when absent)
-    if (!document.documentElement.hasAttribute("data-motion")) {
-      return { transform: "translate(0,0) scale(1)", opacity: 1 };
-    }
-    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (isReduced) {
-      return { transform: "translate(0,0) scale(1)", opacity: 1 };
-    }
-
-    const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue("--scroll-progress")
-      .trim();
-    const p = parseFloat(raw);
-    if (!Number.isFinite(p)) {
-      return { transform: "translate(0,0) scale(1)", opacity: 1 };
-    }
-
-    return globeMotion(Math.max(0, Math.min(1, p)));
-  };
-
   useEffect(() => {
     const cv = canvasRef.current;
     if (!cv) return;
@@ -64,8 +36,8 @@ export default function CyberGlobeBg({
     const g = cv.getContext("2d")!;
     if (!g) return;
 
-    // Fixed globe size per config (300px), centered in canvas
-    const GLOBE_SIZE = cfg.offsets.globe.sizePx;
+    // Fixed globe size: 300px
+    const GLOBE_SIZE = 300;
     let W = GLOBE_SIZE, H = GLOBE_SIZE, R = GLOBE_SIZE * 0.38, cx = GLOBE_SIZE / 2, cy = GLOBE_SIZE / 2;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -82,19 +54,15 @@ export default function CyberGlobeBg({
       statusOff: root.getPropertyValue('--status-off') || COLORS.statusOff,
     };
 
-    const size = () => {
-      W = GLOBE_SIZE;
-      H = GLOBE_SIZE;
-      cv.width = W * dpr;
-      cv.height = H * dpr;
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      R = Math.min(W, H) * 0.38;
-      cx = W / 2;
-      cy = H / 2;
-    };
-
-    window.addEventListener("resize", size);
-    size();
+    // Initial canvas setup
+    cv.width = GLOBE_SIZE * dpr;
+    cv.height = GLOBE_SIZE * dpr;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = GLOBE_SIZE;
+    H = GLOBE_SIZE;
+    R = GLOBE_SIZE * 0.38;
+    cx = GLOBE_SIZE / 2;
+    cy = GLOBE_SIZE / 2;
 
     const TILT = 0.42;
     let yaw = 0;
@@ -102,7 +70,7 @@ export default function CyberGlobeBg({
     // Reduced rotation speed for calm aesthetic
     const ROTATION_SPEED = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.0018;
 
-    // VARIABEL DRAG HANYA DIDEFINISIKAN 1 KALI DI SINI
+    // Drag interaction
     let drag = false;
     let lx = 0;
 
@@ -114,24 +82,24 @@ export default function CyberGlobeBg({
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
-    // 1. Hybrid Event Listener (Kursor Drag Globe + Scroll Web Berjalan)
+    // Pointer event listeners for drag
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
 
-      // 2. Cegah drag jika klik pada elemen UI interaktif
+      // Prevent drag if clicking on interactive elements
       if (
         target.tagName === "BUTTON" ||
         target.closest("button") ||
-        target.closest(".pointer-events-auto") || // UI elements
+        target.closest(".pointer-events-auto") ||
         target.closest("table")
       ) {
         return;
       }
 
-      // 1. Batasan area drag (R * 1.55)
+      // Limit drag area to R * 1.55
       const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
       if (dist > R * 1.55) {
-        return; // Klik di luar area globe, biarkan scroll lewat
+        return; // Click outside globe area, allow scroll through
       }
 
       drag = true;
@@ -150,20 +118,11 @@ export default function CyberGlobeBg({
       }
     };
 
-    // Pasang listener ke WINDOW agar tidak memblokir event scroll pada canvas
     window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointermove", onPointerMove);
 
-    // 2. Scroll Listener (Rotasi Globe saat Web discroll)
-    let lastScrollY = window.scrollY;
-    const handleScroll = () => {
-      const delta = window.scrollY - lastScrollY;
-      yaw += delta * 0.001;
-      lastScrollY = window.scrollY;
-    };
-    window.addEventListener("scroll", handleScroll);
-
+    // 3D math helpers
     const ll = (la: number, lo: number): [number, number, number] => {
       la *= Math.PI / 180;
       lo *= Math.PI / 180;
@@ -194,7 +153,7 @@ export default function CyberGlobeBg({
 
     // Land Dots Generation
     const dots: { v: [number, number, number]; land: boolean }[] = [];
-    const N = 4000; // Increased density
+    const N = 4000;
     for (let i = 0; i < N; i++) {
       const y = 1 - (2 * (i + 0.5)) / N;
       const r = Math.sqrt(1 - y * y);
@@ -280,7 +239,7 @@ export default function CyberGlobeBg({
       });
     }
 
-    for (let i = 0; i < 15; i++) { // Increased spawn count
+    for (let i = 0; i < 15; i++) {
       spawn();
       flows[i].t = Math.random();
     }
@@ -289,17 +248,10 @@ export default function CyberGlobeBg({
 
     function frame() {
       if (!g) return;
-      // Pause rendering entirely when tab is not visible (save CPU).
+      // Pause rendering entirely when tab is not visible
       if (hidden) {
         animId = requestAnimationFrame(frame);
         return;
-      }
-
-      // Apply globe motion transform/opacity from scroll progress (no React re-render)
-      if (containerRef.current) {
-        const m = computeGlobeMotion();
-        containerRef.current.style.transform = m.transform;
-        containerRef.current.style.opacity = String(m.opacity);
       }
 
       if (!drag) yaw += ROTATION_SPEED;
@@ -366,7 +318,7 @@ export default function CyberGlobeBg({
         [0.5, 0.2, 1.32],
         [-0.9, -0.35, 1.55],
       ].forEach(([tx, tz, r], k) => {
-        g.lineWidth = 1.8; // Thicker orbit rings
+        g.lineWidth = 1.8;
         let prev: [number, number] | null = null;
         for (let u = 0; u <= 64; u++) {
           const q = (u / 64) * Math.PI * 2;
@@ -386,8 +338,8 @@ export default function CyberGlobeBg({
           if (prev) {
             const hid = v[2] < 0 && Math.hypot(v[0], v[1]) < 1;
             if (!hid) {
-              const orbitAlpha = v[2] > 0 ? 0.6 : 0.3; // Darkened/Increased opacity
-              g.strokeStyle = `rgba(${hexToRgb(resolvedColors.inkSoft)}, ${orbitAlpha})`; // Changed inkFaint to inkSoft
+              const orbitAlpha = v[2] > 0 ? 0.6 : 0.3;
+              g.strokeStyle = `rgba(${hexToRgb(resolvedColors.inkSoft)}, ${orbitAlpha})`;
               g.beginPath();
               g.moveTo(prev[0], prev[1]);
               g.lineTo(p[0], p[1]);
@@ -436,7 +388,7 @@ export default function CyberGlobeBg({
           if (prev && !(v[2] < 0 && Math.hypot(v[0], v[1]) < 1)) {
             const flowAlpha = (1.0 * s) / steps;
             g.strokeStyle = `rgba(${hexToRgb(col)}, ${flowAlpha})`;
-            g.lineWidth = 2.5; // Thicker flow lines
+            g.lineWidth = 2.5;
             g.beginPath();
             g.moveTo(prev[0], prev[1]);
             g.lineTo(p[0], p[1]);
@@ -510,17 +462,8 @@ export default function CyberGlobeBg({
 
     frame();
 
-    // Apply initial motion state if progress var is present.
-    const motion = computeGlobeMotion();
-    if (containerRef.current) {
-      containerRef.current.style.transform = motion.transform;
-      containerRef.current.style.opacity = String(motion.opacity);
-    }
-
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("resize", size);
-      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointermove", onPointerMove);
@@ -533,25 +476,25 @@ export default function CyberGlobeBg({
       ref={containerRef}
       className={className}
       style={{
-        position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100vh",
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        width: `min(74vh, 560px, 92vw)`,
+        height: `min(74vh, 560px, 92vw)`,
         zIndex: 0,
-        pointerEvents: "none",
+        pointerEvents: "auto",
         ...style,
       }}
     >
       <canvas
         ref={canvasRef}
-        width={cfg.offsets.globe.sizePx}
-        height={cfg.offsets.globe.sizePx}
+        width={300}
+        height={300}
         style={{
-          position: "absolute",
-          inset: 0,
-          width: `${cfg.offsets.globe.sizePx}px`,
-          height: `${cfg.offsets.globe.sizePx}px`,
-          pointerEvents: "none",
+          width: "100%",
+          height: "100%",
+          display: "block",
         }}
         role="img"
         aria-label="Network visualization globe"

@@ -54,7 +54,12 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress, debug = f
   useEffect(() => {
     const wrapper = wrapperRef.current;
     const target = targetRef.current;
-    if (!wrapper || !target) return;
+    console.log("useScrollProgress init", { wrapper: !!wrapper, target: !!target, wrapperRef: wrapperRef, targetRef: targetRef });
+    if (!wrapper || !target) {
+        console.log("useScrollProgress FAILED init", { wrapper: !!wrapper, target: !!target });
+        return;
+    }
+    console.log("useScrollProgress REFS ATTACHED", { wrapperHeight: wrapper.offsetHeight, wrapperScrollHeight: wrapper.scrollHeight });
 
     // Reduced motion check
     isReduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -89,7 +94,8 @@ export function useScrollProgress({ wrapperRef, targetRef, onProgress, debug = f
       // Clamp 0..1
       const clamped = raw < 0 ? 0 : raw > 1 ? 1 : raw;
 
-      if (!isReadyRef.current) {
+      console.log("useScrollProgress tick first frame", { pRef: targetPRef.current, isReady });
+    if (!isReadyRef.current) {
         isReadyRef.current = true;
         setIsReady(true);
         apply(0, true);
