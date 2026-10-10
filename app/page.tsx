@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Wifi, Radar, AlertTriangle, Check } from "lucide-react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
-import AlertsPanel from "@/components/AlertsPanel";
 import { useNetwork } from "@/contexts/NetworkContext";
 import LoadingUI from "@/components/LoadingUI";
 
@@ -36,7 +35,7 @@ function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfi
   );
 }
 
-// Komponen canvas radar
+// Komponen canvas radar mini dengan DPR handling
 function RadarCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -47,9 +46,12 @@ function RadarCanvas() {
 
     let angle = 0;
     let animId: number;
-    const size = 100;
-    cv.width = size;
-    cv.height = size;
+    const dpr = window.devicePixelRatio || 1;
+    const size = 112;
+    cv.width = size * dpr;
+    cv.height = size * dpr;
+    g.scale(dpr, dpr);
+
     const cx = size / 2;
     const cy = size / 2;
     const r = size / 2 - 5;
@@ -113,10 +115,12 @@ function RadarCanvas() {
     draw();
     return () => cancelAnimationFrame(animId);
   }, []);
+
   return (
     <canvas
       ref={canvasRef}
       className="mx-auto block"
+      style={{ width: "112px", height: "112px" }}
       role="img"
       aria-label="Visualisasi radar"
     />
@@ -124,22 +128,26 @@ function RadarCanvas() {
 }
 
 export default function DashboardPage() {
-  const { devices, metrics, ssid, loading } = useNetwork();
+  const { devices, metrics, ssid, alerts, loading } = useNetwork();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "ip", direction: "asc" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "up" | "down">("all");
 
-  // Ref untuk scroll ke slide 2
+  // Ref untuk slide 2 (untuk IntersectionObserver)
   const slide2Ref = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Ref untuk page indicator dots
-  const dotsContainerRef = useRef<HTMLDivElement>(null);
-
-  // State untuk tracking slide visible di viewport (untuk animasi kartu dan kontrol globe)
+  // State untuk tracking slide visible di viewport
   const [activeSlide, setActiveSlide] = useState(0);
+  const [motionReady, setMotionReady] = useState(false);
 
   // IntersectionObserver untuk mendeteksi slide 2 masuk viewport dan trigger card animations
   useEffect(() => {
     if (!slide2Ref.current) return;
+
+    // Set data-motion="ready" setelah observer dibuat
+    setMotionReady(true);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -147,32 +155,11 @@ export default function DashboardPage() {
           if (entry.target === slide2Ref.current) {
             setActiveSlide(entry.isIntersecting ? 1 : 0);
 
-            // Trigger card animations ketika slide 2 masuk viewport
+            // Set data-in attribute untuk trigger animasi masuk
             if (entry.isIntersecting) {
-              const cards = [
-                slide2Ref.current?.querySelector('[data-testid="server-conn-card"]'),
-                slide2Ref.current?.querySelector('[data-testid="radar-card"]'),
-                slide2Ref.current?.querySelector('[data-testid="alerts-card"]'),
-                slide2Ref.current?.querySelector('[data-testid="inspector-card"]'),
-              ];
-
-              cards.forEach((card, index) => {
-                if (card instanceof HTMLElement) {
-                  card.style.animation = 'none';
-                  setTimeout(() => {
-                    card.style.animation = `cardEntry 600ms cubic-bezier(.22,.8,.2,1) forwards`;
-                    card.style.animationDelay = `${index * 80}ms`;
-                  }, 10);
-                }
-              });
+              slide2Ref.current?.setAttribute("data-in", "true");
             } else {
-              // Reset animasi ketika keluar viewport
-              const cards = slide2Ref.current?.querySelectorAll('[data-card-animated]');
-              cards?.forEach((card) => {
-                if (card instanceof HTMLElement) {
-                  card.style.animation = 'none';
-                }
-              });
+              slide2Ref.current?.removeAttribute("data-in");
             }
           }
         });
@@ -181,8 +168,14 @@ export default function DashboardPage() {
     );
 
     observer.observe(slide2Ref.current);
+
+    // Set data-motion="ready" pada slide2 element
+    if (slide2Ref.current && motionReady) {
+      slide2Ref.current.setAttribute("data-motion", "ready");
+    }
+
     return () => observer.disconnect();
-  }, []);
+  }, [motionReady]);
 
   const scrollToSlide2 = () => {
     slide2Ref.current?.scrollIntoView({ behavior: "smooth" });
@@ -197,7 +190,22 @@ export default function DashboardPage() {
   };
 
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
-  const sortedDevices = [...validDevices].sort((a, b) => {
+
+  // Filter devices berdasarkan search query dan status filter
+  const filteredDevices = validDevices.filter((d) => {
+    const matchesSearch =
+      !searchQuery ||
+      d.ip?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.mac?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.hostname?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" || (statusFilter === "up" && d.status === "UP") || (statusFilter === "down" && d.status === "DOWN");
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const sortedDevices = [...filteredDevices].sort((a, b) => {
     const aVal = a[sortConfig.key as keyof typeof a];
     const bVal = b[sortConfig.key as keyof typeof a];
     if (aVal === undefined || bVal === undefined) return 0;
@@ -267,328 +275,762 @@ export default function DashboardPage() {
           </a>
         </section>
 
-        {/* SLIDE 2: Dashboard dengan Grid Kartu */}
+        {/* SLIDE 2: Dashboard dengan Layout Baru */}
         <section
           id="slide2"
           ref={slide2Ref}
+          className="s2 relative w-full"
+          data-testid="slide2-section"
           aria-label="Dashboard jaringan"
-          className="relative w-full"
           style={{
             height: "100dvh",
             scrollSnapAlign: "start",
             display: "flex",
             flexDirection: "column",
+            backgroundColor: COLORS.bgPage,
+            overflow: "hidden",
           }}
         >
-          <div
-            className="h-full"
-            style={{
-              padding: INSET,
-              display: "grid",
-              gridTemplateColumns: "repeat(3, minmax(0,1fr))",
-              gridTemplateRows: "auto 1fr",
-              gap: "12px",
-            }}
-          >
-            {/* Baris 1: Kartu Server Connection, Radar, Alerts */}
-            {/* Kolom 1: Server Connection */}
-            <div
-              data-testid="server-conn-card"
-              data-card-animated="true"
-              className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
-              style={{
-                backgroundColor: COLORS.bgPanel,
-                borderColor: COLORS.line,
-                minHeight: "clamp(220px, 30dvh, 300px)",
-                opacity: 0,
-                transform: "translateY(24px)",
-              }}
-            >
-              <h2 className="text-[13px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
-                Server connection
-              </h2>
-              <div className="space-y-2 font-mono text-xs">
-                <p className="flex justify-between">
-                  <span style={{ color: COLORS.inkSoft }}>IP:</span>
-                  <span style={{ fontFamily: "ui-monospace, Consolas, monospace", fontVariantNumeric: "tabular-nums", color: COLORS.ink }}>
-                    {metrics.server_ip}
-                  </span>
-                </p>
-                <p className="pt-2 border-t" style={{ borderColor: COLORS.line }}>
-                  <span style={{ color: COLORS.inkSoft }}>SSID:</span>
-                  <span
-                    className="block mt-1 truncate"
-                    title={ssid}
-                    style={{
-                      color: COLORS.ink,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {ssid}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* Kolom 2: Radar */}
-            <div
-              data-testid="radar-card"
-              data-card-animated="true"
-              className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
-              style={{
-                backgroundColor: COLORS.bgPanel,
-                borderColor: COLORS.line,
-                minHeight: "clamp(220px, 30dvh, 300px)",
-                opacity: 0,
-                transform: "translateY(24px)",
-              }}
-            >
-              <h2 className="text-[13px] font-sans font-medium mb-3" style={{ color: COLORS.inkSoft }}>
-                Radar
-              </h2>
-              <div className="flex justify-center">
-                <RadarCanvas />
-              </div>
-            </div>
-
-            {/* Kolom 3: Alerts */}
-            <div
-              data-testid="alerts-card"
-              data-card-animated="true"
-              className="border rounded-[14px] p-[14px_16px] pointer-events-auto"
-              style={{
-                backgroundColor: COLORS.bgPanel,
-                borderColor: COLORS.line,
-                minHeight: "clamp(220px, 30dvh, 300px)",
-                opacity: 0,
-                transform: "translateY(24px)",
-              }}
-            >
-              <AlertsPanel />
-            </div>
-
-            {/* Baris 2: Device Inspector (full width) */}
-            <div
-              data-testid="inspector-card"
-              data-card-animated="true"
-              className="border rounded-[14px] p-6 pointer-events-auto"
-              style={{
-                backgroundColor: COLORS.bgPanel,
-                borderColor: COLORS.line,
-                gridColumn: "1 / -1",
-                opacity: 0,
-                transform: "translateY(24px)",
-              }}
-            >
-              {/* Header: Judul, IP/SSID, Online/Offline count */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 border-b pb-4" style={{ borderColor: COLORS.line }}>
-                {/* Kiri: Judul + Deskripsi */}
-                <div className="flex flex-col min-w-0">
-                  <h2 className="text-[15px] font-sans font-medium" style={{ color: COLORS.ink }}>
-                    Inspektur perangkat ({subnetPrefix})
-                  </h2>
-                  <p className="text-[12px] font-sans mt-0.5" style={{ color: COLORS.inkSoft }}>
-                    Scanner ARP Scapy aktif
-                  </p>
-                </div>
-
-                {/* Kanan: Online/Offline counts */}
-                <div className="flex items-center gap-4 font-sans text-xs md:flex-none">
-                  <span className="flex items-center gap-2" style={{ color: COLORS.statusOn }}>
-                    <span className="font-medium" style={{ fontSize: "16px" }}>
-                      {metrics.total_up}
-                    </span>
-                    <span>online</span>
-                  </span>
-                  <span className="flex items-center gap-2" style={{ color: COLORS.statusOff }}>
-                    <span className="font-medium" style={{ fontSize: "16px" }}>
-                      {metrics.total_down}
-                    </span>
-                    <span>offline</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Area tabel: flex:1, min-height:0, overflow auto */}
+          {/* Setup IntersectionObserver untuk animasi masuk setelah komponen mount */}
+          {typeof window !== 'undefined' && (
+            <>
+              {/* Wadah konten slide 2 dengan max-width dan margin auto */}
               <div
-                className="overflow-x-auto overflow-y-auto"
-                style={{ flex: "1 1 0%", minHeight: 0, overscrollBehavior: "auto" }}
+                style={{
+                  maxWidth: "1320px",
+                  margin: "0 auto",
+                  padding: INSET,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                {loading ? (
-                  <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
-                    Menghubungkan ke pemindai...
-                  </div>
-                ) : validDevices.length === 0 ? (
-                  <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
-                    Tidak ada perangkat yang ditemukan.
-                  </div>
-                ) : (
-                  <table
-                    className="w-full text-left"
+                {/* Bilah Status: Full width, SSID + IP + Metrik Ringkas */}
+                <div
+                  className="s2-card"
+                  style={{
+                    "--i": 0,
+                  } as React.CSSProperties}
+                  data-testid="status-bar"
+                >
+                  <div
                     style={{
-                      fontFamily: "ui-monospace, Consolas, monospace",
-                      fontSize: "12px",
-                      minWidth: "900px",
+                      width: "100%",
+                      backgroundColor: COLORS.bgPanel,
+                      border: `1px solid ${COLORS.line}`,
+                      borderRadius: "14px",
+                      padding: "14px 18px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "20px",
                     }}
-                    aria-label="Hasil pemindaian perangkat jaringan"
                   >
-                    <caption className="sr-only">
-                      Hasil pemindaian perangkat jaringan — {validDevices.length} perangkat terdeteksi
-                    </caption>
-                    <thead>
-                      <tr
-                        className="uppercase text-[11px]"
-                        style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft }}
+                    {/* Kiri: Icon WiFi + SSID + Status Pil + IP + Gateway */}
+                    <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", minWidth: 0, flex: 1 }}>
+                      {/* Icon WiFi Box */}
+                      <div
+                        style={{
+                          width: "38px",
+                          height: "38px",
+                          minWidth: "38px",
+                          borderRadius: "10px",
+                          backgroundColor: COLORS.bgSubtle,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
                       >
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("ip")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Alamat IP <SortIndicator columnKey="ip" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("mac")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Alamat MAC <SortIndicator columnKey="mac" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("hostname")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Nama perangkat <SortIndicator columnKey="hostname" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("category")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Kategori <SortIndicator columnKey="category" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("vendor")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Vendor <SortIndicator columnKey="vendor" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("location")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Lokasi <SortIndicator columnKey="location" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("latency")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Latensi <SortIndicator columnKey="latency" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-left cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("status")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Status <SortIndicator columnKey="status" sortConfig={sortConfig} />
-                        </th>
-                        <th
-                          className="px-4 py-3 text-right cursor-pointer whitespace-nowrap"
-                          onClick={() => handleSort("last_seen")}
-                          style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
-                        >
-                          Terakhir dilihat <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y" style={{ borderColor: COLORS.line }}>
-                      {sortedDevices.map((dev, idx) => (
-                        <tr
-                          key={idx}
-                          className="hover:transition-colors"
-                          style={{ backgroundColor: "transparent" }}
-                        >
-                          <td
-                            className="px-4 py-3 font-medium"
-                            style={{ color: COLORS.ink, fontFamily: "ui-monospace, Consolas, monospace" }}
-                          >
-                            {dev.ip || "-"}
-                          </td>
-                          <td
-                            className="px-4 py-3"
-                            style={{ color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}
-                          >
-                            {dev.mac}
-                          </td>
-                          <td className="px-4 py-3" style={{ color: COLORS.ink }}>
-                            {dev.hostname}
-                          </td>
-                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>
-                            {dev.category}
-                          </td>
-                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>
-                            {dev.vendor}
-                          </td>
-                          <td className="px-4 py-3" style={{ color: COLORS.inkSoft }}>
-                            {dev.location}
-                          </td>
-                          <td
-                            className="px-4 py-3"
+                        <Wifi size={20} strokeWidth={1.5} color={COLORS.inkSoft} aria-hidden="true" />
+                      </div>
+
+                      {/* SSID + Status Pil */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                          <span
                             style={{
-                              color: COLORS.accent,
-                              fontFamily: "ui-monospace, Consolas, monospace",
-                              fontVariantNumeric: "tabular-nums",
+                              fontSize: "16px",
+                              fontWeight: "500",
+                              color: COLORS.ink,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                            title={ssid}
+                          >
+                            {ssid}
+                          </span>
+                          {/* Status Pil */}
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                              padding: "4px 8px",
+                              borderRadius: "12px",
+                              backgroundColor:
+                                ssid && ssid !== "Connection Error" && ssid !== "Initializing..."
+                                  ? "rgba(74, 122, 87, 0.13)"
+                                  : "rgba(165, 67, 43, 0.13)",
+                              color:
+                                ssid && ssid !== "Connection Error" && ssid !== "Initializing..."
+                                  ? COLORS.statusOn
+                                  : COLORS.statusOff,
+                              whiteSpace: "nowrap",
                             }}
                           >
-                            {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              {dev.status === "UP" ? (
-                                <>
-                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.statusOn }} />
-                                  <span style={{ color: COLORS.ink }}>Online</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.statusOff }} />
-                                  <span style={{ color: COLORS.inkSoft }}>Offline</span>
-                                </>
-                              )}
-                              {dev.is_blacklisted && (
-                                <span className="flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.accent }} />
-                                  <span style={{ color: COLORS.inkSoft }}>Terblokir</span>
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td
-                            className="px-4 py-3 text-right"
-                            style={{ color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: "5px",
+                                height: "5px",
+                                borderRadius: "50%",
+                                backgroundColor:
+                                  ssid && ssid !== "Connection Error" && ssid !== "Initializing..."
+                                    ? COLORS.statusOn
+                                    : COLORS.statusOff,
+                                animation:
+                                  ssid && ssid !== "Connection Error" && ssid !== "Initializing..."
+                                    ? "pulse 2s ease-in-out infinite"
+                                    : "none",
+                              }}
+                            />
+                            {ssid && ssid !== "Connection Error" && ssid !== "Initializing..." ? "Terhubung" : "Tidak terhubung"}
+                          </span>
+                        </div>
+
+                        {/* IP Server + Gateway */}
+                        <div style={{ fontSize: "12px", color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}>
+                          <div>Server IP: {metrics.server_ip}</div>
+                          {/* Gateway akan ditampilkan jika ada device dengan kategori "Router / AP" yang UP */}
+                          {(() => {
+                            const gateway = devices.find(
+                              (d) => d.category === "Router / AP" || d.category === "Router/AP"
+                            );
+                            return gateway ? <div>Gateway: {gateway.ip}</div> : null;
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Kanan: Empat Angka Ringkas (Online | Offline | Latensi Rata-rata | Peringatan Aktif) */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "12px",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      {/* Online */}
+                      <div style={{ textAlign: "center", paddingRight: "12px", borderRight: `1px solid ${COLORS.line}` }}>
+                        <div style={{ fontSize: "18px", fontWeight: "600", color: COLORS.statusOn }}>
+                          {metrics.total_up}
+                        </div>
+                        <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Online</div>
+                      </div>
+
+                      {/* Offline */}
+                      <div style={{ textAlign: "center", paddingRight: "12px", borderRight: `1px solid ${COLORS.line}` }}>
+                        <div style={{ fontSize: "18px", fontWeight: "600", color: COLORS.statusOff }}>
+                          {metrics.total_down}
+                        </div>
+                        <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Offline</div>
+                      </div>
+
+                      {/* Rata-rata Latensi (hanya jika ada) */}
+                      {(() => {
+                        const upDevices = devices.filter((d) => d.status === "UP" && d.latency !== undefined);
+                        if (upDevices.length > 0) {
+                          const avgLatency =
+                            Math.round(upDevices.reduce((sum, d) => sum + (d.latency || 0), 0) / upDevices.length);
+                          return (
+                            <>
+                              <div style={{ textAlign: "center", paddingRight: "12px", borderRight: `1px solid ${COLORS.line}` }}>
+                                <div style={{ fontSize: "18px", fontWeight: "600", color: COLORS.ink }}>
+                                  {avgLatency}
+                                </div>
+                                <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Rata-rata latensi</div>
+                              </div>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {/* Peringatan Aktif */}
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontSize: "18px",
+                            fontWeight: "600",
+                            color: Math.max(0, alerts.length) > 0 ? COLORS.accent : COLORS.statusOn,
+                          }}
+                        >
+                          {Math.max(0, alerts.length)}
+                        </div>
+                        <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Peringatan</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid Utama: Kolom Kiri (Radar + Peringatan) + Kolom Kanan (Inspector) */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(300px,360px) minmax(0,1fr)",
+                    gap: "12px",
+                    alignItems: "stretch",
+                    width: "100%",
+                    flex: 1,
+                    minHeight: 0,
+                  }}
+                >
+                  {/* Kolom Kiri: Radar + Peringatan */}
+                  <div
+                    className="slide2-left"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                      minHeight: 0,
+                      overflow: "hidden",
+                      contain: "size",
+                    }}
+                  >
+                    {/* Radar Kartu */}
+                    <div
+                      className="s2-card"
+                      style={{
+                        "--i": 1,
+                      } as React.CSSProperties}
+                      data-testid="radar-card"
+                    >
+                      <div
+                        style={{
+                          backgroundColor: COLORS.bgPanel,
+                          border: `1px solid ${COLORS.line}`,
+                          borderRadius: "14px",
+                          padding: "14px 18px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "12px",
+                        }}
+                      >
+                        {/* Header Radar */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <Radar size={16} strokeWidth={1.5} color={COLORS.inkSoft} aria-hidden="true" />
+                          <h3 style={{ fontSize: "14px", fontWeight: "500", color: COLORS.ink }}>Radar</h3>
+                        </div>
+
+                        {/* Radar Canvas Mini */}
+                        <div style={{ display: "flex", justifyContent: "center" }}>
+                          <div style={{ width: "112px", height: "112px" }}>
+                            <RadarCanvas />
+                          </div>
+                        </div>
+
+                        {/* Legenda */}
+                        <div style={{ display: "flex", gap: "16px", justifyContent: "center", fontSize: "11px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: COLORS.statusOn }} />
+                            <span style={{ color: COLORS.inkSoft }}>Online</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: COLORS.statusOff }} />
+                            <span style={{ color: COLORS.inkSoft }}>Offline</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Peringatan Kartu */}
+                    <div
+                      className="s2-card"
+                      style={{
+                        "--i": 2,
+                        flex: 1,
+                        minHeight: "200px",
+                      } as React.CSSProperties}
+                      data-testid="alerts-card"
+                    >
+                      <div
+                        style={{
+                          backgroundColor: COLORS.bgPanel,
+                          border: `1px solid ${COLORS.line}`,
+                          borderRadius: "14px",
+                          padding: "14px 18px",
+                          display: "flex",
+                          flexDirection: "column",
+                          height: "100%",
+                        }}
+                      >
+                        {/* Header Peringatan */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <AlertTriangle size={16} strokeWidth={1.5} color={COLORS.accent} aria-hidden="true" />
+                            <h3 style={{ fontSize: "14px", fontWeight: "500", color: COLORS.ink }}>Peringatan</h3>
+                          </div>
+                          {/* Tag Status */}
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              fontWeight: "500",
+                              padding: "4px 8px",
+                              borderRadius: "12px",
+                              backgroundColor: alerts.length > 0 ? "rgba(180, 83, 26, 0.13)" : "rgba(74, 122, 87, 0.13)",
+                              color: alerts.length > 0 ? COLORS.accent : COLORS.statusOn,
+                            }}
                           >
-                            {new Date(dev.last_seen).toLocaleTimeString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                            {alerts.length > 0 ? `${alerts.length} aktif` : "Normal"}
+                          </span>
+                        </div>
+
+                        {/* Body Peringatan */}
+                        <div
+                          style={{
+                            flex: 1,
+                            minHeight: 0,
+                            overflowY: "auto",
+                            scrollbarWidth: "thin",
+                            scrollbarColor: `${COLORS.line} transparent`,
+                          }}
+                        >
+                          {alerts.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "24px 0", color: COLORS.inkSoft }}>
+                              <div
+                                style={{
+                                  width: "32px",
+                                  height: "32px",
+                                  borderRadius: "50%",
+                                  backgroundColor: "rgba(74, 122, 87, 0.13)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: "0 auto 8px",
+                                }}
+                              >
+                                <Check size={18} strokeWidth={2} color={COLORS.statusOn} aria-hidden="true" />
+                              </div>
+                              <div style={{ fontSize: "12px", fontWeight: "500" }}>Tidak ada peringatan aktif</div>
+                              <div style={{ fontSize: "11px", marginTop: "4px" }}>Semua perangkat terpantau normal</div>
+                            </div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                              {alerts.slice(0, 5).map((alert: any) => (
+                                <div
+                                  key={alert.id}
+                                  style={{
+                                    padding: "8px 10px",
+                                    borderRadius: "8px",
+                                    backgroundColor:
+                                      alert.severity === "critical"
+                                        ? "rgba(165, 67, 43, 0.1)"
+                                        : alert.severity === "warning"
+                                          ? "rgba(180, 83, 26, 0.1)"
+                                          : "rgba(107, 102, 92, 0.1)",
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    gap: "8px",
+                                    fontSize: "11px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      width: "4px",
+                                      height: "4px",
+                                      borderRadius: "50%",
+                                      marginTop: "5px",
+                                      flexShrink: 0,
+                                      backgroundColor:
+                                        alert.severity === "critical"
+                                          ? COLORS.statusOff
+                                          : alert.severity === "warning"
+                                            ? COLORS.accent
+                                            : COLORS.inkSoft,
+                                    }}
+                                  />
+                                  <span style={{ color: COLORS.ink, flex: 1 }}>{alert.reason}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Footer */}
+                        <div
+                          style={{
+                            fontSize: "10px",
+                            color: COLORS.inkSoft,
+                            paddingTop: "8px",
+                            borderTop: `1px solid ${COLORS.line}`,
+                            marginTop: "auto",
+                          }}
+                        >
+                          Aktivitas terbaru
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kolom Kanan: Device Inspector */}
+                  <div
+                    className="s2-card"
+                    style={{
+                      "--i": 3,
+                    } as React.CSSProperties}
+                    data-testid="inspector-card"
+                  >
+                    <div
+                      style={{
+                        backgroundColor: COLORS.bgPanel,
+                        border: `1px solid ${COLORS.line}`,
+                        borderRadius: "14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        height: "100%",
+                        overflow: "hidden",
+                        boxShadow: `0 10px 24px -18px rgba(31,29,26,.35)`,
+                      }}
+                    >
+                      {/* Header Inspector */}
+                      <div
+                        style={{
+                          padding: "16px 18px 14px",
+                          borderBottom: `1px solid ${COLORS.line}`,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <div>
+                          <h2 style={{ fontSize: "15px", fontWeight: "500", color: COLORS.ink }}>
+                            Inspektur perangkat ({subnetPrefix})
+                          </h2>
+                          <div style={{ fontSize: "12px", color: COLORS.inkSoft, marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ display: "inline-block", width: "4px", height: "4px", borderRadius: "50%", backgroundColor: COLORS.statusOn, animation: "pulse 2s ease-in-out infinite" }} />
+                            Pemindai ARP aktif
+                          </div>
+                        </div>
+
+                        {/* Kanan: Pencarian + Filter */}
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <input
+                            type="text"
+                            placeholder="Cari IP, MAC, atau nama"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            ref={searchInputRef}
+                            style={{
+                              width: "170px",
+                              padding: "6px 10px",
+                              fontSize: "12px",
+                              border: `1px solid ${COLORS.line}`,
+                              borderRadius: "6px",
+                              backgroundColor: COLORS.bgPage,
+                              color: COLORS.ink,
+                            }}
+                          />
+                          {/* Status Filter Chips */}
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            {["all", "up", "down"].map((status) => (
+                              <button
+                                key={status}
+                                onClick={() => setStatusFilter(status as "all" | "up" | "down")}
+                                aria-pressed={statusFilter === status}
+                                style={{
+                                  padding: "4px 10px",
+                                  fontSize: "11px",
+                                  borderRadius: "12px",
+                                  border: `1px solid ${statusFilter === status ? COLORS.accent : COLORS.line}`,
+                                  backgroundColor:
+                                    statusFilter === status
+                                      ? "rgba(180, 83, 26, 0.1)"
+                                      : "transparent",
+                                  color: statusFilter === status ? COLORS.accent : COLORS.inkSoft,
+                                  cursor: "pointer",
+                                  fontWeight: statusFilter === status ? "500" : "400",
+                                }}
+                              >
+                                {status === "all" ? "Semua" : status === "up" ? "Online" : "Offline"}
+                                {status !== "all" && (
+                                  <span style={{ marginLeft: "4px", fontSize: "10px" }}>
+                                    ({status === "up" ? metrics.total_up : metrics.total_down})
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tabel Area */}
+                      <div
+                        className="inspector-table-area"
+                        style={{
+                          maxHeight: `calc(var(--head-h) + var(--visible-rows) * var(--row-h))`,
+                        }}
+                      >
+                        {loading ? (
+                          <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
+                            Menghubungkan ke pemindai...
+                          </div>
+                        ) : validDevices.length === 0 ? (
+                          <div className="text-center py-10 font-sans" style={{ color: COLORS.inkSoft }}>
+                            Tidak ada perangkat yang ditemukan.
+                          </div>
+                        ) : (
+                          <table
+                            className="w-full text-left"
+                            style={{
+                              width: "100%",
+                              tableLayout: "auto",
+                              fontSize: "11px",
+                            }}
+                            aria-label="Hasil pemindaian perangkat jaringan"
+                          >
+                            <caption className="sr-only">
+                              Hasil pemindaian perangkat jaringan — {validDevices.length} perangkat terdeteksi
+                            </caption>
+                            <thead>
+                              <tr
+                                style={{
+                                  backgroundColor: COLORS.bgSubtle,
+                                  color: COLORS.inkSoft,
+                                  height: `var(--head-h)`,
+                                  fontSize: "11px",
+                                  fontWeight: "500",
+                                  fontFamily: "var(--font-geist-sans, sans-serif)",
+                                }}
+                              >
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("ip")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                >
+                                  Alamat IP {sortConfig.key === "ip" && <SortIndicator columnKey="ip" sortConfig={sortConfig} />}
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("mac")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                >
+                                  MAC {sortConfig.key === "mac" && <SortIndicator columnKey="mac" sortConfig={sortConfig} />}
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("hostname")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                >
+                                  Nama {sortConfig.key === "hostname" && <SortIndicator columnKey="hostname" sortConfig={sortConfig} />}
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("category")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                >
+                                  Kategori {sortConfig.key === "category" && <SortIndicator columnKey="category" sortConfig={sortConfig} />}
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("vendor")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px", maxWidth: "150px" }}
+                                >
+                                  Vendor {sortConfig.key === "vendor" && <SortIndicator columnKey="vendor" sortConfig={sortConfig} />}
+                                </th>
+                                {validDevices.some((d) => d.location && d.location !== "Unknown") && (
+                                  <th
+                                    className="cursor-pointer whitespace-nowrap"
+                                    onClick={() => handleSort("location")}
+                                    style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  >
+                                    Lokasi {sortConfig.key === "location" && <SortIndicator columnKey="location" sortConfig={sortConfig} />}
+                                  </th>
+                                )}
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("latency")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                >
+                                  Latensi {sortConfig.key === "latency" && <SortIndicator columnKey="latency" sortConfig={sortConfig} />}
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("status")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                >
+                                  Status {sortConfig.key === "status" && <SortIndicator columnKey="status" sortConfig={sortConfig} />}
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap text-right"
+                                  onClick={() => handleSort("last_seen")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px", textAlign: "right" }}
+                                >
+                                  Terakhir dilihat {sortConfig.key === "last_seen" && <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />}
+                                </th>
+                              </tr>
+                            </thead>
+                                >
+                                  Kategori <SortIndicator columnKey="category" sortConfig={sortConfig} />
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("vendor")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
+                                >
+                                  Vendor <SortIndicator columnKey="vendor" sortConfig={sortConfig} />
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("location")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
+                                >
+                                  Lokasi <SortIndicator columnKey="location" sortConfig={sortConfig} />
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("latency")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
+                                >
+                                  Latensi <SortIndicator columnKey="latency" sortConfig={sortConfig} />
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap"
+                                  onClick={() => handleSort("status")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
+                                >
+                                  Status <SortIndicator columnKey="status" sortConfig={sortConfig} />
+                                </th>
+                                <th
+                                  className="cursor-pointer whitespace-nowrap text-right"
+                                  onClick={() => handleSort("last_seen")}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
+                                >
+                                  Terakhir dilihat <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody style={{ borderColor: COLORS.line }}>
+                              {sortedDevices.map((dev, idx) => (
+                                <tr
+                                  key={idx}
+                                  style={{
+                                    backgroundColor: "transparent",
+                                    height: `var(--row-h)`,
+                                    borderBottom: `1px solid ${COLORS.line}`,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.bgSubtle;
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                                  }}
+                                >
+                                  <td
+                                    style={{
+                                      color: COLORS.ink,
+                                      fontFamily: "ui-monospace, Consolas, monospace",
+                                      fontWeight: "500",
+                                      padding: "0 18px",
+                                    }}
+                                  >
+                                    {dev.ip || "-"}
+                                  </td>
+                                  <td
+                                    style={{
+                                      color: COLORS.inkSoft,
+                                      fontFamily: "ui-monospace, Consolas, monospace",
+                                      padding: "0 18px",
+                                    }}
+                                  >
+                                    {dev.mac}
+                                  </td>
+                                  <td style={{ color: COLORS.ink, padding: "0 18px" }}>
+                                    {dev.hostname || "Unknown"}
+                                  </td>
+                                  <td style={{ color: COLORS.inkSoft, padding: "0 18px" }}>
+                                    {dev.category || "Unknown"}
+                                  </td>
+                                  <td style={{ color: COLORS.inkSoft, padding: "0 18px" }}>
+                                    {dev.vendor || "Unknown"}
+                                  </td>
+                                  <td style={{ color: COLORS.inkSoft, padding: "0 18px" }}>
+                                    {dev.location || "-"}
+                                  </td>
+                                  <td
+                                    style={{
+                                      color:
+                                        dev.latency !== undefined && dev.latency >= 150
+                                          ? COLORS.accent
+                                          : dev.latency !== undefined && dev.latency <= 1
+                                            ? COLORS.inkSoft
+                                            : COLORS.ink,
+                                      fontFamily: "ui-monospace, Consolas, monospace",
+                                      fontVariantNumeric: "tabular-nums",
+                                      padding: "0 18px",
+                                    }}
+                                  >
+                                    {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
+                                  </td>
+                                  <td style={{ padding: "0 18px" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                      <span
+                                        style={{
+                                          display: "inline-block",
+                                          width: "6px",
+                                          height: "6px",
+                                          borderRadius: "50%",
+                                          backgroundColor: dev.status === "UP" ? COLORS.statusOn : COLORS.statusOff,
+                                        }}
+                                      />
+                                      <span style={{ color: dev.status === "UP" ? COLORS.ink : COLORS.inkSoft }}>
+                                        {dev.status === "UP" ? "Online" : "Offline"}
+                                      </span>
+                                      {dev.is_blacklisted && (
+                                        <>
+                                          <span style={{ margin: "0 2px" }}>•</span>
+                                          <span style={{ color: COLORS.accent, fontSize: "10px" }}>Terblokir</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td
+                                    style={{
+                                      color: COLORS.inkSoft,
+                                      fontFamily: "ui-monospace, Consolas, monospace",
+                                      textAlign: "right",
+                                      padding: "0 18px",
+                                    }}
+                                    title={new Date(dev.last_seen).toLocaleString()}
+                                  >
+                                    {new Date(dev.last_seen).toLocaleTimeString()}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </section>
       </div>
 
       {/* Penanda halaman: dua titik di tepi kanan */}
       <div
-        ref={dotsContainerRef}
         className="fixed top-1/2 -translate-y-1/2 right-6 z-40 flex items-center pointer-events-none"
         aria-hidden="true"
       >

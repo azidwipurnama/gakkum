@@ -43,44 +43,23 @@ test('fb43: Two-screen layout with scroll-snap, card animations, and page indica
   console.log('Slide 2 found:', slide2);
   expect(slide2).toBe(1);
 
-  // 5. Check all four cards are present with correct data-testid
-  const serverConnCard = await page.locator('[data-testid="server-conn-card"]').count();
+  // 5. Check all cards are present with correct data-testid (status bar + radar + alerts + inspector)
+  const statusBarCard = await page.locator('[data-testid="status-bar"]').count();
   const radarCard = await page.locator('[data-testid="radar-card"]').count();
   const alertsCard = await page.locator('[data-testid="alerts-card"]').count();
   const inspectorCard = await page.locator('[data-testid="inspector-card"]').count();
 
-  console.log('Cards found - Server Conn:', serverConnCard, 'Radar:', radarCard, 'Alerts:', alertsCard, 'Inspector:', inspectorCard);
-  expect(serverConnCard).toBe(1);
+  console.log('Cards found - Status Bar:', statusBarCard, 'Radar:', radarCard, 'Alerts:', alertsCard, 'Inspector:', inspectorCard);
+  expect(statusBarCard).toBe(1);
   expect(radarCard).toBe(1);
   expect(alertsCard).toBe(1);
   expect(inspectorCard).toBe(1);
 
-  // 6. Check cards have initial animation state (opacity 0, translateY 24px) on page load
-  const cardsInitialState = await page.evaluate(() => {
-    const cards = {
-      serverConn: document.querySelector('[data-testid="server-conn-card"]'),
-      radar: document.querySelector('[data-testid="radar-card"]'),
-      alerts: document.querySelector('[data-testid="alerts-card"]'),
-      inspector: document.querySelector('[data-testid="inspector-card"]'),
-    };
-    const out: Record<string, any> = {};
-    Object.entries(cards).forEach(([k, el]) => {
-      if (!el) return;
-      const style = (el as HTMLElement).getAttribute('style') || '';
-      out[k] = {
-        hasOpacity0: style.includes('opacity: 0'),
-        hasTransformY24: style.includes('translateY(24px)'),
-      };
-    });
-    return out;
-  });
-  console.log('Cards initial animation state:', JSON.stringify(cardsInitialState, null, 2));
-
-  // All cards should start with opacity 0 and translateY(24px)
-  expect(cardsInitialState.serverConn.hasOpacity0).toBeTruthy();
-  expect(cardsInitialState.radar.hasOpacity0).toBeTruthy();
-  expect(cardsInitialState.alerts.hasOpacity0).toBeTruthy();
-  expect(cardsInitialState.inspector.hasOpacity0).toBeTruthy();
+  // 6. Check cards have animation setup via data-motion and data-in attributes (not inline styles)
+  const slide2Section = await page.locator('section[data-testid="slide2-section"]');
+  const slide2DataMotion = await slide2Section.getAttribute('data-motion');
+  console.log('Slide 2 data-motion attribute:', slide2DataMotion);
+  expect(slide2DataMotion).toBe('ready');
 
   // 7. Check page indicator dots exist (two buttons on right edge)
   const pageIndicatorButtons = await page.evaluate(() => {
@@ -114,12 +93,18 @@ test('fb43: Two-screen layout with scroll-snap, card animations, and page indica
   // Either has table or loading/empty message
   expect(inspectorStructure.hasTable || inspectorStructure.hasLoadingOrEmpty).toBeTruthy();
 
-  // 9. Verify no old motion CSS elements (data-motion attribute should be absent)
+  // 9. Verify no old motion CSS elements (only new data-motion="ready" on slide 2 is allowed)
   const oldMotionElements = await page.evaluate(() => {
     const all = Array.from(document.querySelectorAll('[data-motion]'));
-    return all.length;
+    // Filter out the new slide2 section with data-motion="ready" (which is expected)
+    const oldOnes = all.filter(el => {
+      const attr = (el as HTMLElement).getAttribute('data-motion');
+      const isSlide2 = (el as HTMLElement).getAttribute('data-testid') === 'slide2-section';
+      return !(attr === 'ready' && isSlide2);
+    });
+    return oldOnes.length;
   });
-  console.log('Old motion elements with data-motion attribute:', oldMotionElements);
+  console.log('Old motion elements (excluding new slide2 data-motion="ready"):', oldMotionElements);
   expect(oldMotionElements).toBe(0);
 
   // 10. Verify scroll hint arrow animation is present
