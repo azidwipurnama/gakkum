@@ -406,15 +406,25 @@ export default function DashboardPage() {
                           </span>
                         </div>
 
-                        {/* IP Server + Gateway */}
-                        <div style={{ fontSize: "12px", color: COLORS.inkSoft, fontFamily: "ui-monospace, Consolas, monospace" }}>
-                          <div>Server IP: {metrics.server_ip}</div>
-                          {/* Gateway akan ditampilkan jika ada device dengan kategori "Router / AP" yang UP */}
+                        {/* IP Server + Gateway — horizontal single line */}
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: COLORS.inkSoft,
+                            fontFamily: "ui-monospace, Consolas, monospace",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <span>Server IP: {metrics.server_ip}</span>
+                          <span style={{ margin: "0 4px", color: COLORS.inkSoft }}>|</span>
                           {(() => {
                             const gateway = devices.find(
                               (d) => d.category === "Router / AP" || d.category === "Router/AP"
                             );
-                            return gateway ? <div>Gateway: {gateway.ip}</div> : null;
+                            return gateway ? <span>Gateway: {gateway.ip}</span> : null;
                           })()}
                         </div>
                       </div>
