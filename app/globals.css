@@ -1,66 +1,34 @@
-@import "tailwindcss";
-
 :root {
   color-scheme: light;
 
   /* Warm Paper Design Tokens */
-  --bg-page:      #E8E3D8; /* latar halaman (kertas gelap) */
-  --bg-panel:     #FAF8F3; /* card, panel, tabel */
-  --bg-subtle:    #F1EDE3; /* header tabel, isi bola globe, hover baris */
-  --line:         #DDD7C8; /* border 1px, garis pemisah, cincin radar */
+  --bg-page:      #E8E3D8;
+  --bg-panel:     #FAF8F3;
+  --bg-subtle:    #F1EDE3;
+  --line:         #DDD7C8;
 
-  --ink:          #1F1D1A; /* teks utama, garis luar globe */
-  --ink-soft:     #6B665C; /* teks sekunder, label, titik globe */
-  --ink-faint:    #B8B1A0; /* orbit globe, elemen sangat halus */
+  --ink:          #1F1D1A;
+  --ink-soft:     #6B665C;
+  --ink-faint:    #B8B1A0;
 
-  --accent:       #B4531A; /* terakota: satu-satunya aksen */
+  --accent:       #B4531A;
   --accent-hover: #9A4516;
 
-  --status-on:    #4A7A57; /* online, hijau lumut */
-  --status-off:   #A5432B; /* offline, merah bata */
+  --status-on:    #4A7A57;
+  --status-off:   #A5432B;
 
   --radius-card:  14px;
   --radius-ctl:   8px;
 
   /* Device Inspector table sizing */
-  --visible-rows: 8;  /* jumlah baris maksimal yang terlihat sekaligus */
-  --row-h:        46px;  /* tinggi satu baris data tabel */
-  --head-h:       44px;  /* tinggi header tabel */
+  --visible-rows: 8;
+  --row-h:        46px;
+  --head-h:       44px;
 
-  /* TAHAP 1: Token warna tambahan */
-  --accent-soft:  rgba(180, 83, 26, 0.13);   /* background aksen lembut */
-  --on-soft:      rgba(74, 122, 87, 0.13);   /* background status on lembut */
-  --off-soft:     rgba(165, 67, 43, 0.13);   /* background status off lembut */
-  --row-hover:    rgba(31, 29, 26, 0.045);   /* hover baris tabel */
-
-  /* Tailwind v4 token mappings */
-  --color-background: var(--bg-page);
-  --color-foreground: var(--ink);
-  --color-panel: var(--bg-panel);
-  --color-subtle: var(--bg-subtle);
-  --color-line: var(--line);
-  --color-ink-soft: var(--ink-soft);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-status-on: var(--status-on);
-  --color-status-off: var(--status-off);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-panel: var(--panel);
-  --color-subtle: var(--subtle);
-  --color-line: var(--line);
-  --color-ink-soft: var(--ink-soft);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-status-on: var(--status-on);
-  --color-status-off: var(--status-off);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --accent-soft:  rgba(180, 83, 26, 0.13);
+  --on-soft:      rgba(74, 122, 87, 0.13);
+  --off-soft:     rgba(165, 67, 43, 0.13);
+  --row-hover:    rgba(31, 29, 26, 0.045);
 }
 
 @layer base {
@@ -86,19 +54,7 @@ body {
   }
 }
 
-/* Animasi masuk kartu (600ms, 80ms stagger) */
-@keyframes cardEntry {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Animated scroll-hint arrow (cheapest paint-only animation) */
+/* Scroll-hint arrow */
 @keyframes slideUpDown {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
@@ -107,35 +63,10 @@ body {
   animation: slideUpDown 1.8s ease-in-out infinite;
 }
 
-/* Reduced motion: disable all non-essential motion */
 @media (prefers-reduced-motion: reduce) {
   .scroll-pill-icon {
     animation: none;
   }
-}
-
-/* Page indicator dots: dua titik di tepi kanan */
-.page-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.page-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: background-color 300ms ease;
-  cursor: pointer;
-}
-
-.page-dot.active {
-  background-color: var(--accent);
-}
-
-.page-dot.inactive {
-  background-color: var(--ink-faint);
 }
 
 /* Device Inspector table scroll area */
@@ -147,54 +78,24 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
-
-/* Webkit scrollbar styling (Chrome, Safari, Edge) */
 .inspector-table-area::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 .inspector-table-area::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .inspector-table-area::-webkit-scrollbar-thumb {
   background-color: var(--line);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
-
 .inspector-table-area::-webkit-scrollbar-thumb:hover {
   background-color: var(--ink-soft);
 }
 
-/* TAHAP 1: Animasi masuk slide 2 dengan data-motion */
-.s2[data-motion="ready"] .s2-card {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 600ms cubic-bezier(.22, .8, .2, 1), transform 600ms cubic-bezier(.22, .8, .2, 1);
-  transition-delay: calc(var(--i) * 80ms);
-}
-
-.s2[data-motion="ready"][data-in="true"] .s2-card {
-  opacity: 1;
-  transform: none;
-}
-
-.s2[data-motion="ready"]:not([data-in="true"]) .s2-card {
-  transition-delay: 0ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .s2[data-motion="ready"] .s2-card {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
-/* Phase 5 — Accessibility focus ring */
+/* Accessibility focus ring */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   a:focus-visible,
   button:focus-visible,
@@ -205,7 +106,7 @@ body {
   }
 }
 
-/* Skip-link (visible on focus only) */
+/* Skip-link */
 .skip-link {
   position: absolute;
   top: -2.5rem;
@@ -223,13 +124,6 @@ body {
   top: 0.5rem;
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-/* Mobile: tighten grid layout for small viewports */
-@media (max-width: 640px) {
-  .page-indicator {
-    right: 0.5rem;
-  }
 }
 
 /* Screen-reader-only utility */

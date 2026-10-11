@@ -16,6 +16,7 @@ const COLORS = {
   bgPage: "#E8E3D8",
   bgPanel: "#FAF8F3",
   bgSubtle: "#F1EDE3",
+  rowHover: "rgba(31, 29, 26, 0.045)",
   line: "#DDD7C8",
 };
 
@@ -664,19 +665,6 @@ export default function DashboardPage() {
                             </div>
                           )}
                         </div>
-
-                        {/* Footer */}
-                        <div
-                          style={{
-                            fontSize: "10px",
-                            color: COLORS.inkSoft,
-                            paddingTop: "8px",
-                            borderTop: `1px solid ${COLORS.line}`,
-                            marginTop: "auto",
-                          }}
-                        >
-                          Aktivitas terbaru
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -813,175 +801,93 @@ export default function DashboardPage() {
                                 }}
                               >
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("ip")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Alamat IP {sortConfig.key === "ip" && <SortIndicator columnKey="ip" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("mac")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   MAC {sortConfig.key === "mac" && <SortIndicator columnKey="mac" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("hostname")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Nama {sortConfig.key === "hostname" && <SortIndicator columnKey="hostname" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("category")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Kategori {sortConfig.key === "category" && <SortIndicator columnKey="category" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("vendor")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px", maxWidth: "150px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Vendor {sortConfig.key === "vendor" && <SortIndicator columnKey="vendor" sortConfig={sortConfig} />}
                                 </th>
-                                {validDevices.some((d) => d.location && d.location !== "Unknown") && (
-                                  <th
-                                    className="cursor-pointer whitespace-nowrap"
-                                    onClick={() => handleSort("location")}
-                                    style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
-                                  >
-                                    Lokasi {sortConfig.key === "location" && <SortIndicator columnKey="location" sortConfig={sortConfig} />}
-                                  </th>
-                                )}
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("latency")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Latensi {sortConfig.key === "latency" && <SortIndicator columnKey="latency" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
                                   onClick={() => handleSort("status")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Status {sortConfig.key === "status" && <SortIndicator columnKey="status" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-right"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3 text-right"
                                   onClick={() => handleSort("last_seen")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 10px", textAlign: "right" }}
+                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Terakhir dilihat {sortConfig.key === "last_seen" && <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />}
                                 </th>
                               </tr>
                             </thead>
-                                >
-                                  Kategori <SortIndicator columnKey="category" sortConfig={sortConfig} />
-                                </th>
-                                <th
-                                  className="cursor-pointer whitespace-nowrap"
-                                  onClick={() => handleSort("vendor")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
-                                >
-                                  Vendor <SortIndicator columnKey="vendor" sortConfig={sortConfig} />
-                                </th>
-                                <th
-                                  className="cursor-pointer whitespace-nowrap"
-                                  onClick={() => handleSort("location")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
-                                >
-                                  Lokasi <SortIndicator columnKey="location" sortConfig={sortConfig} />
-                                </th>
-                                <th
-                                  className="cursor-pointer whitespace-nowrap"
-                                  onClick={() => handleSort("latency")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
-                                >
-                                  Latensi <SortIndicator columnKey="latency" sortConfig={sortConfig} />
-                                </th>
-                                <th
-                                  className="cursor-pointer whitespace-nowrap"
-                                  onClick={() => handleSort("status")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
-                                >
-                                  Status <SortIndicator columnKey="status" sortConfig={sortConfig} />
-                                </th>
-                                <th
-                                  className="cursor-pointer whitespace-nowrap text-right"
-                                  onClick={() => handleSort("last_seen")}
-                                  style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10, padding: "0 18px" }}
-                                >
-                                  Terakhir dilihat <SortIndicator columnKey="last_seen" sortConfig={sortConfig} />
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody style={{ borderColor: COLORS.line }}>
+                            <tbody>
                               {sortedDevices.map((dev, idx) => (
                                 <tr
-                                  key={idx}
+                                  key={dev.mac || idx}
                                   style={{
-                                    backgroundColor: "transparent",
                                     height: `var(--row-h)`,
-                                    borderBottom: `1px solid ${COLORS.line}`,
+                                    backgroundColor: COLORS.bgSubtle,
                                   }}
                                   onMouseEnter={(e) => {
-                                    (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.bgSubtle;
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.rowHover;
                                   }}
                                   onMouseLeave={(e) => {
-                                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.bgSubtle;
                                   }}
                                 >
-                                  <td
-                                    style={{
-                                      color: COLORS.ink,
-                                      fontFamily: "ui-monospace, Consolas, monospace",
-                                      fontWeight: "500",
-                                      padding: "0 18px",
-                                    }}
-                                  >
+                                  <td className="px-2.5 py-2 text-[11px] font-mono font-medium text-[var(--ink)]">
                                     {dev.ip || "-"}
                                   </td>
-                                  <td
-                                    style={{
-                                      color: COLORS.inkSoft,
-                                      fontFamily: "ui-monospace, Consolas, monospace",
-                                      padding: "0 18px",
-                                    }}
-                                  >
+                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)] font-mono">
                                     {dev.mac}
                                   </td>
-                                  <td style={{ color: COLORS.ink, padding: "0 18px" }}>
-                                    {dev.hostname || "Unknown"}
-                                  </td>
-                                  <td style={{ color: COLORS.inkSoft, padding: "0 18px" }}>
-                                    {dev.category || "Unknown"}
-                                  </td>
-                                  <td style={{ color: COLORS.inkSoft, padding: "0 18px" }}>
-                                    {dev.vendor || "Unknown"}
-                                  </td>
-                                  <td style={{ color: COLORS.inkSoft, padding: "0 18px" }}>
-                                    {dev.location || "-"}
-                                  </td>
+                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink)]">{dev.hostname || "Unknown"}</td>
+                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)]">{dev.category || "Unknown"}</td>
+                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)]">{dev.vendor || "Unknown"}</td>
                                   <td
-                                    style={{
-                                      color:
-                                        dev.latency !== undefined && dev.latency >= 150
-                                          ? COLORS.accent
-                                          : dev.latency !== undefined && dev.latency <= 1
-                                            ? COLORS.inkSoft
-                                            : COLORS.ink,
-                                      fontFamily: "ui-monospace, Consolas, monospace",
-                                      fontVariantNumeric: "tabular-nums",
-                                      padding: "0 18px",
-                                    }}
+                                    className="px-2.5 py-2 text-[11px] font-mono text-[var(--ink)]"
                                   >
                                     {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
                                   </td>
-                                  <td style={{ padding: "0 18px" }}>
+                                  <td className="px-2.5 py-2 text-[11px]">
                                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                       <span
                                         style={{
@@ -995,21 +901,10 @@ export default function DashboardPage() {
                                       <span style={{ color: dev.status === "UP" ? COLORS.ink : COLORS.inkSoft }}>
                                         {dev.status === "UP" ? "Online" : "Offline"}
                                       </span>
-                                      {dev.is_blacklisted && (
-                                        <>
-                                          <span style={{ margin: "0 2px" }}>•</span>
-                                          <span style={{ color: COLORS.accent, fontSize: "10px" }}>Terblokir</span>
-                                        </>
-                                      )}
                                     </div>
                                   </td>
                                   <td
-                                    style={{
-                                      color: COLORS.inkSoft,
-                                      fontFamily: "ui-monospace, Consolas, monospace",
-                                      textAlign: "right",
-                                      padding: "0 18px",
-                                    }}
+                                    className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)] text-right font-mono"
                                     title={new Date(dev.last_seen).toLocaleString()}
                                   >
                                     {new Date(dev.last_seen).toLocaleTimeString()}
