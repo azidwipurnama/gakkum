@@ -328,7 +328,7 @@ export default function DashboardPage() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      gap: "20px",
+                      gap: "200px",
                     }}
                   >
                     {/* Kiri: Icon WiFi + SSID + Status Pil + IP + Gateway */}
