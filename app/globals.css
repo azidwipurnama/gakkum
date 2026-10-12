@@ -21,9 +21,9 @@
   --radius-ctl:   8px;
 
   /* Device Inspector table sizing */
-  --visible-rows: 8;
-  --row-h:        38px;
-  --head-h:       38px;
+  --visible-rows: 22;
+  --row-h:        20px;
+  --head-h:       30px;
 
   --accent-soft:  rgba(180, 83, 26, 0.13);
   --on-soft:      rgba(74, 122, 87, 0.13);
@@ -60,7 +60,7 @@ body {
   50% { transform: translateY(-4px); }
 }
 .scroll-pill-icon {
-  animation: slideUpDown 1.8s ease-in-out infinite;
+  animation: slideUpDown 0.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

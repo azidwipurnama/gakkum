@@ -694,7 +694,6 @@ export default function DashboardPage() {
                         borderRadius: "14px",
                         display: "flex",
                         flexDirection: "column",
-                        height: "100%",
                         overflow: "hidden",
                         boxShadow: `0 10px 24px -18px rgba(31,29,26,.35)`,
                       }}
