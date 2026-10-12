@@ -19,6 +19,7 @@
 
   --radius-card:  14px;
   --radius-ctl:   8px;
+  --card-px:      20px;
 
   /* Device Inspector table sizing */
   --visible-rows: 22;
@@ -34,6 +35,31 @@
 @layer base {
   *, ::before, ::after {
     border-color: var(--line);
+  }
+
+  /* Device Inspector table reset */
+  .inspector-table-area table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  .inspector-table-area td,
+  .inspector-table-area th {
+    padding-left: 10px;
+    padding-right: 10px;
+    border: 0;
+    text-align: center;
+  }
+  .inspector-table-area td:first-child,
+  .inspector-table-area th:first-child {
+    padding-left: var(--card-px);
+  }
+  .inspector-table-area td:last-child,
+  .inspector-table-area th:last-child {
+    padding-right: var(--card-px);
+    text-align: right;
+  }
+  .inspector-table-area td {
+    border-top: 1px solid var(--line);
   }
 }
 
@@ -77,6 +103,8 @@ body {
   overscroll-behavior: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
+  scrollbar-gutter: stable;
+  border-top: 1px solid var(--line);
 }
 .inspector-table-area::-webkit-scrollbar {
   width: 8px;

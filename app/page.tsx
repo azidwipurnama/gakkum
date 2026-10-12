@@ -257,9 +257,8 @@ export default function DashboardPage() {
           <button
             onClick={scrollToSlide2}
             aria-label="Gulir ke dashboard"
-            className="fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
+            className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
             style={{
-              bottom: "6dvh",
               color: COLORS.inkSoft,
               "--tw-ring-color": COLORS.accent,
             } as React.CSSProperties}
@@ -701,7 +700,7 @@ export default function DashboardPage() {
                       {/* Header Inspector */}
                       <div
                         style={{
-                          padding: "16px 18px 14px",
+                          padding: "16px var(--card-px) 14px",
                           borderBottom: `1px solid ${COLORS.line}`,
                           display: "flex",
                           justifyContent: "space-between",
@@ -787,7 +786,7 @@ export default function DashboardPage() {
                           </div>
                         ) : (
                           <table
-                            className="w-full text-left"
+                            className="w-full text-center"
                             style={{
                               width: "100%",
                               tableLayout: "auto",
@@ -810,56 +809,56 @@ export default function DashboardPage() {
                                 }}
                               >
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("ip")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Alamat IP {sortConfig.key === "ip" && <SortIndicator columnKey="ip" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("mac")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   MAC {sortConfig.key === "mac" && <SortIndicator columnKey="mac" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("hostname")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Nama {sortConfig.key === "hostname" && <SortIndicator columnKey="hostname" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("category")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Kategori {sortConfig.key === "category" && <SortIndicator columnKey="category" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("vendor")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Vendor {sortConfig.key === "vendor" && <SortIndicator columnKey="vendor" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("latency")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Latensi {sortConfig.key === "latency" && <SortIndicator columnKey="latency" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3"
+                                  className="whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)]"
                                   onClick={() => handleSort("status")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
                                   Status {sortConfig.key === "status" && <SortIndicator columnKey="status" sortConfig={sortConfig} />}
                                 </th>
                                 <th
-                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] px-2.5 py-3 text-right"
+                                  className="cursor-pointer whitespace-nowrap text-[11px] font-medium text-[var(--ink-soft)] text-right"
                                   onClick={() => handleSort("last_seen")}
                                   style={{ position: "sticky", top: 0, backgroundColor: COLORS.bgSubtle, zIndex: 10 }}
                                 >
@@ -873,30 +872,30 @@ export default function DashboardPage() {
                                   key={dev.mac || idx}
                                   style={{
                                     height: `var(--row-h)`,
-                                    backgroundColor: COLORS.bgSubtle,
+                                    backgroundColor: "transparent",
                                   }}
                                   onMouseEnter={(e) => {
                                     (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.rowHover;
                                   }}
                                   onMouseLeave={(e) => {
-                                    (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.bgSubtle;
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
                                   }}
                                 >
-                                  <td className="px-2.5 py-2 text-[11px] font-mono font-medium text-[var(--ink)]">
+                                  <td className="py-1 text-[11px] font-mono font-medium text-[var(--ink)]">
                                     {dev.ip || "-"}
                                   </td>
-                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)] font-mono">
+                                  <td className="py-1 text-[11px] text-[var(--ink-soft)] font-mono">
                                     {dev.mac}
                                   </td>
-                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink)]">{dev.hostname || "Unknown"}</td>
-                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)]">{dev.category || "Unknown"}</td>
-                                  <td className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)]">{dev.vendor || "Unknown"}</td>
+                                  <td className="py-1 text-[11px] text-[var(--ink)]">{dev.hostname || "Unknown"}</td>
+                                  <td className="py-1 text-[11px] text-[var(--ink-soft)]">{dev.category || "Unknown"}</td>
+                                  <td className="py-1 text-[11px] text-[var(--ink-soft)]">{dev.vendor || "Unknown"}</td>
                                   <td
-                                    className="px-2.5 py-2 text-[11px] font-mono text-[var(--ink)]"
+                                    className="py-1 text-[11px] font-mono text-[var(--ink)]"
                                   >
                                     {dev.latency !== undefined ? `${dev.latency}ms` : "-"}
                                   </td>
-                                  <td className="px-2.5 py-2 text-[11px]">
+                                  <td className="py-1 text-[11px]">
                                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                       <span
                                         style={{
@@ -913,7 +912,7 @@ export default function DashboardPage() {
                                     </div>
                                   </td>
                                   <td
-                                    className="px-2.5 py-2 text-[11px] text-[var(--ink-soft)] text-right font-mono"
+                                    className="py-1 text-[11px] text-[var(--ink-soft)] text-right font-mono"
                                     title={new Date(dev.last_seen).toLocaleString()}
                                   >
                                     {new Date(dev.last_seen).toLocaleTimeString()}
