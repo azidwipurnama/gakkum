@@ -82,8 +82,8 @@ body {
 
 /* Scroll-hint arrow */
 @keyframes slideUpDown {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%, 100% { transform: translateY(280px); }
+  50% { transform: translateY(270px); }
 }
 .scroll-pill-icon {
   animation: slideUpDown 0.8s ease-in-out infinite;
@@ -92,6 +92,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .scroll-pill-icon {
     animation: none;
+    transform: translateY(600px);
   }
 }
 

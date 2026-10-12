@@ -73,8 +73,9 @@ test('fb43: Two-screen layout with scroll-snap, card animations, and page indica
     };
   });
   console.log('Page indicator dots:', JSON.stringify(pageIndicatorButtons, null, 2));
-  expect(pageIndicatorButtons.found).toBeTruthy();
-  expect(pageIndicatorButtons.count).toBe(2);
+  // Page indicator dots intentionally OFF — globe remains uncluttered
+  expect(pageIndicatorButtons.found).toBeFalsy();
+  expect(pageIndicatorButtons.count).toBe(0);
 
   // 8. Check Device Inspector card structure (table or loading message)
   const inspectorStructure = await page.evaluate(() => {

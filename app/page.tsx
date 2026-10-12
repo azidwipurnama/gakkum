@@ -219,7 +219,7 @@ export default function DashboardPage() {
     setSortConfig((prev) => ({ key, direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc" }));
   };
 
-  const subnetPrefix = metrics?.server_ip ? metrics.server_ip.split(".").slice(0, 3).join(".") + ".x" : "Localhost";
+  const subnetPrefix = metrics?.server_ip || "Localhost";
 
   return (
     <>
@@ -253,20 +253,20 @@ export default function DashboardPage() {
           {/* Globe centered di tengah slide */}
           <CyberGlobeBg wifiName={ssid} />
 
-          {/* Tombol scroll down dengan panah beranimasi */}
+          {/* Tombol scroll down dengan panah beranimasi — di tepi kanan globe */}
           <button
             onClick={scrollToSlide2}
             aria-label="Gulir ke dashboard"
-            className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
+            className="absolute right-8 bottom-10 z-30 flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
             style={{
               color: COLORS.inkSoft,
               "--tw-ring-color": COLORS.accent,
             } as React.CSSProperties}
           >
-            <p className="text-[15px] font-sans mb-1" style={{ color: COLORS.inkSoft }}>
+            <p className="text-[13px] font-sans" style={{ color: COLORS.inkSoft }}>
               Gulir ke bawah
             </p>
-            <ChevronDown className="w-4 h-4 scroll-pill-icon" style={{ color: COLORS.inkSoft }} />
+            <ChevronDown className="w-3.5 h-3.5 scroll-pill-icon" style={{ color: COLORS.inkSoft }} />
           </button>
 
           {/* Skip-link */}
@@ -532,6 +532,9 @@ export default function DashboardPage() {
                           display: "flex",
                           flexDirection: "column",
                           gap: "12px",
+                          height: "100%",
+                          overflow: "hidden",
+                          boxSizing: "border-box",
                         }}
                       >
                         {/* Header Radar */}
@@ -594,7 +597,7 @@ export default function DashboardPage() {
                               fontSize: "10px",
                               fontWeight: "500",
                               padding: "4px 8px",
-                              borderRadius: "12px",
+                              borderRadius: "120px",
                               backgroundColor: alerts.length > 0 ? "rgba(180, 83, 26, 0.13)" : "rgba(74, 122, 87, 0.13)",
                               color: alerts.length > 0 ? COLORS.accent : COLORS.statusOn,
                             }}
@@ -932,34 +935,6 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      {/* Penanda halaman: dua titik di tepi kanan */}
-      <div
-        className="fixed top-1/2 -translate-y-1/2 right-6 z-40 flex items-center pointer-events-none"
-        aria-hidden="true"
-      >
-        <div className="flex flex-col items-center gap-3">
-          {/* Dot slide 1 */}
-          <button
-            onClick={() => scrollToSlide(0)}
-            className="w-2 h-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
-            style={{
-              backgroundColor: activeSlide === 0 ? COLORS.accent : COLORS.inkFaint,
-              "--tw-ring-color": COLORS.accent,
-            } as React.CSSProperties}
-            aria-label="Gulir ke slide 1"
-          />
-          {/* Dot slide 2 */}
-          <button
-            onClick={() => scrollToSlide(1)}
-            className="w-2 h-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
-            style={{
-              backgroundColor: activeSlide === 1 ? COLORS.accent : COLORS.inkFaint,
-              "--tw-ring-color": COLORS.accent,
-            } as React.CSSProperties}
-            aria-label="Gulir ke slide 2"
-          />
-        </div>
-      </div>
     </>
   );
 }
