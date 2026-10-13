@@ -355,21 +355,23 @@ export default function DashboardPage() {
           {/* Globe centered di tengah slide */}
           <CyberGlobeBg wifiName={ssid} />
 
-          {/* Tombol scroll down dengan panah beranimasi â€” di tepi kanan globe */}
-          <button
-            onClick={scrollToSlide2}
-            aria-label="Gulir ke dashboard"
-            className="absolute right-8 bottom-10 z-30 flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
-            style={{
-              color: COLORS.inkSoft,
-              "--tw-ring-color": COLORS.accent,
-            } as React.CSSProperties}
-          >
-            <p className="text-[13px] font-sans" style={{ color: COLORS.inkSoft }}>
-              Gulir ke bawah
-            </p>
-            <ChevronDown className="w-3.5 h-3.5 scroll-pill-icon" style={{ color: COLORS.inkSoft }} />
-          </button>
+          {/* Tombol scroll down — hanya muncul setelah loading selesai */}
+          {isLoaded && (
+            <button
+              onClick={scrollToSlide2}
+              aria-label="Gulir ke dashboard"
+              className="absolute right-8 bottom-10 z-30 flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 pointer-events-auto"
+              style={{
+                color: COLORS.inkSoft,
+                "--tw-ring-color": COLORS.accent,
+              } as React.CSSProperties}
+            >
+              <p className="text-[13px] font-sans" style={{ color: COLORS.inkSoft }}>
+                Gulir ke bawah
+              </p>
+              <ChevronDown className="w-3.5 h-3.5 scroll-pill-icon" style={{ color: COLORS.inkSoft }} />
+            </button>
+          )}
 
           {/* Skip-link */}
           <a href="#slide2" className="skip-link">
@@ -424,7 +426,6 @@ export default function DashboardPage() {
                       width: "100%",
                       backgroundColor: COLORS.bgPanel,
                       border: `1px solid ${COLORS.line}`,
-                      borderRadius: "14px",
                       padding: "14px 18px",
                       display: "flex",
                       justifyContent: "space-between",
@@ -556,25 +557,13 @@ export default function DashboardPage() {
                         <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Offline</div>
                       </div>
 
-                      {/* Rata-rata Latensi (hanya jika ada) */}
-                      {(() => {
-                        const upDevices = devices.filter((d) => d.status === "UP" && d.latency !== undefined);
-                        if (upDevices.length > 0) {
-                          const avgLatency =
-                            Math.round(upDevices.reduce((sum, d) => sum + (d.latency || 0), 0) / upDevices.length);
-                          return (
-                            <>
-                              <div style={{ textAlign: "center", paddingRight: "12px", borderRight: `1px solid ${COLORS.line}` }}>
-                                <div style={{ fontSize: "18px", fontWeight: "600", color: COLORS.ink }}>
-                                  {avgLatency}
-                                </div>
-                                <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Rata-rata latensi</div>
-                              </div>
-                            </>
-                          );
-                        }
-                        return null;
-                      })()}
+                      {/* Total Perangkat = Online + Offline */}
+                      <div style={{ textAlign: "center", paddingRight: "12px", borderRight: `1px solid ${COLORS.line}` }}>
+                        <div style={{ fontSize: "18px", fontWeight: "600", color: COLORS.ink }}>
+                          {metrics.total_up + metrics.total_down}
+                        </div>
+                        <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Total Perangkat</div>
+                      </div>
 
                       {/* Peringatan Aktif */}
                       <div style={{ textAlign: "center" }}>
@@ -631,7 +620,6 @@ export default function DashboardPage() {
                         style={{
                           backgroundColor: COLORS.bgPanel,
                           border: `1px solid ${COLORS.line}`,
-                          borderRadius: "14px",
                           padding: "14px 18px",
                           display: "flex",
                           flexDirection: "column",
@@ -797,10 +785,7 @@ export default function DashboardPage() {
                           <h2 style={{ fontSize: "15px", fontWeight: "500", color: COLORS.ink }}>
                             Inspektur perangkat ({subnetPrefix})
                           </h2>
-                          <div style={{ fontSize: "12px", color: COLORS.inkSoft, marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ display: "inline-block", width: "4px", height: "4px", borderRadius: "50%", backgroundColor: COLORS.statusOn, animation: "pulse 2s ease-in-out infinite" }} />
-                            Pemindai ARP aktif
-                          </div>
+
                         </div>
 
                         {/* Kanan: Pencarian + Filter */}

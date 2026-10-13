@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="465" height="655" viewBox="0 0 465 655">
+  <title>Denah area kerja dengan lima access point</title>
+  <desc>Denah tampak atas dengan koridor abu-abu, ruangan di kiri dan kanan, serta lima penanda access point Wi-Fi.</desc>
+  <defs>
+    <linearGradient id="floor" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#aaa"/>
+      <stop offset="1" stop-color="#929292"/>
+    </linearGradient>
+    <linearGradient id="room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8f5ee"/>
+      <stop offset="1" stop-color="#eee9df"/>
+    </linearGradient>
+    <g id="ap">
+      <circle r="36" fill="#5d91d8" opacity=".12"/>
+      <circle r="26" fill="#7aa6e0" opacity=".17"/>
+      <circle r="17" fill="#fff" stroke="#d7dfe9" stroke-width="1.5"/>
+      <g fill="none" stroke="#1262ce" stroke-width="2.7" stroke-linecap="round">
+        <path d="M-9 -3 Q0 -11 9 -3"/>
+        <path d="M-6 1 Q0 -4 6 1"/>
+        <path d="M-3 5 Q0 2 3 5"/>
+      </g>
+      <circle cy="9" r="1.8" fill="#1262ce"/>
+    </g>
+    <style>
+      .wall { fill:none; stroke:#292929; stroke-width:7; stroke-linecap:square; stroke-linejoin:miter; }
+      .thin { fill:none; stroke:#333; stroke-width:4.5; }
+      .window { fill:#c5c9c9; stroke:#8f9291; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="465" height="655" fill="#f5f1e9"/>
+  <rect x="3" y="3" width="459" height="649" fill="none" stroke="#a64aff" stroke-width="2"/>
+
+  <!-- Main floor plan footprint -->
+  <path d="M29 16 H439 V633 H29 Z" fill="url(#floor)"/>
+
+  <!-- Left rooms -->
+  <g fill="url(#room)">
+    <rect x="32" y="20" width="101" height="72"/>
+    <rect x="32" y="100" width="101" height="72"/>
+    <rect x="32" y="180" width="101" height="72"/>
+    <rect x="32" y="260" width="101" height="72"/>
+    <rect x="32" y="340" width="101" height="72"/>
+    <rect x="32" y="420" width="101" height="72"/>
+    <rect x="32" y="500" width="101" height="72"/>
+    <rect x="32" y="580" width="101" height="49"/>
+  </g>
+
+  <!-- Right rooms -->
+  <g fill="url(#room)">
+    <rect x="330" y="20" width="105" height="72"/>
+    <rect x="330" y="100" width="105" height="72"/>
+    <rect x="330" y="180" width="105" height="72"/>
+    <rect x="330" y="260" width="105" height="72"/>
+    <rect x="373" y="365" width="62" height="105"/>
+    <rect x="373" y="478" width="62" height="151"/>
+  </g>
+
+  <!-- Outer and room walls -->
+  <g class="wall">
+    <path d="M29 16 H439 V633 H29 Z"/>
+    <path d="M133 20 V629"/>
+    <path d="M330 20 V360 H373 V629"/>
+    <path d="M32 96 H133 M32 176 H133 M32 256 H133 M32 336 H133 M32 416 H133 M32 496 H133 M32 576 H133"/>
+    <path d="M330 96 H435 M330 176 H435 M330 256 H435 M330 336 H435"/>
+    <path d="M373 474 H435"/>
+  </g>
+
+  <!-- Corridor divider segments: partitions, not a road marking -->
+  <g class="thin">
+    <path d="M235 20 V161"/>
+    <path d="M235 164 V208"/>
+    <path d="M235 212 V335"/>
+  </g>
+
+  <!-- Openings at the bottom and window strips on outer edges -->
+  <path d="M204 633 H268" stroke="#f5f1e9" stroke-width="9"/>
+  <g class="window">
+    <rect x="26" y="42" width="5" height="28"/>
+    <rect x="26" y="115" width="5" height="28"/>
+    <rect x="26" y="195" width="5" height="28"/>
+    <rect x="26" y="275" width="5" height="28"/>
+    <rect x="26" y="355" width="5" height="28"/>
+    <rect x="26" y="435" width="5" height="28"/>
+    <rect x="26" y="515" width="5" height="28"/>
+    <rect x="26" y="592" width="5" height="24"/>
+    <rect x="438" y="42" width="5" height="28"/>
+    <rect x="438" y="115" width="5" height="28"/>
+    <rect x="438" y="195" width="5" height="28"/>
+    <rect x="438" y="275" width="5" height="28"/>
+    <rect x="438" y="390" width="5" height="28"/>
+    <rect x="438" y="500" width="5" height="28"/>
+    <rect x="438" y="592" width="5" height="24"/>
+  </g>
+
+  <!-- Five access point markers -->
+  <g transform="translate(181 94)"><use href="#ap"/></g>
+  <g transform="translate(288 94)"><use href="#ap"/></g>
+  <g transform="translate(382 187)"><use href="#ap"/></g>
+  <g transform="translate(181 236)"><use href="#ap"/></g>
+  <g transform="translate(181 551)"><use href="#ap"/></g>
+  <g transform="translate(308 551)"><use href="#ap"/></g>
+</svg>
