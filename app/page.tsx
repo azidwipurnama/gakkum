@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { ChevronDown, Wifi, Radar, Bell, Trash2 } from "lucide-react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useNetworkEvents } from "@/hooks/useNetworkEvents";
+import { useNetworkEvents, type NotifEvent } from "@/hooks/useNetworkEvents";
 import LoadingUI from "@/components/LoadingUI";
 
 const COLORS = {
@@ -23,9 +23,84 @@ const COLORS = {
 
 const INSET = "clamp(16px, 3vw, 36px)";
 
-// Batas jumlah item notifikasi yang dirender ke DOM.
-// Sisanya dibuang dari DOM; riwayat lengkap tetap tersimpan di state/localStorage.
-const RENDER_LIMIT = 50;
+// Jumlah item yang masih memakai animasi masuk berurutan.
+// Antrean lebih panjang dari ini dirender langsung tanpa animasi.
+const ANIMATION_MAX_QUEUE = 20;
+
+// Satu baris notifikasi. Dibungkus React.memo supaya daftar panjang tidak
+// dirender ulang seluruhnya setiap kali ada notifikasi baru masuk.
+const NotificationRow = React.memo(function NotificationRow({
+  event: n,
+  index,
+  animate,
+}: {
+  event: NotifEvent;
+  index: number;
+  animate: boolean;
+}) {
+  return (
+    <div
+      title={n.detail ? `${n.title} - ${n.detail}` : n.title}
+      style={{
+        display: "block",
+        height: "var(--notif-row-h)",
+        minHeight: "var(--notif-row-h)",
+        maxHeight: "var(--notif-row-h)",
+        flex: "none",
+        boxSizing: "border-box",
+        padding: "8px 10px",
+        backgroundColor: COLORS.bgSubtle,
+        borderBottom: `1px solid ${COLORS.line}`,
+        animation: animate ? `slideDownIn 0.2s ease-out forwards` : "none",
+        animationDelay: animate ? `${Math.min(index * 60, ANIMATION_MAX_QUEUE * 60)}ms` : undefined,
+        overflow: "hidden",
+      }}
+    >
+      {/* Baris isi: flex horizontal internal, tidak berbagi tinggi dengan item lain */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", height: "100%", minWidth: 0 }}>
+        {/* Dot */}
+        <span
+          style={{
+            width: n.type === 'arp_ok' ? "6px" : "8px",
+            height: n.type === 'arp_ok' ? "6px" : "8px",
+            borderRadius: "50%",
+            backgroundColor:
+              n.dotColor === 'on' ? COLORS.statusOn :
+              n.dotColor === 'off' ? COLORS.statusOff :
+              n.dotColor === 'warn' ? COLORS.accent : COLORS.inkSoft,
+            flexShrink: 0,
+          }}
+        />
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+          <div style={{
+            fontSize: "13px",
+            fontWeight: n.type === 'arp_ok' ? 400 : 500,
+            lineHeight: "18px",
+            color: COLORS.ink,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
+          }}>
+            {n.title}
+          </div>
+          {n.detail && (
+            <div style={{
+              fontSize: "12px",
+              lineHeight: "16px",
+              color: COLORS.inkSoft,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis"
+            }}>
+              {n.detail}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // Indikator pengurutan untuk header tabel
 function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfig: { key: string; direction: "asc" | "desc" } }) {
@@ -675,68 +750,13 @@ export default function DashboardPage() {
                               Tidak ada notifikasi
                             </div>
                           ) : (
-                            notifications.slice(0, RENDER_LIMIT).map((n, index) => (
-                              <div
+                            notifications.map((n, index) => (
+                              <NotificationRow
                                 key={n.id}
-                                title={n.detail ? `${n.title} - ${n.detail}` : n.title}
-                                style={{
-                                  display: "block",
-                                  height: "var(--notif-row-h)",
-                                  minHeight: "var(--notif-row-h)",
-                                  maxHeight: "var(--notif-row-h)",
-                                  flex: "none",
-                                  boxSizing: "border-box",
-                                  padding: "8px 10px",
-                                  backgroundColor: COLORS.bgSubtle,
-                                  borderBottom: `1px solid ${COLORS.line}`,
-                                  animation: `slideDownIn 0.2s ease-out forwards`,
-                                  animationDelay: `${Math.min(index * 60, 20 * 60)}ms`,
-                                  overflow: "hidden",
-                                }}
-                              >
-                                {/* Baris isi: flex horizontal internal, tidak berbagi tinggi dengan item lain */}
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px", height: "100%", minWidth: 0 }}>
-                                  {/* Dot */}
-                                  <span
-                                    style={{
-                                      width: n.type === 'arp_ok' ? "6px" : "8px",
-                                      height: n.type === 'arp_ok' ? "6px" : "8px",
-                                      borderRadius: "50%",
-                                      backgroundColor:
-                                        n.dotColor === 'on' ? COLORS.statusOn :
-                                        n.dotColor === 'off' ? COLORS.statusOff :
-                                        n.dotColor === 'warn' ? COLORS.accent : COLORS.inkSoft,
-                                      flexShrink: 0,
-                                    }}
-                                  />
-                                  {/* Content */}
-                                  <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                                    <div style={{
-                                      fontSize: "13px",
-                                      fontWeight: n.type === 'arp_ok' ? 400 : 500,
-                                      lineHeight: "18px",
-                                      color: COLORS.ink,
-                                      whiteSpace: "nowrap",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis"
-                                    }}>
-                                      {n.title}
-                                    </div>
-                                    {n.detail && (
-                                      <div style={{
-                                        fontSize: "12px",
-                                        lineHeight: "16px",
-                                        color: COLORS.inkSoft,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis"
-                                      }}>
-                                        {n.detail}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
+                                event={n}
+                                index={index}
+                                animate={notifications.length <= ANIMATION_MAX_QUEUE}
+                              />
                             ))
                           )}
                         </div>

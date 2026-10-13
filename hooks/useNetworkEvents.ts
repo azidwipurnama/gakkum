@@ -2,16 +2,18 @@
 
 import { Device } from "@/types/network";
 import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  DEFAULT_CAP,
+  EPHEMERAL_KINDS,
+  NOTIF_CAPS,
+  NOTIF_KINDS,
+  type EventKind,
+} from "@/lib/notifConfig";
+
+export type { EventKind };
 
 const STORAGE_KEY = "gakkum:notifications";
 const COOLDOWN_DEVICE = 5000; // ms per IP/jenis
-const COOLDOWN_ARP = 5000; // ms antar update arp_activity
-
-export type EventKind =
-  | "scan_baseline"
-  | "device_new"
-  | "device_offline"
-  | "arp_ok";
 
 export interface NotifEvent {
   id: string; // stable unique key: `${type}:${ip}`
@@ -25,17 +27,38 @@ export interface NotifEvent {
   vendor?: string;
 }
 
-// Retensi terpisah
-const ARP_MAX_EVENTS = 100;
-const IMPORTANT_MAX_EVENTS = 100;
+/** Kumpulan notifikasi per jenis — tiap jenis punya kumpulan dan batasnya sendiri. */
+type NotifStore = Record<EventKind, NotifEvent[]>;
 
 const COOLDOWN: Record<string, number> = {
   device_new: COOLDOWN_DEVICE,
   device_offline: COOLDOWN_DEVICE,
+  device_online: COOLDOWN_DEVICE,
+  device_no_response: COOLDOWN_DEVICE,
   arp_ok: COOLDOWN_DEVICE,
 };
 
 const now = () => Date.now();
+
+const EPHEMERAL = new Set<EventKind>(EPHEMERAL_KINDS);
+
+const emptyStore = (): NotifStore => {
+  const store = {} as NotifStore;
+  for (const kind of NOTIF_KINDS) store[kind] = [];
+  return store;
+};
+
+/** Potong tiap jenis sesuai batasnya sendiri (jenis lain tidak tersentuh). */
+const capStore = (store: NotifStore): NotifStore => {
+  const capped = {} as NotifStore;
+  for (const kind of NOTIF_KINDS) {
+    capped[kind] = (store[kind] ?? []).slice(0, NOTIF_CAPS[kind] ?? DEFAULT_CAP);
+  }
+  return capped;
+};
+
+const isKnownKind = (value: unknown): value is EventKind =>
+  typeof value === "string" && (NOTIF_KINDS as string[]).includes(value);
 
 /**
  * useNetworkEvents — membandingkan snapshot devices tiap kali `devices` berubah
@@ -48,8 +71,8 @@ export function useNetworkEvents(
   isWsConnected: boolean,
   hasReceivedData: boolean
 ) {
-  const [importantNotifications, setImportantNotifications] = useState<NotifEvent[]>([]);
-  const [arpNotifications, setArpNotifications] = useState<NotifEvent[]>([]);
+  // Satu kumpulan per jenis; tiap jenis dibatasi sendiri (lihat lib/notifConfig.ts)
+  const [store, setStore] = useState<NotifStore>(emptyStore);
 
   // persist: load sekali di mount
   const initializedRef = useRef(false);
@@ -70,8 +93,23 @@ export function useNetworkEvents(
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as NotifEvent[];
-        if (Array.isArray(parsed)) setImportantNotifications(parsed);
+        const parsed = JSON.parse(stored) as unknown;
+        const loaded = emptyStore();
+        if (Array.isArray(parsed)) {
+          // Format lama: satu array datar berisi semua jenis.
+          for (const ev of parsed as NotifEvent[]) {
+            if (!ev || !isKnownKind(ev.type) || EPHEMERAL.has(ev.type)) continue;
+            loaded[ev.type].push(ev);
+          }
+        } else if (parsed && typeof parsed === "object") {
+          const byKind = parsed as Record<string, unknown>;
+          for (const kind of NOTIF_KINDS) {
+            if (EPHEMERAL.has(kind)) continue;
+            const list = byKind[kind];
+            if (Array.isArray(list)) loaded[kind] = list as NotifEvent[];
+          }
+        }
+        setStore(capStore(loaded));
       }
     } catch {
       /* ignore corrupt storage */
@@ -81,31 +119,39 @@ export function useNetworkEvents(
     if (!baselineRef.current) sessionStorage.setItem("gakkum:baseline", "1");
   }, []);
 
-  // --- Tulis persist saari importantNotifications berubah ---
+  // --- Tulis persist saat kumpulan berubah (arp_ok tidak disimpan) ---
   useEffect(() => {
     if (!initializedRef.current) return;
     if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(importantNotifications));
+      const persisted: Partial<Record<EventKind, NotifEvent[]>> = {};
+      for (const kind of NOTIF_KINDS) {
+        if (EPHEMERAL.has(kind)) continue;
+        persisted[kind] = store[kind];
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
     } catch {
       /* quota/etc — abaikan */
     }
-  }, [importantNotifications]);
+  }, [store]);
 
   const emit = useCallback((ev: NotifEvent) => {
-    if (ev.type === "arp_ok") {
-      setArpNotifications((prev) => [ev, ...prev].slice(0, ARP_MAX_EVENTS));
-      return;
+    const kind = ev.type;
+    const cap = NOTIF_CAPS[kind] ?? DEFAULT_CAP;
+
+    // arp_ok tidak memakai cooldown (volumenya tinggi, hanya di memori)
+    if (kind !== "arp_ok") {
+      const key = `${kind}:${ev.ip}`;
+      const last = cooldownRef.current.get(key);
+      if (last !== undefined && now() - last < (COOLDOWN[kind] ?? COOLDOWN_DEVICE)) return;
+      cooldownRef.current.set(key, now());
     }
 
-    const key = `${ev.type}:${ev.ip}`;
-    const last = cooldownRef.current.get(key);
-    if (last !== undefined && now() - last < (COOLDOWN[ev.type] ?? COOLDOWN_DEVICE)) return;
-    cooldownRef.current.set(key, now());
-    setImportantNotifications((prev) => {
-      // dedup: hapus yang lama dengan id sama, prepend baru
-      const filtered = prev.filter((n) => n.id !== ev.id);
-      return [ev, ...filtered].slice(0, IMPORTANT_MAX_EVENTS);
+    setStore((prev) => {
+      const sameKind = prev[kind];
+      // dedup: hapus yang lama dengan id sama, prepend baru, buang yang tertua
+      const filtered = sameKind.filter((n) => n.id !== ev.id);
+      return { ...prev, [kind]: [ev, ...filtered].slice(0, cap) };
     });
   }, []);
 
@@ -118,16 +164,16 @@ export function useNetworkEvents(
       const byIp = new Map<string, Device>();
       for (const d of devs) byIp.set(d.ip, d);
 
-      // ARP activity: kumpulkan semua yang last_seen berubah
+      // ARP activity: hanya perangkat yang SUDAH UP dan last_seen-nya maju.
+      // Perangkat yang baru kembali online (DOWN → UP) tidak menghasilkan arp_ok.
       let changedDevices: Device[] = [];
       for (const d of devs) {
         const prevEntry = prevMap.get(d.ip);
-        if (!prevEntry || prevEntry.last_seen !== d.last_seen) {
-          // Hanya jika sesi baseline sudah lewat (dihindarkan emit saat awal)
-          if (baselineRef.current && prevEntry) {
-            changedDevices.push(d);
-          }
-        }
+        if (!prevEntry) continue;
+        if (d.status !== "UP" || prevEntry.status !== "UP") continue;
+        if (prevEntry.last_seen === d.last_seen) continue;
+        // Hanya jika sesi baseline sudah lewat (dihindarkan emit saat awal)
+        if (baselineRef.current) changedDevices.push(d);
       }
 
       // Emit untuk semua yang berubah (maks 200 per snapshot)
@@ -136,20 +182,22 @@ export function useNetworkEvents(
       );
 
       sorted.slice(0, 200).forEach(d => {
-        if (d.status === "UP") {
-          emit({
-            id: `arp_ok:${d.ip}:${now()}`, // ID harus unik per kejadian
-            type: "arp_ok",
-            ip: d.ip,
-            title: `Berhasil ARP pada ${d.ip}`,
-            detail: `${d.mac} - ${d.vendor || 'Vendor tidak diketahui'}`,
-            ts: now(),
-            dotColor: "on",
-            mac: d.mac,
-            vendor: d.vendor,
-          });
-        }
+        emit({
+          id: `arp_ok:${d.ip}:${now()}`, // ID harus unik per kejadian
+          type: "arp_ok",
+          ip: d.ip,
+          title: `Berhasil ARP pada ${d.ip}`,
+          detail: `${d.mac} - ${d.vendor || 'Vendor tidak diketahui'}`,
+          ts: now(),
+          dotColor: "on",
+          mac: d.mac,
+          vendor: d.vendor,
+        });
       });
+
+      // identitas singkat perangkat untuk baris detail
+      const identity = (d: Device) =>
+        `${d.hostname || d.mac}${d.vendor ? ` - ${d.vendor}` : ""}`;
 
       // emit perangkat event (penting)
       for (const d of devs) {
@@ -172,21 +220,31 @@ export function useNetworkEvents(
               id: `device_offline:${d.ip}`,
               type: "device_offline",
               ip: d.ip,
-              title: `${d.ip} (${d.hostname || d.mac})`,
-              detail: "Perangkat offline",
+              title: `${d.ip} sedang kondisi offline`,
+              detail: identity(d),
               ts: now(),
               dotColor: "off",
+            });
+          } else if (d.status === "UP") {
+            emit({
+              id: `device_online:${d.ip}`,
+              type: "device_online",
+              ip: d.ip,
+              title: `${d.ip} kembali online`,
+              detail: identity(d),
+              ts: now(),
+              dotColor: "on",
             });
           }
         }
       }
 
-      // devices yang hilang dari snapshot → offline
+      // devices yang hilang dari snapshot → tidak merespons
       for (const [ip, prevEntry] of prevMap) {
         if (!byIp.has(ip)) {
           emit({
-            id: `device_offline:${ip}`,
-            type: "device_offline",
+            id: `device_no_response:${ip}`,
+            type: "device_no_response",
             ip,
             title: ip,
             detail: "Perangkat tidak merespons",
@@ -231,8 +289,7 @@ export function useNetworkEvents(
 
   // --- clearEvents (hapus semua + persist bersih) ---
   const clearEvents = useCallback(() => {
-    setImportantNotifications([]);
-    setArpNotifications([]);
+    setStore(emptyStore());
     prevSnapshotRef.current.clear();
     cooldownRef.current.clear();
     if (typeof window !== "undefined") {
@@ -240,10 +297,12 @@ export function useNetworkEvents(
     }
   }, []);
 
-  // --- merge list untuk render ---
+  // --- merge list untuk render: gabung semua jenis, terbaru di atas ---
   const displayList = useCallback((): NotifEvent[] => {
-    return [...arpNotifications, ...importantNotifications].sort((a, b) => b.ts - a.ts).slice(0, 100);
-  }, [arpNotifications, importantNotifications]);
+    const all: NotifEvent[] = [];
+    for (const kind of NOTIF_KINDS) all.push(...store[kind]);
+    return all.sort((a, b) => b.ts - a.ts);
+  }, [store]);
 
   // --- dev: simulasi via window ---
   useEffect(() => {
@@ -291,5 +350,5 @@ export function useNetworkEvents(
     };
   }, [processSnapshot]);
 
-  return { notifications: displayList(), clearEvents, emit };
+  return { notifications: displayList(), clearEvents };
 }
