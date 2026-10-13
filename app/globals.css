@@ -20,6 +20,9 @@
   --radius-card:  14px;
   --radius-ctl:   8px;
   --card-px:      20px;
+  --visible-notifs: 3;
+  --notif-row-h:   56px;
+
 
   /* Device Inspector table sizing */
   --visible-rows: 22;
@@ -85,6 +88,11 @@ body {
   0%, 100% { transform: translateY(280px); }
   50% { transform: translateY(270px); }
 }
+
+@keyframes slideDownIn {
+  0% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 .scroll-pill-icon {
   animation: slideUpDown 0.8s ease-in-out infinite;
 }
@@ -98,7 +106,7 @@ body {
 
 /* Device Inspector table scroll area */
 .inspector-table-area {
-  max-height: calc(var(--head-h) + var(--visible-rows) * var(--row-h));
+  height: calc(var(--head-h) + var(--visible-rows) * var(--row-h));
   overflow-y: auto;
   overflow-x: auto;
   overscroll-behavior: auto;

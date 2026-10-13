@@ -46,13 +46,13 @@ test('fb43: Two-screen layout with scroll-snap, card animations, and page indica
   // 5. Check all cards are present with correct data-testid (status bar + radar + alerts + inspector)
   const statusBarCard = await page.locator('[data-testid="status-bar"]').count();
   const radarCard = await page.locator('[data-testid="radar-card"]').count();
-  const alertsCard = await page.locator('[data-testid="alerts-card"]').count();
+  const notificationsCard = await page.locator('[data-testid="notifications-card"]').count();
   const inspectorCard = await page.locator('[data-testid="inspector-card"]').count();
 
-  console.log('Cards found - Status Bar:', statusBarCard, 'Radar:', radarCard, 'Alerts:', alertsCard, 'Inspector:', inspectorCard);
+  console.log('Cards found - Status Bar:', statusBarCard, 'Radar:', radarCard, 'Notifications:', notificationsCard, 'Inspector:', inspectorCard);
   expect(statusBarCard).toBe(1);
   expect(radarCard).toBe(1);
-  expect(alertsCard).toBe(1);
+  expect(notificationsCard).toBe(1);
   expect(inspectorCard).toBe(1);
 
   // 6. Check cards have animation setup via data-motion and data-in attributes (not inline styles)

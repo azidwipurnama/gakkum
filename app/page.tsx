@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { ChevronDown, Wifi, Radar, AlertTriangle, Check } from "lucide-react";
+import { ChevronDown, Wifi, Radar, Bell, Trash2 } from "lucide-react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { useNetworkEvents } from "@/hooks/useNetworkEvents";
 import LoadingUI from "@/components/LoadingUI";
 
 const COLORS = {
@@ -21,6 +22,10 @@ const COLORS = {
 };
 
 const INSET = "clamp(16px, 3vw, 36px)";
+
+// Batas jumlah item notifikasi yang dirender ke DOM.
+// Sisanya dibuang dari DOM; riwayat lengkap tetap tersimpan di state/localStorage.
+const RENDER_LIMIT = 50;
 
 // Indikator pengurutan untuk header tabel
 function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfig: { key: string; direction: "asc" | "desc" } }) {
@@ -129,7 +134,8 @@ function RadarCanvas() {
 }
 
 export default function DashboardPage() {
-  const { devices, metrics, ssid, alerts, loading } = useNetwork();
+  const { devices, metrics, ssid, alerts, loading, isWsConnected, hasReceivedData } = useNetwork();
+  const { notifications, clearEvents } = useNetworkEvents(devices, isWsConnected, hasReceivedData);
   const [isLoaded, setIsLoaded] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "ip", direction: "asc" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,9 +145,33 @@ export default function DashboardPage() {
   const slide2Ref = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // State untuk tracking slide visible di viewport
-  const [activeSlide, setActiveSlide] = useState(0);
   const [motionReady, setMotionReady] = useState(false);
+
+  // Track viewport width for responsive containment and sizing
+  const [isNarrow, setIsNarrow] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 980 : false
+  );
+
+  // Cleanup localStorage keys from old "Peringatan" card implementation.
+  // The old alerts-card component stored its own data under a separate key.
+  // This effect removes any leftover keys that are no longer used by the
+  // notification system. Safe to delete this effect once no legacy data remains.
+  useEffect(() => {
+    try {
+      // Check for and remove any legacy localStorage keys related to the old
+      // "Peringatan" card. The current notification system only uses:
+      // - "gakkum:notifications" (importantNotifications)
+      // - "gakkum:baseline" (sessionStorage, one-shot session flag)
+      const legacyKeys = ["gakkum:alerts", "gakkum:alertNotifications"];
+      legacyKeys.forEach((key) => {
+        if (localStorage.getItem(key) !== null) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {
+      // localStorage not available (SSR) or quota exceeded â€” ignore
+    }
+  }, []);
 
   // IntersectionObserver untuk mendeteksi slide 2 masuk viewport dan trigger card animations
   useEffect(() => {
@@ -154,8 +184,6 @@ export default function DashboardPage() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.target === slide2Ref.current) {
-            setActiveSlide(entry.isIntersecting ? 1 : 0);
-
             // Set data-in attribute untuk trigger animasi masuk
             if (entry.isIntersecting) {
               slide2Ref.current?.setAttribute("data-in", "true");
@@ -178,16 +206,15 @@ export default function DashboardPage() {
     return () => observer.disconnect();
   }, [motionReady]);
 
+  // Update isNarrow on resize
+  useEffect(() => {
+    const handleResize = () => setIsNarrow(window.innerWidth < 980);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const scrollToSlide2 = () => {
     slide2Ref.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const scrollToSlide = (slideIndex: number) => {
-    if (slideIndex === 0) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else if (slideIndex === 1) {
-      scrollToSlide2();
-    }
   };
 
   const validDevices = devices.filter((d) => d.ip && d.ip.trim() !== "");
@@ -253,7 +280,7 @@ export default function DashboardPage() {
           {/* Globe centered di tengah slide */}
           <CyberGlobeBg wifiName={ssid} />
 
-          {/* Tombol scroll down dengan panah beranimasi — di tepi kanan globe */}
+          {/* Tombol scroll down dengan panah beranimasi â€” di tepi kanan globe */}
           <button
             onClick={scrollToSlide2}
             aria-label="Gulir ke dashboard"
@@ -327,7 +354,7 @@ export default function DashboardPage() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      gap: "200px",
+                      gap: "24px",
                     }}
                   >
                     {/* Kiri: Icon WiFi + SSID + Status Pil + IP + Gateway */}
@@ -405,7 +432,7 @@ export default function DashboardPage() {
                           </span>
                         </div>
 
-                        {/* IP Server + Gateway — horizontal single line */}
+                        {/* IP Server + Gateway â€” horizontal single line */}
                         <div
                           style={{
                             fontSize: "12px",
@@ -495,7 +522,7 @@ export default function DashboardPage() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "minmax(300px,360px) minmax(0,1fr)",
+                    gridTemplateColumns: "minmax(320px,390px) minmax(0,1fr)",
                     gap: "12px",
                     alignItems: "stretch",
                     width: "100%",
@@ -512,7 +539,7 @@ export default function DashboardPage() {
                       gap: "12px",
                       minHeight: 0,
                       overflow: "hidden",
-                      contain: "size",
+                      contain: isNarrow ? "none" : "size",
                     }}
                   >
                     {/* Radar Kartu */}
@@ -520,6 +547,8 @@ export default function DashboardPage() {
                       className="s2-card"
                       style={{
                         "--i": 1,
+                        flex: 1,
+                        minHeight: "220px",
                       } as React.CSSProperties}
                       data-testid="radar-card"
                     >
@@ -564,117 +593,151 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    {/* Peringatan Kartu */}
+                    {/* Notifikasi Kartu */}
                     <div
                       className="s2-card"
                       style={{
                         "--i": 2,
-                        flex: 1,
-                        minHeight: "200px",
+                        flex: "none",
+                        display: "flex",
+                        flexDirection: "column",
                       } as React.CSSProperties}
-                      data-testid="alerts-card"
+                      data-testid="notifications-card"
                     >
                       <div
                         style={{
                           backgroundColor: COLORS.bgPanel,
                           border: `1px solid ${COLORS.line}`,
-                          borderRadius: "14px",
                           padding: "14px 18px",
                           display: "flex",
                           flexDirection: "column",
                           height: "100%",
                         }}
                       >
-                        {/* Header Peringatan */}
+                        {/* Header */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                          <h3 style={{ fontSize: "14px", fontWeight: "500", color: COLORS.ink, display: "flex", alignItems: "center", gap: "8px" }}>
+                            <Bell size={16} strokeWidth={1.5} color={COLORS.inkSoft} aria-hidden="true" />
+                            Notifikasi
+                          </h3>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <AlertTriangle size={16} strokeWidth={1.5} color={COLORS.accent} aria-hidden="true" />
-                            <h3 style={{ fontSize: "14px", fontWeight: "500", color: COLORS.ink }}>Peringatan</h3>
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "120px", backgroundColor: isWsConnected ? "rgba(74, 122, 87, 0.1)" : "rgba(165, 67, 43, 0.1)", border: `1px solid ${isWsConnected ? COLORS.statusOn : COLORS.statusOff}` }}>
+                              <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: isWsConnected ? COLORS.statusOn : COLORS.statusOff, animation: isWsConnected ? "pulse 2s ease-in-out infinite" : "none" }} />
+                              <span style={{ fontSize: "10px", fontWeight: "500", color: isWsConnected ? COLORS.statusOn : COLORS.statusOff }}>
+                                {isWsConnected ? "Langsung" : "Terputus"}
+                              </span>
+                            </div>
+                            <button
+                              onClick={clearEvents}
+                              disabled={notifications.length === 0}
+                              aria-label="Bersihkan notifikasi"
+                              style={{
+                                padding: "4px",
+                                borderRadius: "6px",
+                                border: "none",
+                                backgroundColor: "transparent",
+                                cursor: notifications.length === 0 ? "not-allowed" : "pointer",
+                                color: notifications.length === 0 ? COLORS.inkFaint : COLORS.inkSoft,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "color 0.2s",
+                              }}
+                              onMouseEnter={(e) => { if (notifications.length > 0) e.currentTarget.style.color = COLORS.accent }}
+                              onMouseLeave={(e) => { if (notifications.length > 0) e.currentTarget.style.color = COLORS.inkSoft }}
+                            >
+                              <Trash2 size={16} strokeWidth={1.5} />
+                            </button>
                           </div>
-                          {/* Tag Status */}
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "500",
-                              padding: "4px 8px",
-                              borderRadius: "120px",
-                              backgroundColor: alerts.length > 0 ? "rgba(180, 83, 26, 0.13)" : "rgba(74, 122, 87, 0.13)",
-                              color: alerts.length > 0 ? COLORS.accent : COLORS.statusOn,
-                            }}
-                          >
-                            {alerts.length > 0 ? `${alerts.length} aktif` : "Normal"}
-                          </span>
                         </div>
 
-                        {/* Body Peringatan */}
+                        {/* SR-only Announcer for Important Events */}
+                        <div className="sr-only" aria-live="polite">
+                          {notifications.filter(n => n.type !== 'arp_ok').slice(0, 1).map(n => n.title)}
+                        </div>
+
+                        {/* List: aria-live="off" — block flow, tinggi tetap, scroll vertikal */}
                         <div
+                          aria-live="off"
                           style={{
-                            flex: 1,
-                            minHeight: 0,
+                            display: "block",
+                            height: `calc(var(--visible-notifs) * var(--notif-row-h))`,
                             overflowY: "auto",
+                            overflowX: "hidden",
                             scrollbarWidth: "thin",
-                            scrollbarColor: `${COLORS.line} transparent`,
+                            scrollbarColor: "var(--line) transparent",
+                            scrollbarGutter: "stable",
+                            paddingRight: "4px",
                           }}
                         >
-                          {alerts.length === 0 ? (
-                            <div style={{ textAlign: "center", padding: "24px 0", color: COLORS.inkSoft }}>
-                              <div
-                                style={{
-                                  width: "32px",
-                                  height: "32px",
-                                  borderRadius: "50%",
-                                  backgroundColor: "rgba(74, 122, 87, 0.13)",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  margin: "0 auto 8px",
-                                }}
-                              >
-                                <Check size={18} strokeWidth={2} color={COLORS.statusOn} aria-hidden="true" />
-                              </div>
-                              <div style={{ fontSize: "12px", fontWeight: "500" }}>Tidak ada peringatan aktif</div>
-                              <div style={{ fontSize: "11px", marginTop: "4px" }}>Semua perangkat terpantau normal</div>
+                          {notifications.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "20px 0", color: COLORS.inkSoft, fontSize: "12px" }}>
+                              Tidak ada notifikasi
                             </div>
                           ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                              {alerts.slice(0, 5).map((alert: any) => (
-                                <div
-                                  key={alert.id}
-                                  style={{
-                                    padding: "8px 10px",
-                                    borderRadius: "8px",
-                                    backgroundColor:
-                                      alert.severity === "critical"
-                                        ? "rgba(165, 67, 43, 0.1)"
-                                        : alert.severity === "warning"
-                                          ? "rgba(180, 83, 26, 0.1)"
-                                          : "rgba(107, 102, 92, 0.1)",
-                                    display: "flex",
-                                    alignItems: "flex-start",
-                                    gap: "8px",
-                                    fontSize: "11px",
-                                  }}
-                                >
+                            notifications.slice(0, RENDER_LIMIT).map((n, index) => (
+                              <div
+                                key={n.id}
+                                title={n.detail ? `${n.title} - ${n.detail}` : n.title}
+                                style={{
+                                  display: "block",
+                                  height: "var(--notif-row-h)",
+                                  minHeight: "var(--notif-row-h)",
+                                  maxHeight: "var(--notif-row-h)",
+                                  flex: "none",
+                                  boxSizing: "border-box",
+                                  padding: "8px 10px",
+                                  backgroundColor: COLORS.bgSubtle,
+                                  borderBottom: `1px solid ${COLORS.line}`,
+                                  animation: `slideDownIn 0.2s ease-out forwards`,
+                                  animationDelay: `${Math.min(index * 60, 20 * 60)}ms`,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                {/* Baris isi: flex horizontal internal, tidak berbagi tinggi dengan item lain */}
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px", height: "100%", minWidth: 0 }}>
+                                  {/* Dot */}
                                   <span
                                     style={{
-                                      display: "inline-block",
-                                      width: "4px",
-                                      height: "4px",
+                                      width: n.type === 'arp_ok' ? "6px" : "8px",
+                                      height: n.type === 'arp_ok' ? "6px" : "8px",
                                       borderRadius: "50%",
-                                      marginTop: "5px",
-                                      flexShrink: 0,
                                       backgroundColor:
-                                        alert.severity === "critical"
-                                          ? COLORS.statusOff
-                                          : alert.severity === "warning"
-                                            ? COLORS.accent
-                                            : COLORS.inkSoft,
+                                        n.dotColor === 'on' ? COLORS.statusOn :
+                                        n.dotColor === 'off' ? COLORS.statusOff :
+                                        n.dotColor === 'warn' ? COLORS.accent : COLORS.inkSoft,
+                                      flexShrink: 0,
                                     }}
                                   />
-                                  <span style={{ color: COLORS.ink, flex: 1 }}>{alert.reason}</span>
+                                  {/* Content */}
+                                  <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                                    <div style={{
+                                      fontSize: "13px",
+                                      fontWeight: n.type === 'arp_ok' ? 400 : 500,
+                                      lineHeight: "18px",
+                                      color: COLORS.ink,
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis"
+                                    }}>
+                                      {n.title}
+                                    </div>
+                                    {n.detail && (
+                                      <div style={{
+                                        fontSize: "12px",
+                                        lineHeight: "16px",
+                                        color: COLORS.inkSoft,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis"
+                                      }}>
+                                        {n.detail}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            ))
                           )}
                         </div>
                       </div>
@@ -693,7 +756,6 @@ export default function DashboardPage() {
                       style={{
                         backgroundColor: COLORS.bgPanel,
                         border: `1px solid ${COLORS.line}`,
-                        borderRadius: "14px",
                         display: "flex",
                         flexDirection: "column",
                         overflow: "hidden",
@@ -776,7 +838,7 @@ export default function DashboardPage() {
                       <div
                         className="inspector-table-area"
                         style={{
-                          maxHeight: `calc(var(--head-h) + var(--visible-rows) * var(--row-h))`,
+                          height: `calc(var(--head-h) + var(--visible-rows) * var(--row-h))`,
                         }}
                       >
                         {loading ? (
@@ -798,7 +860,7 @@ export default function DashboardPage() {
                             aria-label="Hasil pemindaian perangkat jaringan"
                           >
                             <caption className="sr-only">
-                              Hasil pemindaian perangkat jaringan — {validDevices.length} perangkat terdeteksi
+                              Hasil pemindaian perangkat jaringan â€” {validDevices.length} perangkat terdeteksi
                             </caption>
                             <thead>
                               <tr
