@@ -12,6 +12,13 @@ import {
 
 export type { EventKind };
 
+declare global {
+  interface Window {
+    /** Hanya tersedia di mode development untuk QA lewat console. */
+    __simulateNetwork?: (kind: "new" | "offline" | "online", ip: string) => void;
+  }
+}
+
 const STORAGE_KEY = "gakkum:notifications";
 const COOLDOWN_DEVICE = 5000; // ms per IP/jenis
 
@@ -69,7 +76,8 @@ const isKnownKind = (value: unknown): value is EventKind =>
 export function useNetworkEvents(
   devices: Device[],
   isWsConnected: boolean,
-  hasReceivedData: boolean
+  hasReceivedData: boolean,
+  arpRepliesBatch?: { items: Array<{ ip: string; mac: string; ts: string; vendor: string }>; receivedAt: number } | null
 ) {
   // Satu kumpulan per jenis; tiap jenis dibatasi sendiri (lihat lib/notifConfig.ts)
   const [store, setStore] = useState<NotifStore>(emptyStore);
@@ -109,6 +117,9 @@ export function useNetworkEvents(
             if (Array.isArray(list)) loaded[kind] = list as NotifEvent[];
           }
         }
+        // Memuat state persist sekali di mount (tidak bisa lewat initializer
+        // karena akan menyebabkan hydration mismatch saat SSR).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStore(capStore(loaded));
       }
     } catch {
@@ -164,36 +175,8 @@ export function useNetworkEvents(
       const byIp = new Map<string, Device>();
       for (const d of devs) byIp.set(d.ip, d);
 
-      // ARP activity: hanya perangkat yang SUDAH UP dan last_seen-nya maju.
-      // Perangkat yang baru kembali online (DOWN → UP) tidak menghasilkan arp_ok.
-      let changedDevices: Device[] = [];
-      for (const d of devs) {
-        const prevEntry = prevMap.get(d.ip);
-        if (!prevEntry) continue;
-        if (d.status !== "UP" || prevEntry.status !== "UP") continue;
-        if (prevEntry.last_seen === d.last_seen) continue;
-        // Hanya jika sesi baseline sudah lewat (dihindarkan emit saat awal)
-        if (baselineRef.current) changedDevices.push(d);
-      }
-
-      // Emit untuk semua yang berubah (maks 200 per snapshot)
-      const sorted = [...changedDevices].sort(
-        (a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime()
-      );
-
-      sorted.slice(0, 200).forEach(d => {
-        emit({
-          id: `arp_ok:${d.ip}:${now()}`, // ID harus unik per kejadian
-          type: "arp_ok",
-          ip: d.ip,
-          title: `Berhasil ARP pada ${d.ip}`,
-          detail: `${d.mac} - ${d.vendor || 'Vendor tidak diketahui'}`,
-          ts: now(),
-          dotColor: "on",
-          mac: d.mac,
-          vendor: d.vendor,
-        });
-      });
+      // ARP activity kini datang dari pesan WebSocket "arp_replies"
+      // (lihat processArpReplies); tidak lagi disimpulkan dari last_seen.
 
       // identitas singkat perangkat untuk baris detail
       const identity = (d: Device) =>
@@ -240,7 +223,7 @@ export function useNetworkEvents(
       }
 
       // devices yang hilang dari snapshot → tidak merespons
-      for (const [ip, prevEntry] of prevMap) {
+      for (const ip of prevMap.keys()) {
         if (!byIp.has(ip)) {
           emit({
             id: `device_no_response:${ip}`,
@@ -307,7 +290,7 @@ export function useNetworkEvents(
   // --- dev: simulasi via window ---
   useEffect(() => {
     if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
-    (window as any).__simulateNetwork = (kind: "new" | "offline" | "online", ip: string) => {
+    window.__simulateNetwork = (kind: "new" | "offline" | "online", ip: string) => {
       // memanipulasi salinan lokal devices yang terakhir masuk ke snapshot ref.
       // Ini hanya untuk QA console, tidak tersimpan ke localStorage.
       const devs = devicesSnapshotRef.current;
@@ -339,6 +322,7 @@ export function useNetworkEvents(
           last_seen: new Date().toISOString(),
           status: "UP",
           is_blacklisted: false,
+          is_self: false,
         });
       }
       // trigger proses lagi
@@ -346,9 +330,54 @@ export function useNetworkEvents(
     };
     return () => {
       // cleanup global
-      delete (window as any).__simulateNetwork;
+      delete window.__simulateNetwork;
     };
   }, [processSnapshot]);
+
+  // --- ARP REPLIES: satu setStore untuk seluruh batch, satu kali per pesan ---
+  useEffect(() => {
+    // tidak ada data atau baseline belum lewat → skip (first snapshot tidak menghasilkan notifikasi ARP)
+    if (!arpRepliesBatch || !baselineRef.current) return;
+
+    const { items, receivedAt } = arpRepliesBatch;
+    const nowTs = now();
+    // abaikan pesan lebih tua dari 2 siklus (2 * 4s ≈ 8000 ms)
+    const MAX_AGE_MS = 8000;
+    const valid = items.filter(
+      item => {
+        const itemTs = new Date(item.ts).getTime();
+        return nowTs - itemTs <= MAX_AGE_MS;
+      }
+    );
+
+    if (valid.length === 0) return;
+
+    // buat notifikasi arp_ok untuk setiap item yang valid (maks 200 per pesan)
+    const toEmit: NotifEvent[] = valid.slice(0, 200).map((item, index) => ({
+      // ID unik: gabungkan receivedAt dan index agar tidak tabrak dalam batch yang sama
+      id: `arp_ok:${item.ip}:${receivedAt}:${index}`,
+      type: "arp_ok",
+      ip: item.ip,
+      title: `Berhasil ARP pada ${item.ip}`,
+      detail: `${item.mac} - ${item.vendor || 'Vendor tidak diketahui'}`,
+      ts: receivedAt, // gunakan waktu penerimaan WS agar urutan sesuai dengan broadcast
+      dotColor: "on",
+      mac: item.mac,
+      vendor: item.vendor,
+    }));
+
+    // Sinkronkan data ARP dari WS ke state React (skenario yang tepat untuk
+    // setState di dalam effect per dokumentasi resmi react.dev).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStore(prev => {
+      const kind = "arp_ok";
+      const cap = NOTIF_CAPS[kind] ?? DEFAULT_CAP;
+      const sameKind = prev[kind];
+      // gabungkan baru + lama, buang yang tertua sesuai cap
+      const combined = [...toEmit, ...sameKind];
+      return { ...prev, [kind]: combined.slice(0, cap) };
+    });
+  }, [arpRepliesBatch]);
 
   return { notifications: displayList(), clearEvents };
 }

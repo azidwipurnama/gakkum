@@ -57,18 +57,37 @@ def run_agent():
 
             queue.append(data)
 
-            # Try to send oldest
+            # Try to send oldest. When the server returns 429, honor the
+            # Retry-After header and retry the same queued sample after
+            # waiting — plus a small buffer or minimum backoff to avoid
+            # immediate re-collision when interval equals rate limit window.
             while queue:
                 report = queue[0]
                 response = requests.post(SERVER_URL, json=report, headers={"x-api-key": API_KEY}, timeout=5)
                 if response.status_code == 201:
                     queue.popleft()
                     backoff = 1 # reset backoff
+                elif response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    try:
+                        wait = int(retry_after) + 1  # add 1s buffer to avoid immediate re-trigger
+                    except (TypeError, ValueError):
+                        wait = max(backoff, INTERVAL)
+                    logging.warning(
+                        f"Rate limited (429). Retry-After={retry_after}, "
+                        f"waiting {wait}s before retry."
+                    )
+                    time.sleep(wait)
+                    continue
                 else:
                     logging.warning(f"Server returned {response.status_code}")
                     break # Wait for next attempt
 
-            time.sleep(INTERVAL)
+            # Sleep the normal interval between collection cycles.
+            # (A 429 retry cycle already slept via Retry-After above, so
+            #  this only runs after a successful send or an unhandled error.)
+            if response.status_code != 429:
+                time.sleep(INTERVAL)
 
         except Exception as e:
             logging.error(f"Error: {e}")

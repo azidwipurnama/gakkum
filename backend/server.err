@@ -1,0 +1,24 @@
+D:\programmingProject\vscode\laragon\www\gakkum\backend\main.py:169: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+D:\programmingProject\vscode\laragon\www\gakkum\backend\main.py:649: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+INFO:     Started server process [7308]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64363 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+D:\programmingProject\vscode\laragon\www\gakkum\backend\main.py:629: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+  [i.dict() for i in report.interfaces],
+INFO:     127.0.0.1:52530 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open

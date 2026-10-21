@@ -4,9 +4,10 @@ from datetime import datetime
 import anomaly_config
 
 class AnomalyDetector:
-    def __init__(self, supabase, broadcast_func):
+    def __init__(self, supabase, broadcast_func, is_persist_allowed=None):
         self.supabase = supabase
         self.broadcast_func = broadcast_func
+        self.is_persist_allowed = is_persist_allowed
         self.stats = {} # {device_id: {hour: {count, mean, m2}}}
 
     # Stats Welford's algorithm
@@ -59,5 +60,8 @@ class AnomalyDetector:
             "risk_score": risk_score,
             "reason": reason
         }
-        self.supabase.table("alerts").insert(alert).execute()
+        if self.is_persist_allowed is None or self.is_persist_allowed():
+            self.supabase.table("alerts").insert(alert).execute()
+        else:
+            print("[INFO] Supabase alert insert skipped (SSID is not GAKKUM WING-C)")
         return alert

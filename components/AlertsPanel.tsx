@@ -19,7 +19,7 @@ export default function AlertsPanel() {
 
   // Hanya render peringatan — parent (page.tsx) menangani struktur kartu keseluruhan
   // Fungsi ini dipanggil dari page.tsx, tapi tidak lagi digunakan di sini
-  // Semua konten AlertsPanel sudah diintegrasikan ke dalam struktur slide 2 di page.tsx
+  // Semua konten AlertsPanel sudah diintegrasikan ke dalam  struktur slide 2 di page.tsx
 
   // Return null karena semua konten sudah di-inline di page.tsx
   return null;

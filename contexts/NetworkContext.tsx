@@ -7,12 +7,13 @@ import { Device } from '../types/network';
 interface NetworkContextType {
   devices: Device[];
   metrics: { total_up: number; total_down: number; server_ip: string };
-  alerts: any[];
+  alerts: Record<string, unknown>[];
   ssid: string;
   loading: boolean;
   error: string | null;
   isWsConnected: boolean;
   hasReceivedData: boolean;
+  arpRepliesBatch?: { items: Array<{ ip: string; mac: string; ts: string; vendor: string }>; receivedAt: number } | null;
 }
 
 const NetworkContext = createContext<NetworkContextType | undefined>(undefined);

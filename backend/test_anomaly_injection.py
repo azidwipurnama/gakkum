@@ -3,7 +3,7 @@ import time
 import random
 
 # Configuration
-SERVER_URL = "http://localhost:8000/api/agent/report"
+SERVER_URL = "http://localhost:8001/api/agent/report"
 AGENT_ID = "agent-001"
 API_KEY = "KEY_ASLI_AGEN_001"
 
@@ -28,7 +28,7 @@ for _ in range(5):
     send_report(bs, br)
     bs += 1000
     br += 1000
-    time.sleep(2)
+    time.sleep(5)
 
 # Scenario: Anomaly
 print("Scenario: Anomaly (Spike)")

@@ -1,9 +1,11 @@
 ﻿"use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { ChevronDown, Wifi, Radar, Bell, Trash2 } from "lucide-react";
+import { ChevronDown, Wifi, Bell, Trash2, X, Activity } from "lucide-react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
+import MonitoringPanel from "@/components/MonitoringPanel";
 import { useNetwork } from "@/contexts/NetworkContext";
+import type { Device, DeviceNetworkDetails } from "@/types/network";
 import { useNetworkEvents, type NotifEvent } from "@/hooks/useNetworkEvents";
 import LoadingUI from "@/components/LoadingUI";
 
@@ -22,6 +24,49 @@ const COLORS = {
 };
 
 const INSET = "clamp(16px, 3vw, 36px)";
+
+// Backend FastAPI — harus sama dengan WS_URL di hooks/useWebSocket.ts.
+const API_BASE = "http://localhost:8000";
+const API_KEY = "GAKKUM_SECRET_KEY";
+
+// Label arah koneksi untuk popup detail jaringan.
+const DIRECTION_LABEL: Record<string, string> = {
+  outbound: "Keluar",
+  inbound: "Masuk",
+  listening: "Mendengarkan",
+};
+
+// Gaya bersama untuk isi popup detail jaringan.
+const SECTION_TITLE: React.CSSProperties = {
+  fontSize: "11px",
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  color: COLORS.inkSoft,
+};
+
+const CHIP: React.CSSProperties = {
+  fontSize: "11px",
+  fontFamily: "monospace",
+  padding: "3px 8px",
+  borderRadius: "6px",
+  border: `1px solid ${COLORS.line}`,
+  backgroundColor: COLORS.bgSubtle,
+  color: COLORS.ink,
+};
+
+const TH: React.CSSProperties = {
+  padding: "6px 8px",
+  fontWeight: 500,
+  whiteSpace: "nowrap",
+  borderBottom: `1px solid ${COLORS.line}`,
+};
+
+const TD: React.CSSProperties = {
+  padding: "5px 8px",
+  color: COLORS.ink,
+  whiteSpace: "nowrap",
+};
 
 // Jumlah item yang masih memakai animasi masuk berurutan.
 // Antrean lebih panjang dari ini dirender langsung tanpa animasi.
@@ -116,105 +161,17 @@ function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfi
   );
 }
 
-// Komponen canvas radar mini dengan DPR handling
-function RadarCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const cv = canvasRef.current;
-    if (!cv) return;
-    const g = cv.getContext("2d");
-    if (!g) return;
-
-    let angle = 0;
-    let animId: number;
-    const dpr = window.devicePixelRatio || 1;
-    const size = 112;
-    cv.width = size * dpr;
-    cv.height = size * dpr;
-    g.scale(dpr, dpr);
-
-    const cx = size / 2;
-    const cy = size / 2;
-    const r = size / 2 - 5;
-
-    const blips = [
-      { x: cx + 15, y: cy - 10, status: "on" },
-      { x: cx - 18, y: cy + 15, status: "on" },
-      { x: cx + 7, y: cy + 22, status: "off" },
-    ];
-
-    const draw = () => {
-      g.clearRect(0, 0, size, size);
-      g.strokeStyle = COLORS.inkFaint;
-      g.lineWidth = 1;
-      [0.3, 0.6, 0.9].forEach((s) => {
-        g.beginPath();
-        g.arc(cx, cy, r * s, 0, Math.PI * 2);
-        g.stroke();
-      });
-      g.strokeStyle = COLORS.line;
-      g.beginPath();
-      g.moveTo(cx - r, cy);
-      g.lineTo(cx + r, cy);
-      g.moveTo(cx, cy - r);
-      g.lineTo(cx, cy + r);
-      g.stroke();
-
-      angle += 0.03;
-      const sx = cx + Math.cos(angle) * r;
-      const sy = cy + Math.sin(angle) * r;
-
-      g.fillStyle = `${COLORS.accent}26`;
-      g.beginPath();
-      g.moveTo(cx, cy);
-      g.arc(cx, cy, r, angle - 0.5, angle);
-      g.closePath();
-      g.fill();
-
-      g.strokeStyle = COLORS.accent;
-      g.lineWidth = 1.5;
-      g.beginPath();
-      g.moveTo(cx, cy);
-      g.lineTo(sx, sy);
-      g.stroke();
-
-      blips.forEach((b) => {
-        const c = b.status === "on" ? COLORS.statusOn : COLORS.statusOff;
-        g.fillStyle = c;
-        g.beginPath();
-        g.arc(b.x, b.y, 3, 0, Math.PI * 2);
-        g.fill();
-        g.strokeStyle = c;
-        g.lineWidth = 1;
-        g.beginPath();
-        g.arc(b.x, b.y, 5, 0, Math.PI * 2);
-        g.stroke();
-      });
-
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="mx-auto block"
-      style={{ width: "112px", height: "112px" }}
-      role="img"
-      aria-label="Visualisasi radar"
-    />
-  );
-}
 
 export default function DashboardPage() {
-  const { devices, metrics, ssid, alerts, loading, isWsConnected, hasReceivedData } = useNetwork();
-  const { notifications, clearEvents } = useNetworkEvents(devices, isWsConnected, hasReceivedData);
+  const { devices, metrics, ssid, alerts, loading, isWsConnected, hasReceivedData, arpRepliesBatch } = useNetwork();
+  const { notifications, clearEvents } = useNetworkEvents(devices, isWsConnected, hasReceivedData, arpRepliesBatch);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "ip", direction: "asc" });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "up" | "down">("all");
+  // Panel pemantauan (snapshot + diff vs baseline) — dibuka dari bilah status.
+  const [monitoringOpen, setMonitoringOpen] = useState(false);
 
   // Ref untuk slide 2 (untuk IntersectionObserver)
   const slide2Ref = useRef<HTMLDivElement>(null);
@@ -281,6 +238,19 @@ export default function DashboardPage() {
     return () => observer.disconnect();
   }, [motionReady]);
 
+  // Loading timeout: 10 seconds
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (!isLoaded && !hasReceivedData) {
+      timer = setTimeout(() => {
+        if (!hasReceivedData) {
+          setLoadError("Gagal memuat data jaringan. Silakan coba lagi.");
+        }
+      }, 10000);
+    }
+    return () => clearTimeout(timer);
+  }, [isLoaded, hasReceivedData]);
+
   // Update isNarrow on resize
   useEffect(() => {
     const handleResize = () => setIsNarrow(window.innerWidth < 980);
@@ -321,11 +291,97 @@ export default function DashboardPage() {
     setSortConfig((prev) => ({ key, direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc" }));
   };
 
+  // Popup detail jaringan per perangkat (IPv4/IPv6, protokol, koneksi).
+  // Data diambil dari GET /api/device/{mac}/network saat baris diklik.
+  const [netDetail, setNetDetail] = useState<{
+    device: Device;
+    data: DeviceNetworkDetails | null;
+    loading: boolean;
+    error: string | null;
+  } | null>(null);
+
+  const openNetworkDetail = async (dev: Device) => {
+    setNetDetail({ device: dev, data: null, loading: true, error: null });
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/device/${encodeURIComponent(dev.mac)}/network?api_key=${API_KEY}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: DeviceNetworkDetails = await res.json();
+      // Abaikan respons yang datang setelah user sudah membuka perangkat lain.
+      setNetDetail((prev) =>
+        prev && prev.device.mac === dev.mac ? { ...prev, data, loading: false } : prev
+      );
+    } catch (err) {
+      setNetDetail((prev) =>
+        prev && prev.device.mac === dev.mac
+          ? {
+              ...prev,
+              loading: false,
+              error: err instanceof Error ? err.message : "Gagal memuat data",
+            }
+          : prev
+      );
+    }
+  };
+
+  // Tutup popup dengan tombol Escape.
+  useEffect(() => {
+    if (!netDetail) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNetDetail(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [netDetail]);
+
   const subnetPrefix = metrics?.server_ip || "Localhost";
 
   return (
     <>
-      {!isLoaded && <LoadingUI onFinished={() => setIsLoaded(true)} />}
+      {!isLoaded && (
+        <>
+          <LoadingUI onFinished={() => setIsLoaded(true)} />
+          {loadError && (
+            <div
+              style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                zIndex: 100,
+                backgroundColor: COLORS.bgPanel,
+                border: `1px solid ${COLORS.line}`,
+                padding: "24px",
+                borderRadius: "12px",
+                textAlign: "center",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                maxWidth: "320px",
+              }}
+            >
+              <p style={{ fontSize: "14px", color: COLORS.ink, marginBottom: "16px" }}>{loadError}</p>
+              <button
+                onClick={() => {
+                  setLoadError(null);
+                  window.location.reload();
+                }}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                  backgroundColor: COLORS.accent,
+                  color: "#FFF",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Coba Lagi
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Container scroll-snap dengan dua slide penuh layar */}
       <div
@@ -578,6 +634,39 @@ export default function DashboardPage() {
                         </div>
                         <div style={{ fontSize: "10px", color: COLORS.inkSoft }}>Peringatan</div>
                       </div>
+
+                      {/* Tombol panel pemantauan */}
+                      <button
+                        onClick={() => setMonitoringOpen(true)}
+                        aria-label="Buka panel pemantauan jaringan"
+                        title="Pemantauan jaringan: snapshot, perangkat baru/hilang, lonjakan trafik"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          marginLeft: "4px",
+                          padding: "7px 11px",
+                          borderRadius: "8px",
+                          border: `1px solid ${COLORS.line}`,
+                          backgroundColor: COLORS.bgSubtle,
+                          color: COLORS.ink,
+                          fontSize: "11px",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = COLORS.accent;
+                          e.currentTarget.style.color = COLORS.accent;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = COLORS.line;
+                          e.currentTarget.style.color = COLORS.ink;
+                        }}
+                      >
+                        <Activity size={14} strokeWidth={1.7} aria-hidden="true" />
+                        Pemantauan
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -629,29 +718,43 @@ export default function DashboardPage() {
                           boxSizing: "border-box",
                         }}
                       >
-                        {/* Header Radar */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <Radar size={16} strokeWidth={1.5} color={COLORS.inkSoft} aria-hidden="true" />
-                          <h3 style={{ fontSize: "14px", fontWeight: "500", color: COLORS.ink }}>Radar</h3>
-                        </div>
-
-                        {/* Radar Canvas Mini */}
-                        <div style={{ display: "flex", justifyContent: "center" }}>
-                          <div style={{ width: "112px", height: "112px" }}>
-                            <RadarCanvas />
-                          </div>
-                        </div>
-
-                        {/* Legenda */}
-                        <div style={{ display: "flex", gap: "16px", justifyContent: "center", fontSize: "11px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: COLORS.statusOn }} />
-                            <span style={{ color: COLORS.inkSoft }}>Online</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: COLORS.statusOff }} />
-                            <span style={{ color: COLORS.inkSoft }}>Offline</span>
-                          </div>
+                        {/* Logo Setdit (menggantikan header + area radar + legend) */}
+                        <div
+                          style={{
+                            flex: 1,
+                            minHeight: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "20px",
+                            boxSizing: "border-box",
+                          }}
+                        >
+                          <img
+                            src="/setdit.svg"
+                            alt="Denah area kerja dengan lima access point"
+                            draggable={false}
+                            onError={(e) => {
+                              const parent = (e.currentTarget as HTMLImageElement).parentElement;
+                              if (parent && !parent.querySelector('.setdit-fallback')) {
+                                const fb = document.createElement('span');
+                                fb.className = 'setdit-fallback';
+                                fb.textContent = 'Logo tidak dapat dimuat';
+                                fb.style.cssText = 'font-size:12px;color:' + (COLORS.inkSoft || '#94a3b8') + ';text-align:center;';
+                                parent.innerHTML = '';
+                                parent.appendChild(fb);
+                              }
+                            }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              userSelect: 'none',
+                              pointerEvents: 'none',
+                              aspectRatio: '465 / 655',
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -943,6 +1046,13 @@ export default function DashboardPage() {
                                   style={{
                                     height: `var(--row-h)`,
                                     backgroundColor: "transparent",
+                                    cursor: "pointer",
+                                  }}
+                                  title="Klik untuk detail IPv4/IPv6, protokol, dan koneksi"
+                                  tabIndex={0}
+                                  onClick={() => openNetworkDetail(dev)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") openNetworkDetail(dev);
                                   }}
                                   onMouseEnter={(e) => {
                                     (e.currentTarget as HTMLElement).style.backgroundColor = COLORS.rowHover;
@@ -957,7 +1067,26 @@ export default function DashboardPage() {
                                   <td className="py-1 text-[11px] text-[var(--ink-soft)] font-mono">
                                     {dev.mac}
                                   </td>
-                                  <td className="py-1 text-[11px] text-[var(--ink)]">{dev.hostname || "Unknown"}</td>
+                                  <td className="py-1 text-[11px] text-[var(--ink)]">
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                                      {dev.hostname || "Unknown"}
+                                      {dev.is_self && (
+                                        <span
+                                          style={{
+                                            fontSize: "11px",
+                                            padding: "2px 6px",
+                                            borderRadius: "12px",
+                                            backgroundColor: COLORS.bgSubtle,
+                                            color: COLORS.inkSoft,
+                                            border: `1px solid ${COLORS.line}`,
+                                            whiteSpace: "nowrap",
+                                          }}
+                                        >
+                                          Perangkat ini
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
                                   <td className="py-1 text-[11px] text-[var(--ink-soft)]">{dev.category || "Unknown"}</td>
                                   <td className="py-1 text-[11px] text-[var(--ink-soft)]">{dev.vendor || "Unknown"}</td>
                                   <td
@@ -1001,6 +1130,230 @@ export default function DashboardPage() {
           )}
         </section>
       </div>
+
+      {/* Popup detail jaringan: diklik dari baris tabel inspektur */}
+      {netDetail && (
+        <div
+          onClick={() => setNetDetail(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 300,
+            backgroundColor: "rgba(31, 29, 26, 0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Detail jaringan ${netDetail.device.hostname || netDetail.device.ip}`}
+            style={{
+              width: "min(700px, 100%)",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              backgroundColor: COLORS.bgPanel,
+              border: `1px solid ${COLORS.line}`,
+              borderRadius: "12px",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.25)",
+            }}
+          >
+            {/* Header popup */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "12px",
+                padding: "16px 18px",
+                borderBottom: `1px solid ${COLORS.line}`,
+                position: "sticky",
+                top: 0,
+                backgroundColor: COLORS.bgPanel,
+                zIndex: 1,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: "15px", fontWeight: 500, color: COLORS.ink }}>
+                  {netDetail.device.hostname || "Unknown"}
+                  <span style={{ color: COLORS.inkSoft, fontWeight: 400 }}> · {netDetail.device.ip}</span>
+                </div>
+                <div style={{ fontSize: "12px", color: COLORS.inkSoft, fontFamily: "monospace", marginTop: "2px" }}>
+                  {netDetail.device.mac}
+                </div>
+              </div>
+              <button
+                onClick={() => setNetDetail(null)}
+                aria-label="Tutup"
+                style={{
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                  border: `1px solid ${COLORS.line}`,
+                  borderRadius: "6px",
+                  backgroundColor: COLORS.bgSubtle,
+                  color: COLORS.inkSoft,
+                  cursor: "pointer",
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Isi popup */}
+            <div style={{ padding: "14px 18px" }}>
+              {netDetail.loading && (
+                <div style={{ textAlign: "center", padding: "24px 0", fontSize: "13px", color: COLORS.inkSoft }}>
+                  Memuat detail jaringan...
+                </div>
+              )}
+
+              {netDetail.error && (
+                <div style={{ textAlign: "center", padding: "24px 0", fontSize: "13px", color: COLORS.statusOff }}>
+                  Gagal memuat data: {netDetail.error}
+                </div>
+              )}
+
+              {netDetail.data && !netDetail.loading && (
+                <>
+                  {/* Alamat IPv4 */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={SECTION_TITLE}>Alamat IPv4</div>
+                    {netDetail.data.ipv4.length === 0 ? (
+                      <div style={{ fontSize: "12px", color: COLORS.inkFaint, marginTop: "6px" }}>
+                        Belum ada data (jendela pantau {netDetail.data.window_seconds} detik)
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                        {netDetail.data.ipv4.map((item) => (
+                          <span
+                            key={item.address}
+                            title={`Terakhir terlihat: ${new Date(item.last_seen).toLocaleString()}`}
+                            style={CHIP}
+                          >
+                            {item.address}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Alamat IPv6 */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={SECTION_TITLE}>Alamat IPv6</div>
+                    {netDetail.data.ipv6.length === 0 ? (
+                      <div style={{ fontSize: "12px", color: COLORS.inkFaint, marginTop: "6px" }}>
+                        Belum ada data (jendela pantau {netDetail.data.window_seconds} detik)
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                        {netDetail.data.ipv6.map((item) => (
+                          <span
+                            key={item.address}
+                            title={`Terakhir terlihat: ${new Date(item.last_seen).toLocaleString()}`}
+                            style={CHIP}
+                          >
+                            {item.address}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Protokol terdeteksi (TCP/UDP/ICMP/IPv6/...) */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={SECTION_TITLE}>Protokol terdeteksi</div>
+                    {netDetail.data.protocols.length === 0 ? (
+                      <div style={{ fontSize: "12px", color: COLORS.inkFaint, marginTop: "6px" }}>
+                        Belum ada paket tercatat
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                        {netDetail.data.protocols.map((item) => (
+                          <span
+                            key={item.name}
+                            title={`Terakhir: ${new Date(item.last_seen).toLocaleString()}`}
+                            style={{
+                              ...CHIP,
+                              color: COLORS.accent,
+                              fontWeight: 600,
+                              backgroundColor: "rgba(180, 83, 26, 0.08)",
+                              borderColor: "rgba(180, 83, 26, 0.3)",
+                            }}
+                          >
+                            {item.name}
+                            <span style={{ color: COLORS.inkSoft, fontWeight: 400 }}> · {item.packets} paket</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Koneksi (port & endpoint remote) */}
+                  <div>
+                    <div style={SECTION_TITLE}>Koneksi</div>
+                    {netDetail.data.connections.length === 0 ? (
+                      <div style={{ fontSize: "12px", color: COLORS.inkFaint, marginTop: "6px" }}>
+                        Belum ada koneksi tercatat
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto", marginTop: "6px" }}>
+                        <table style={{ width: "100%", fontSize: "11px", borderCollapse: "collapse" }}>
+                          <thead>
+                            <tr
+                              style={{
+                                backgroundColor: COLORS.bgSubtle,
+                                color: COLORS.inkSoft,
+                                textAlign: "left",
+                              }}
+                            >
+                              <th style={TH}>Arah</th>
+                              <th style={TH}>Protokol</th>
+                              <th style={TH}>Port lokal</th>
+                              <th style={TH}>Endpoint remote</th>
+                              <th style={TH}>Paket</th>
+                              <th style={TH}>Terakhir</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {netDetail.data.connections.map((c, i) => (
+                              <tr key={`${c.protocol}-${c.direction}-${c.local_port}-${c.remote_address}-${c.remote_port}-${i}`} style={{ borderBottom: `1px solid ${COLORS.line}` }}>
+                                <td style={TD}>{DIRECTION_LABEL[c.direction] || c.direction}</td>
+                                <td style={{ ...TD, color: COLORS.accent, fontWeight: 600 }}>{c.protocol}</td>
+                                <td style={{ ...TD, fontFamily: "monospace" }}>{c.local_port ?? "-"}</td>
+                                <td style={{ ...TD, fontFamily: "monospace" }}>
+                                  {c.remote_address}
+                                  {c.remote_port != null ? `:${c.remote_port}` : ""}
+                                </td>
+                                <td style={TD}>{c.packets}</td>
+                                <td style={TD}>{new Date(c.last_seen).toLocaleTimeString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Meta: sumber data */}
+                  <div style={{ fontSize: "11px", color: COLORS.inkFaint, marginTop: "14px" }}>
+                    Sumber: {netDetail.data.source} · jendela pantau {netDetail.data.window_seconds}s ·
+                    diambil {new Date(netDetail.data.captured_at).toLocaleString()}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <MonitoringPanel open={monitoringOpen} onClose={() => setMonitoringOpen(false)} />
 
     </>
   );
