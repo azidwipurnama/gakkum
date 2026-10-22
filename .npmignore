@@ -1,0 +1,15 @@
+node_modules/
+.next/
+backend/venv/
+backend/__pycache__/
+backend/server.log
+backend/server.err
+playwright-report/
+test-results/
+.env
+.env.*
+backend/.env
+backend/.env.*
+*.log
+*.err
+.DS_Store

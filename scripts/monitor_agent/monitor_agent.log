@@ -5963,3 +5963,8 @@
 2026-10-21 07:16:16,443 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/agent/report (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it"))
 2026-10-21 08:54:55,624 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
 2026-10-21 12:00:11,526 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-21 14:00:11,022 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-21 14:10:21,455 - WARNING - Server returned 500
+2026-10-21 15:05:30,275 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)
+2026-10-22 08:00:53,638 - INFO - Agent agent-001 started.
+2026-10-22 08:00:57,738 - ERROR - Error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/agent/report (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it"))

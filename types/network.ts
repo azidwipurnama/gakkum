@@ -7,9 +7,13 @@ export interface Device {
   category: string; // Router, Printer, Smartphone, Laptop, etc.
   vendor: string; // Manufacturer name
   location: string; // Room mapping
+  room_id?: string; // Ruangan terakhir tempat perangkat terlihat
+  ap_id?: string; // AP tempat host terhubung saat perangkat terlihat
+  rooms?: string[]; // Riwayat ruangan tempat perangkat pernah terlihat
   last_seen: string; // ISO format
   status: DeviceStatus;
   latency?: number; // Latency in ms
+  ipv6?: NetworkAddressItem[];
   is_blacklisted: boolean; // Restriction status
   is_self: boolean; // True if this is the host machine running the scanner
 }

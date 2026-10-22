@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Device } from '../types/network';
+import { RoomInfo } from '../lib/rooms';
 
 const WS_URL = 'ws://localhost:8000/ws/network-monitor?api_key=GAKKUM_SECRET_KEY';
 
@@ -21,6 +22,11 @@ export function useWebSocket() {
   const [hasReceivedData, setHasReceivedData] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [arpRepliesBatch, setArpRepliesBatch] = useState<{ items: ArpReplyItem[]; receivedAt: number } | null>(null);
+  // Konteks ruangan: diisi backend dari BSSID AP yang sedang dipakai host.
+  const [rooms, setRooms] = useState<RoomInfo[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+  const [currentAp, setCurrentAp] = useState<string | null>(null);
+  const [currentBssid, setCurrentBssid] = useState<string>('');
 
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<number | null>(null);
@@ -74,6 +80,10 @@ export function useWebSocket() {
             if (Array.isArray(data.devices)) setDevices(data.devices);
             if (data.metrics) setMetrics(data.metrics);
             if (data.ssid) setSsid(data.ssid);
+            if (Array.isArray(data.rooms)) setRooms(data.rooms);
+            if ('current_room' in data) setCurrentRoom(data.current_room ?? null);
+            if ('current_ap' in data) setCurrentAp(data.current_ap ?? null);
+            if (typeof data.current_bssid === 'string') setCurrentBssid(data.current_bssid);
           } else if (data.type === 'arp_replies') {
             if (Array.isArray(data.data)) {
               setArpRepliesBatch({
@@ -154,5 +164,19 @@ export function useWebSocket() {
     };
   }, [connect]);
 
-  return { devices, metrics, alerts, ssid, loading, error, isWsConnected, hasReceivedData, arpRepliesBatch };
+  return {
+    devices,
+    metrics,
+    alerts,
+    ssid,
+    loading,
+    error,
+    isWsConnected,
+    hasReceivedData,
+    arpRepliesBatch,
+    rooms,
+    currentRoom,
+    currentAp,
+    currentBssid,
+  };
 }

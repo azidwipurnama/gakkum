@@ -15,12 +15,10 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 # Networking Config
-# Mapping BSSID to Room name
-BSSID_MAPPING = {
-    "AA:BB:CC:DD:EE:01": "Gakkum-1",
-    "AA:BB:CC:DD:EE:02": "Gakkum-2",
-    # ... Add more mappings based on 13 Access Points
-}
+# Mapping BSSID -> nama ruangan. Sumber datanya ada di backend/rooms.py
+# (beserta koordinat AP pada denah), supaya tidak ada dua daftar yang bisa
+# berbeda. Isi BSSID asli di sana, bukan di sini.
+from rooms import BSSID_TO_LOCATION as BSSID_MAPPING
 
 # Network interface for Scapy (might depend on OS)
 INTERFACE = "Ethernet" # Adjust to your local interface name
@@ -34,6 +32,9 @@ BROADCAST_INTERVAL_SECONDS = 2
 # --- Langkah B New Configs ---
 ARP_SCAN_INTERVAL_SECONDS = 4
 ARP_TIMEOUT_SECONDS = 3
+# Pencarian alamat IPv6 (ICMPv6 Echo ke ff02::1). Lebih jarang dari ARP karena
+# alamat IPv6 tidak berubah-ubah dan pemindaian ini hanya pelengkap.
+IPV6_SCAN_INTERVAL_SECONDS = 30
 AGENT_REPORT_RATE_LIMIT_SECONDS = 2
 WATCHDOG_CHECK_INTERVAL_SECONDS = 5
 WORKER_THREAD_COUNT = 8

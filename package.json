@@ -1,7 +1,36 @@
 {
   "name": "gakkum",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Network monitoring and room map dashboard with FastAPI backend and Next.js frontend",
+  "bin": {
+    "gakkum": "bin/gakkum.js"
+  },
+  "files": [
+    "bin/",
+    "backend/main.py",
+    "backend/models.py",
+    "backend/utils.py",
+    "backend/anomaly.py",
+    "backend/sniffer.py",
+    "backend/timestamp_engine.py",
+    "backend/config.py",
+    "backend/workers.py",
+    "backend/supabase_payload.py",
+    "backend/monitoring.py",
+    "backend/get_ssid.py",
+    "backend/wifi_bssid.py",
+    "backend/rooms.py",
+    "backend/requirements.txt",
+    "app/",
+    "components/",
+    "contexts/",
+    "hooks/",
+    "lib/",
+    "types/",
+    "public/",
+    "package.json",
+    "README.md"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -30,5 +59,8 @@
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

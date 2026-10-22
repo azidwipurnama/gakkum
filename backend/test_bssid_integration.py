@@ -1,6 +1,7 @@
 import unittest
 
 from timestamp_engine import TimestampEngine, BSSID_MAPPING_NORMALIZED
+from rooms import room_label_for_bssid, room_for_bssid
 from supabase_payload import DEVICE_UPSERT_FIELDS, build_device_upsert_payload
 
 
@@ -8,8 +9,11 @@ class TestBssidIntegration(unittest.TestCase):
     """Verifikasi alur BSSID host -> lokasi tanpa menyentuh jaringan atau Supabase."""
 
     def test_mapping_dinormalisasi_ke_huruf_kecil(self):
-        # get_host_bssid() mengembalikan huruf kecil, sedangkan config.py memakai huruf besar
-        self.assertEqual(BSSID_MAPPING_NORMALIZED.get("aa:bb:cc:dd:ee:01"), "Gakkum-1")
+        # get_host_bssid() mengembalikan huruf kecil, sedangkan rooms.py memakai huruf besar
+        self.assertEqual(
+            BSSID_MAPPING_NORMALIZED.get("aa:bb:cc:dd:ee:01"),
+            room_label_for_bssid("AA:BB:CC:DD:EE:01"),
+        )
 
     def test_stamp_host_bssid_mengisi_lokasi(self):
         engine = TimestampEngine()
@@ -22,8 +26,9 @@ class TestBssidIntegration(unittest.TestCase):
         # Huruf besar sengaja dipakai untuk menguji normalisasi
         self.assertEqual(engine.apply_host_bssid("AA:BB:CC:DD:EE:01"), 2)
 
+        label = room_label_for_bssid("AA:BB:CC:DD:EE:01")
         lokasi_akhir = sorted(d["location"] for d in engine.get_full_payload()["devices"])
-        self.assertEqual(lokasi_akhir, ["Gakkum-1", "Gakkum-1"])
+        self.assertEqual(lokasi_akhir, [label, label])
 
     def test_bssid_perangkat_tidak_ditimpa(self):
         engine = TimestampEngine()
@@ -31,7 +36,31 @@ class TestBssidIntegration(unittest.TestCase):
         engine.apply_host_bssid("aa:bb:cc:dd:ee:01")
 
         self.assertEqual(engine.devices["aa:bb:cc:00:00:0c"]["bssid"], "aa:bb:cc:dd:ee:02")
-        self.assertEqual(engine.get_full_payload()["devices"][0]["location"], "Gakkum-2")
+        self.assertEqual(
+            engine.get_full_payload()["devices"][0]["location"],
+            room_label_for_bssid("AA:BB:CC:DD:EE:02"),
+        )
+
+    def test_payload_memuat_room_dan_riwayat(self):
+        engine = TimestampEngine()
+        engine.update_device("aa:bb:cc:00:00:0d", ip="10.10.20.18")
+        engine.apply_host_bssid("aa:bb:cc:dd:ee:01")
+
+        device = engine.get_full_payload()["devices"][0]
+        room = room_for_bssid("aa:bb:cc:dd:ee:01")
+        self.assertEqual(device["room_id"], room["room_id"])
+        self.assertEqual(device["ap_id"], room["ap_id"])
+        self.assertIn(room["room_id"], device["rooms"])
+
+    def test_bssid_tak_dikenal_tidak_mengisi_ruangan(self):
+        engine = TimestampEngine()
+        engine.update_device("aa:bb:cc:00:00:1a", ip="10.10.20.19")
+
+        # BSSID tetap dicap supaya payload tidak kehilangan informasi, tetapi
+        # tidak ada ruangan yang bisa disimpulkan darinya.
+        self.assertEqual(engine.apply_host_bssid("ff:ff:ff:ff:ff:ff"), 0)
+        self.assertEqual(engine.devices["aa:bb:cc:00:00:1a"]["bssid"], "ff:ff:ff:ff:ff:ff")
+        self.assertEqual(engine.get_full_payload()["devices"][0]["location"], "Unknown")
 
     def test_bssid_none_tidak_mengubah_apa_pun(self):
         engine = TimestampEngine()
@@ -77,7 +106,10 @@ class TestBssidIntegration(unittest.TestCase):
             ["category", "hostname", "id", "ip", "location", "vendor"],
         )
         self.assertEqual(prepared[0]["id"], "aa:bb:cc:00:00:11")
-        self.assertEqual(prepared[0]["location"], "Gakkum-1")
+        self.assertEqual(
+            prepared[0]["location"],
+            room_label_for_bssid("AA:BB:CC:DD:EE:01"),
+        )
 
     def test_payload_upsert_bssid_kosong_tetap_tanpa_bssid(self):
         engine = TimestampEngine()

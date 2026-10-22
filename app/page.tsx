@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { ChevronDown, Wifi, Bell, Trash2, X, Activity } from "lucide-react";
 import CyberGlobeBg from "@/components/CyberGlobeBg";
 import MonitoringPanel from "@/components/MonitoringPanel";
+import RoomMap from "@/components/RoomMap";
 import { useNetwork } from "@/contexts/NetworkContext";
 import type { Device, DeviceNetworkDetails } from "@/types/network";
 import { useNetworkEvents, type NotifEvent } from "@/hooks/useNetworkEvents";
@@ -718,43 +719,16 @@ export default function DashboardPage() {
                           boxSizing: "border-box",
                         }}
                       >
-                        {/* Logo Setdit (menggantikan header + area radar + legend) */}
+                        {/* Denah ruangan + titik perangkat (lihat components/RoomMap.tsx) */}
                         <div
                           style={{
                             flex: 1,
                             minHeight: 0,
                             display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: "20px",
-                            boxSizing: "border-box",
+                            flexDirection: "column",
                           }}
                         >
-                          <img
-                            src="/setdit.svg"
-                            alt="Denah area kerja dengan lima access point"
-                            draggable={false}
-                            onError={(e) => {
-                              const parent = (e.currentTarget as HTMLImageElement).parentElement;
-                              if (parent && !parent.querySelector('.setdit-fallback')) {
-                                const fb = document.createElement('span');
-                                fb.className = 'setdit-fallback';
-                                fb.textContent = 'Logo tidak dapat dimuat';
-                                fb.style.cssText = 'font-size:12px;color:' + (COLORS.inkSoft || '#94a3b8') + ';text-align:center;';
-                                parent.innerHTML = '';
-                                parent.appendChild(fb);
-                              }
-                            }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain',
-                              userSelect: 'none',
-                              pointerEvents: 'none',
-                              aspectRatio: '465 / 655',
-                            }}
-                          />
+                          <RoomMap />
                         </div>
                       </div>
                     </div>
@@ -1249,7 +1223,8 @@ export default function DashboardPage() {
                     <div style={SECTION_TITLE}>Alamat IPv6</div>
                     {netDetail.data.ipv6.length === 0 ? (
                       <div style={{ fontSize: "12px", color: COLORS.inkFaint, marginTop: "6px" }}>
-                        Belum ada data (jendela pantau {netDetail.data.window_seconds} detik)
+                        Belum ada paket IPv6 dari perangkat ini. Perangkat yang hanya
+                        memakai IPv4 tidak akan muncul di sini.
                       </div>
                     ) : (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>

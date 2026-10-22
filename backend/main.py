@@ -59,6 +59,7 @@ agent_request_times = {}
 
 from get_ssid import get_active_ssid, is_target_ssid
 from wifi_bssid import get_host_bssid
+from rooms import room_for_bssid, public_rooms
 
 # Initialize Engine and Sniffer
 engine = TimestampEngine()
@@ -271,6 +272,16 @@ async def broadcast_loop():
             # Add SSID to payload using cached value to avoid blocking the broadcast loop
             payload["ssid"] = _ssid_cache["value"] or "Unknown Network"
 
+            # Konteks ruangan: BSSID AP tempat host terhubung menentukan ruangan
+            # mana yang ditampilkan denah. "rooms" membawa koordinat AP supaya
+            # frontend tidak perlu menyimpan daftar terpisah.
+            host_bssid = get_cached_host_bssid()
+            payload["current_bssid"] = host_bssid or ""
+            room = room_for_bssid(host_bssid)
+            payload["current_room"] = room["room_id"] if room else None
+            payload["current_ap"] = room["ap_id"] if room else None
+            payload["rooms"] = public_rooms()
+
             # --- SUPABASE SYNC DISABLED ---
             # Sync to Supabase is disabled to allow updates regardless of SSID
             # To enable again, replace the following line with: if _is_persist_allowed():
@@ -314,6 +325,23 @@ async def debug_devices():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+@app.get("/api/rooms")
+async def rooms_registry():
+    """Registry ruangan + koordinat AP untuk denah frontend.
+
+    Tidak butuh API key: isinya hanya tata letak denah (BSSID tidak ikut
+    dikirim), dan endpoint ini dipakai untuk render awal sebelum WebSocket
+    mengirim DEVICE_UPDATE pertama.
+    """
+    host_bssid = get_cached_host_bssid()
+    room = room_for_bssid(host_bssid)
+    return {
+        "rooms": public_rooms(),
+        "current_room": room["room_id"] if room else None,
+        "current_ap": room["ap_id"] if room else None,
+        "current_bssid": host_bssid or "",
+    }
 
 @app.get("/api/device/{mac}/network")
 async def device_network_details(

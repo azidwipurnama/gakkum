@@ -1,7 +1,7 @@
 import time
 import asyncio
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 import socket
 from config import (
     TIMEOUT_MINUTES,
@@ -10,6 +10,7 @@ from config import (
     LATENCY_STALE_SECONDS,
     CATEGORY_RECHECK_SECONDS,
 )
+from rooms import room_for_bssid, room_id_for_bssid, room_label
 from ping_parser import LATENCY_FAILED, LATENCY_BELOW_1MS
 from network_activity import NetworkActivityCollector
 
@@ -49,6 +50,21 @@ def vendor_matches(vendor, names):
     return any(name.lower() in vendor_lower for name in names)
 
 
+def normalize_ipv6(address):
+    """Kembalikan alamat IPv6 unicast dalam bentuk huruf kecil, atau None.
+
+    Zone id (mis. ``fe80::1%12``) dibuang karena hanya berlaku di host yang
+    melihatnya. Multicast (ff00::/8), unspecified (::), dan loopback (::1)
+    bukan alamat milik perangkat, jadi tidak disimpan.
+    """
+    if not address:
+        return None
+    value = address.split('%', 1)[0].strip().lower()
+    if ':' not in value or value in ('::', '::1') or value.startswith('ff'):
+        return None
+    return value
+
+
 class TimestampEngine:
     def __init__(self):
         self._lock = threading.RLock()
@@ -56,6 +72,12 @@ class TimestampEngine:
         self.dirty_devices = set() # Track devices that need Supabase sync
         self.recent_replies = [] # Track devices responding to ARP per cycle
         self.network_activity = NetworkActivityCollector() # Detail jaringan pasif per perangkat
+
+        # Alamat IPv6 untuk MAC yang belum dikenal (belum menjawab ARP).
+        # Paket IPv6 sering terlihat lebih dulu daripada hasil ARP scan; tanpa
+        # buffer ini alamatnya dibuang dan perangkat tampak "tidak punya IPv6".
+        # Isinya dipindahkan ke perangkat saat update_device() membuat entri baru.
+        self._pending_ipv6 = {}
 
         # Heartbeat tracking
         self._heartbeat_lock = threading.Lock()
@@ -194,7 +216,18 @@ class TimestampEngine:
                     "latency": stored_latency,
                     "latency_since": now,
                     "is_blacklisted": is_blacklisted,
-                    "is_self": is_self
+                    "is_self": is_self,
+                    # Ruangan tempat perangkat ini terakhir terlihat (diisi oleh
+                    # apply_host_bssid). "room_history" menyimpan semua ruangan
+                    # agar riwayat perpindahan host tidak hilang.
+                    "room_id": room_id_for_bssid(bssid),
+                    "ap_id": (room_for_bssid(bssid) or {}).get("ap_id", ""),
+                    "room_history": {},
+                    # Alamat IPv6 yang pernah terlihat untuk perangkat ini
+                    # (ip -> waktu terlihat). Diisi oleh record_ipv6_address()
+                    # dan sengaja TIDAK memengaruhi last_seen. Alamat yang
+                    # sempat terlihat sebelum perangkat terdaftar ikut dibawa.
+                    "ipv6_addresses": dict(self._pending_ipv6.pop(mac, {})),
                 }
                 self.dirty_devices.add(mac)
                 if ip:
@@ -217,6 +250,10 @@ class TimestampEngine:
                 changed = True
             if bssid and self.devices[mac]["bssid"] != bssid:
                 self.devices[mac]["bssid"] = bssid
+                info = room_for_bssid(bssid)
+                if info:
+                    self.devices[mac]["room_id"] = info["room_id"]
+                    self.devices[mac]["ap_id"] = info["ap_id"]
                 changed = True
             if latency is not None:
                 if self.devices[mac]["latency"] != latency:
@@ -252,6 +289,47 @@ class TimestampEngine:
                 return True, current_ip
             return False, None
 
+    def record_ipv6_address(self, mac, address):
+        """Catat alamat IPv6 sebuah perangkat TANPA menyentuh last_seen.
+
+        Alamat IPv6 disimpan di bucket terpisah (ipv6_addresses) dan tidak
+        mengubah last_seen, status, ip, maupun latency. Dengan begitu fitur
+        IPv6 tidak mengganggu arti "terakhir terkoneksi" yang sudah dipakai
+        dasbor dan laporan.
+
+        Return True bila alamat ini baru untuk perangkat tersebut.
+        """
+        if not mac:
+            return False
+        normalized = normalize_ipv6(address)
+        if normalized is None:
+            return False
+
+        mac = mac.lower()
+        now_iso = datetime.now().isoformat()
+        with self._lock:
+            data = self.devices.get(mac)
+            if data is None:
+                # Perangkat belum dikenal (ARP scan belum menemukannya). Jangan
+                # buat entri perangkat dari paket IPv6 saja — perangkat tanpa
+                # IPv4 tidak tampil di dasbor — tetapi simpan alamatnya supaya
+                # tidak hilang saat perangkat akhirnya terdaftar.
+                pending = self._pending_ipv6.get(mac)
+                if pending is None:
+                    if len(self._pending_ipv6) >= 512:
+                        return False
+                    pending = {}
+                    self._pending_ipv6[mac] = pending
+                is_new = normalized not in pending
+                pending[normalized] = now_iso
+                return is_new
+            bucket = data.setdefault("ipv6_addresses", {})
+            is_new = normalized not in bucket
+            bucket[normalized] = now_iso
+            if is_new:
+                self.dirty_devices.add(mac)
+            return is_new
+
     def needs_category_probe(self, mac, now=None):
         """True bila kategori perangkat belum pernah diprobe atau sudah kedaluwarsa.
 
@@ -272,14 +350,45 @@ class TimestampEngine:
             return (now - checked_at).total_seconds() > CATEGORY_RECHECK_SECONDS
 
     def apply_host_bssid(self, bssid):
+        """Tandai perangkat aktif sebagai terlihat dari AP host saat ini.
+
+        BSSID yang dilaporkan adapter adalah AP tempat laptop monitoring
+        terhubung, bukan AP milik tiap perangkat. Jadi yang dicatat adalah
+        "perangkat ini terlihat saat host berada di ruangan X". Catatan itu
+        dipakai denah untuk menyaring titik per ruangan.
+
+        Perangkat yang sudah punya BSSID sendiri tidak ditimpa (BSSID itu
+        berasal dari sumber yang lebih spesifik), tetapi riwayat ruangannya
+        tetap diperbarui selama perangkat masih aktif.
+        """
         if not bssid:
             return 0
+
+        room = room_for_bssid(bssid)
+        now = datetime.now()
+        # Perangkat yang sudah lama tidak terlihat tidak ikut dicap: kalau
+        # tidak, semua perangkat yang pernah muncul akan terus dianggap ada
+        # di ruangan tempat host berada sekarang.
+        active_since = now - timedelta(minutes=TIMEOUT_MINUTES)
+        now_iso = now.isoformat()
         stamped = 0
+
         with self._lock:
             for data in self.devices.values():
                 if not data.get("bssid"):
                     data["bssid"] = bssid
-                    stamped += 1
+
+                if room is None:
+                    continue
+                last_seen = data.get("last_seen")
+                if last_seen is not None and last_seen < active_since:
+                    continue
+
+                data.setdefault("room_history", {})[room["room_id"]] = now_iso
+                data["room_id"] = room["room_id"]
+                data["ap_id"] = room["ap_id"]
+                stamped += 1
+
         return stamped
 
     def check_status(self):
@@ -311,7 +420,15 @@ class TimestampEngine:
             if data["status"] == "UP": total_up += 1
             else: total_down += 1
 
-            location = BSSID_MAPPING_NORMALIZED.get((data.get("bssid") or "").lower(), "Unknown")
+            # Ruangan diambil dari BSSID perangkat bila dikenal; kalau tidak,
+            # pakai ruangan tempat perangkat terakhir terlihat (diisi oleh
+            # apply_host_bssid).
+            device_room_id = room_id_for_bssid(data.get("bssid")) or data.get("room_id") or ""
+            location = room_label(device_room_id)
+
+            room_history = sorted((data.get("room_history") or {}).keys())
+            if device_room_id and device_room_id not in room_history:
+                room_history.append(device_room_id)
 
             measured_latency = data.get("latency", 0)
             latency_since = data.get("latency_since")
@@ -333,6 +450,12 @@ class TimestampEngine:
             if measured_latency is LATENCY_BELOW_1MS:
                 measured_latency = 0.5
 
+            ipv6_addresses = [
+                {"address": address, "last_seen": seen_at}
+                for address, seen_at in (data.get("ipv6_addresses") or {}).items()
+            ]
+            ipv6_addresses.sort(key=lambda item: item["last_seen"], reverse=True)
+
             device_entry = {
                 "ip": data.get("ip", ""),
                 "mac": mac,
@@ -340,9 +463,13 @@ class TimestampEngine:
                 "vendor": data.get("vendor", ""),
                 "category": data.get("category", "General Device"),
                 "location": location,
+                "room_id": device_room_id,
+                "ap_id": data.get("ap_id", ""),
+                "rooms": room_history,
                 "bssid": data.get("bssid", ""),
                 "status": data["status"],
                 "last_seen": data["last_seen"].isoformat(),
+                "ipv6": ipv6_addresses,
                 "is_blacklisted": data.get("is_blacklisted", False)
             }
             if include_latency:
@@ -386,8 +513,20 @@ class TimestampEngine:
             if device is None:
                 return None
             is_self = bool(device.get("is_self"))
+            stored_ipv6 = dict(device.get("ipv6_addresses") or {})
 
-        return self.network_activity.snapshot(mac, include_host=is_self)
+        details = self.network_activity.snapshot(mac, include_host=is_self)
+
+        # Alamat IPv6 yang tersimpan di record perangkat digabung dengan hasil
+        # jendela pantau pasif. Tanpa ini alamat IPv6 hilang dari popup setelah
+        # 300 detik tanpa paket, padahal perangkatnya masih terdaftar dan
+        # alamatnya tetap valid.
+        known = {item["address"].lower() for item in details["ipv6"]}
+        for address, seen_at in stored_ipv6.items():
+            if address.lower() not in known:
+                details["ipv6"].append({"address": address, "last_seen": seen_at})
+        details["ipv6"].sort(key=lambda item: item["last_seen"], reverse=True)
+        return details
 
     def lookup_vendor(self, mac):
         if mac_lookup:

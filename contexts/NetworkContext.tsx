@@ -3,6 +3,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { Device } from '../types/network';
+import { RoomInfo } from '../lib/rooms';
 
 interface NetworkContextType {
   devices: Device[];
@@ -14,6 +15,10 @@ interface NetworkContextType {
   isWsConnected: boolean;
   hasReceivedData: boolean;
   arpRepliesBatch?: { items: Array<{ ip: string; mac: string; ts: string; vendor: string }>; receivedAt: number } | null;
+  rooms: RoomInfo[];
+  currentRoom: string | null;
+  currentAp: string | null;
+  currentBssid: string;
 }
 
 const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
