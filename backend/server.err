@@ -30,3 +30,19 @@ INFO:     127.0.0.1:64878 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET
 INFO:     connection open
 INFO:     127.0.0.1:60388 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
 INFO:     connection open
+INFO:     127.0.0.1:49654 - "WebSocket /ws/network-monitor" 403
+INFO:     connection rejected (403 Forbidden)
+INFO:     127.0.0.1:62461 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62902 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62095 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:64226 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:64755 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53083 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62613 - "WebSocket /ws/network-monitor?api_key=GAKKUM_SECRET_KEY" [accepted]
+INFO:     connection open
