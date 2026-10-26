@@ -151,13 +151,11 @@ const NotificationRow = React.memo(function NotificationRow({
 // Indikator pengurutan untuk header tabel
 function SortIndicator({ columnKey, sortConfig }: { columnKey: string; sortConfig: { key: string; direction: "asc" | "desc" } }) {
   if (sortConfig.key !== columnKey) {
-    return <span className="ml-1.5 inline-flex items-center text-[12px] opacity-20">^</span>;
+    return <span className="ml-1.5 inline-flex items-center text-[12px] opacity-20">↑</span>;
   }
   return (
-    <span
-      className={`ml-1.5 inline-flex items-center text-[12px] text-[var(--accent)] transition-transform duration-300 ${sortConfig.direction === "desc" ? "rotate-180" : "rotate-0"}`}
-    >
-      ^
+    <span className="ml-1.5 inline-flex items-center text-[12px] text-[var(--accent)] font-semibold">
+      {sortConfig.direction === "asc" ? "↑" : "↓"}
     </span>
   );
 }

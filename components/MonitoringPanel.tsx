@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { Activity, RefreshCw, Play, X } from "lucide-react";
 
 const COLORS = {
@@ -60,6 +60,9 @@ type AlertRow = {
   severity: string;
   device_mac: string | null;
   message: string;
+  // Additional fields from summary/alerts if provided by API
+  current_value?: number;
+  baseline_value?: number;
 };
 
 type Summary = {
@@ -85,59 +88,16 @@ const SEVERITY_COLOR: Record<string, string> = {
   critical: COLORS.statusOff,
 };
 
-function fmtTime(value?: string | null) {
-  if (!value) return "—";
+function fmtTimeCompact(value?: string | null) {
+  if (!value) return { time: "—", date: "" };
   try {
-    return new Date(value).toLocaleString("id-ID", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const d = new Date(value);
+    const time = d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(":", ".");
+    const date = d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
+    return { time, date };
   } catch {
-    return value;
+    return { time: value, date: "" };
   }
-}
-
-function StatTile({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
-  return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: "140px",
-        padding: "10px 12px",
-        border: `1px solid ${COLORS.line}`,
-        borderRadius: "8px",
-        backgroundColor: COLORS.bgSubtle,
-      }}
-    >
-      <div style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", color: COLORS.inkSoft }}>
-        {label}
-      </div>
-      <div style={{ fontSize: "16px", fontWeight: 600, color: COLORS.ink, marginTop: "4px" }}>{value}</div>
-      {hint ? <div style={{ fontSize: "10px", color: COLORS.inkFaint, marginTop: "2px" }}>{hint}</div> : null}
-    </div>
-  );
-}
-
-function SectionCard({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <div style={{ border: `1px solid ${COLORS.line}`, borderRadius: "8px", backgroundColor: COLORS.bgSubtle, padding: "10px 12px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
-        <span style={{ fontSize: "12px", fontWeight: 600, color: COLORS.ink }}>{title}</span>
-        <span style={{ fontSize: "11px", color: COLORS.inkSoft, fontFamily: "monospace" }}>{count}</span>
-      </div>
-      {children}
-    </div>
-  );
 }
 
 export default function MonitoringPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -147,6 +107,9 @@ export default function MonitoringPanel({ open, onClose }: { open: boolean; onCl
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+  const [query, setQuery] = useState("");
+  const [hideRandom, setHideRandom] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,6 +162,25 @@ export default function MonitoringPanel({ open, onClose }: { open: boolean; onCl
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  const isRandomMac = (mac: string) => {
+    if (!mac || mac.length < 2) return false;
+    return (parseInt(mac.slice(0, 2), 16) & 0x02) !== 0;
+  };
+
+  const filteredAlerts = useMemo(() => {
+    return alerts.filter((a) => {
+      if (filter !== "all" && a.rule_type !== filter) return false;
+      const searchStr = (a.device_mac + a.message).toLowerCase();
+      if (query && !searchStr.includes(query.toLowerCase())) return false;
+      if (hideRandom && isRandomMac(a.device_mac ?? "") && a.rule_type !== "traffic_spike") return false;
+      return true;
+    });
+  }, [alerts, filter, query, hideRandom]);
+
+  const hiddenCount = useMemo(() => {
+    return alerts.filter(a => hideRandom && isRandomMac(a.device_mac ?? "") && a.rule_type !== "traffic_spike").length;
+  }, [alerts, hideRandom]);
+
   if (!open) return null;
 
   const baselineReady = summary?.baseline_ready ?? false;
@@ -224,14 +206,14 @@ export default function MonitoringPanel({ open, onClose }: { open: boolean; onCl
         aria-label="Pemantauan jaringan"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "min(880px, 100%)",
+          width: "min(1000px, 100%)",
           maxHeight: "88vh",
           display: "flex",
           flexDirection: "column",
           backgroundColor: COLORS.bgPanel,
           border: `1px solid ${COLORS.line}`,
-          borderRadius: "10px",
-          boxShadow: "0 20px 60px rgba(31, 29, 26, 0.25)",
+          borderRadius: "0px", // Square corners
+          boxShadow: "0 24px 60px -24px rgba(43, 42, 39, 0.45)",
           overflow: "hidden",
         }}
       >
@@ -242,269 +224,362 @@ export default function MonitoringPanel({ open, onClose }: { open: boolean; onCl
             alignItems: "center",
             justifyContent: "space-between",
             gap: "12px",
-            padding: "14px 18px",
+            padding: "16px 20px",
             borderBottom: `1px solid ${COLORS.line}`,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-            <Activity size={18} strokeWidth={1.5} color={COLORS.inkSoft} aria-hidden="true" />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+            <Activity size={20} strokeWidth={1.5} color={COLORS.inkSoft} aria-hidden="true" />
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: "15px", fontWeight: 600, color: COLORS.ink }}>Pemantauan Jaringan</div>
-              <div style={{ fontSize: "11px", color: COLORS.inkSoft }}>
-                Snapshot berkala + perbandingan terhadap baseline 30 hari
+              <div style={{ fontSize: "16px", fontWeight: 500, color: COLORS.ink }}>Pemantauan jaringan</div>
+              <div style={{ fontSize: "12px", color: COLORS.inkSoft }}>
+                Pemindaian berkala dan perbandingan dengan baseline 30 hari
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <button
               onClick={load}
               disabled={loading}
-              aria-label="Muat ulang"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                fontSize: "11px",
-                padding: "5px 9px",
-                borderRadius: "6px",
+                fontSize: "13px",
+                padding: "7px 12px",
+                borderRadius: "0px",
                 border: `1px solid ${COLORS.line}`,
-                backgroundColor: COLORS.bgSubtle,
-                color: COLORS.inkSoft,
+                backgroundColor: "transparent",
+                color: COLORS.ink,
                 cursor: loading ? "not-allowed" : "pointer",
               }}
             >
-              <RefreshCw size={13} strokeWidth={1.7} /> Muat ulang
+              Muat ulang
             </button>
             <button
               onClick={runNow}
               disabled={running}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                fontSize: "11px",
-                padding: "5px 9px",
-                borderRadius: "6px",
+                fontSize: "13px",
+                padding: "7px 12px",
+                borderRadius: "0px",
                 border: `1px solid ${COLORS.accent}`,
-                backgroundColor: running ? COLORS.bgSubtle : COLORS.accent,
-                color: running ? COLORS.inkSoft : "#FAF8F3",
+                backgroundColor: running ? "transparent" : COLORS.accent,
+                color: running ? COLORS.inkSoft : "#fff",
                 cursor: running ? "not-allowed" : "pointer",
               }}
             >
-              <Play size={13} strokeWidth={1.7} /> {running ? "Menjalankan…" : "Jalankan sekarang"}
+              Jalankan sekarang
             </button>
             <button
               onClick={onClose}
-              aria-label="Tutup"
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "4px",
-                borderRadius: "6px",
+                width: "32px",
+                height: "32px",
+                display: "grid",
+                placeItems: "center",
                 border: "none",
                 backgroundColor: "transparent",
                 color: COLORS.inkSoft,
                 cursor: "pointer",
               }}
             >
-              <X size={17} strokeWidth={1.7} />
+              <X size={16} strokeWidth={1.6} />
             </button>
           </div>
         </div>
 
         {/* Body */}
-        <div style={{ padding: "14px 18px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ padding: "16px 20px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "14px" }}>
           {error ? (
-            <div
-              style={{
-                fontSize: "12px",
-                color: COLORS.statusOff,
-                backgroundColor: "rgba(165, 67, 43, 0.08)",
-                border: `1px solid ${COLORS.statusOff}`,
-                borderRadius: "6px",
-                padding: "8px 10px",
-              }}
-            >
+            <div style={{ fontSize: "12px", color: COLORS.statusOff, backgroundColor: "rgba(165, 67, 43, 0.08)", border: `1px solid ${COLORS.statusOff}`, borderRadius: "0px", padding: "8px 10px" }}>
               {error}
-              <div style={{ marginTop: "4px", color: COLORS.inkSoft }}>
-                Pastikan tabel pemantauan sudah dibuat: jalankan <code>schema/migration_monitoring.sql</code> di SQL Editor Supabase.
-              </div>
             </div>
           ) : null}
 
           {!schemaReady ? (
-            <div
-              style={{
-                fontSize: "12px",
-                color: COLORS.ink,
-                backgroundColor: "rgba(180, 83, 26, 0.08)",
-                border: `1px solid ${COLORS.accent}`,
-                borderRadius: "6px",
-                padding: "9px 11px",
-              }}
-            >
+            <div style={{ fontSize: "12px", color: COLORS.ink, backgroundColor: "rgba(180, 83, 26, 0.08)", border: `1px solid ${COLORS.accent}`, borderRadius: "0px", padding: "9px 11px" }}>
               <div style={{ fontWeight: 600, color: COLORS.accent }}>Tabel pemantauan belum dibuat</div>
-              <div style={{ marginTop: "3px", color: COLORS.inkSoft }}>
-                Jalankan <code>schema/migration_monitoring.sql</code> di SQL Editor Supabase, lalu tekan
-                &ldquo;Muat ulang&rdquo;. Selama tabel belum ada, siklus tetap berjalan tetapi tidak ada riwayat
-                yang tersimpan.
+              <div style={{ marginTop: "3px", color: COLORS.inkSoft }}>Jalankan migration_monitoring.sql di Supabase.</div>
+            </div>
+          ) : null}
+
+          {/* Verdict Banner */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "10px 14px",
+              backgroundColor: (status?.last_alert_count ?? 0) > 0 ? "rgba(180, 83, 26, 0.12)" : "rgba(63, 122, 87, 0.13)",
+              borderLeft: `3px solid ${(status?.last_alert_count ?? 0) > 0 ? COLORS.accent : COLORS.statusOn}`,
+              borderRadius: "0px",
+            }}
+          >
+            <Activity size={18} color={(status?.last_alert_count ?? 0) > 0 ? COLORS.accent : COLORS.statusOn} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 500, fontSize: "14px", color: COLORS.ink }}>
+                {(status?.last_alert_count ?? 0) > 0
+                  ? `Perlu perhatian: ${status?.last_alert_count ?? 0} temuan pada siklus terakhir`
+                  : "Kondisi jaringan stabil"}
               </div>
-              {status?.schema_error ? (
-                <div style={{ marginTop: "4px", fontFamily: "monospace", fontSize: "10px", color: COLORS.inkSoft }}>
-                  {status.schema_error}
-                </div>
-              ) : null}
+              <div style={{ fontSize: "12px", color: COLORS.inkSoft }}>
+                Siklus berjalan otomatis setiap {status ? Math.round(status.interval_seconds / 60) : "—"} menit.
+              </div>
             </div>
-          ) : null}
-
-          {/* Status tiles */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            <StatTile
-              label="Siklus terakhir"
-              value={status?.last_run_at ? fmtTime(status.last_run_at) : "belum jalan"}
-              hint={status?.last_duration_seconds != null ? `${status.last_duration_seconds}s · ${status.runs} siklus` : undefined}
-            />
-            <StatTile
-              label="Interval"
-              value={status ? `${Math.round(status.interval_seconds / 60)} menit` : "—"}
-              hint={status ? `retensi ${status.retention_days} hari` : undefined}
-            />
-            <StatTile
-              label="Baseline"
-              value={
-                <span style={{ color: baselineReady ? COLORS.statusOn : COLORS.statusOff }}>
-                  {baselineReady ? "Siap" : "Belum siap"}
-                </span>
-              }
-              hint={status ? `${status.baseline_days} hari · butuh ≥24 jam` : undefined}
-            />
-            <StatTile
-              label="Terlacak"
-              value={status?.devices_tracked ?? "—"}
-              hint={
-                status
-                  ? `snapshot ${status.last_snapshot_devices} · aktivitas ${status.last_activity_devices}`
-                  : undefined
-              }
-            />
+            <div style={{ fontSize: "12px", color: COLORS.inkSoft, whiteSpace: "nowrap" }}>
+              Dipindai {status?.last_run_at ? fmtTimeCompact(status.last_run_at).time : "—"}
+            </div>
           </div>
 
-          {/* SSID/BSSID context */}
-          <div style={{ fontSize: "11px", color: COLORS.inkSoft, fontFamily: "monospace" }}>
-            SSID: {status?.current_ssid || "—"} · BSSID: {status?.current_bssid || "—"} · Temuan siklus terakhir:{" "}
-            {status?.last_alert_count ?? 0}
+          {/* KPI Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", border: `1px solid ${COLORS.line}` }}>
+            <div style={{ padding: "12px 14px", borderRight: `1px solid ${COLORS.line}` }}>
+              <small style={{ display: "block", fontSize: "12px", color: COLORS.inkSoft }}>Siklus terakhir</small>
+              <b style={{ display: "block", fontSize: "20px", fontWeight: 500, margin: "2px 0 1px", color: COLORS.ink }}>
+                {status?.last_run_at ? fmtTimeCompact(status.last_run_at).time : "—"}
+              </b>
+              <span style={{ fontSize: "12px", color: COLORS.inkSoft }}>
+                {status?.last_run_at ? fmtTimeCompact(status.last_run_at).date : "—"}, selesai {status?.last_duration_seconds ?? "—"} dtk
+              </span>
+            </div>
+            <div style={{ padding: "12px 14px", borderRight: `1px solid ${COLORS.line}` }}>
+              <small style={{ display: "block", fontSize: "12px", color: COLORS.inkSoft }}>Interval</small>
+              <b style={{ display: "block", fontSize: "20px", fontWeight: 500, margin: "2px 0 1px", color: COLORS.ink }}>
+                {status ? `${Math.round(status.interval_seconds / 60)} menit` : "—"}
+              </b>
+              <span style={{ fontSize: "12px", color: COLORS.inkSoft }}>data disimpan {status?.retention_days ?? "—"} hari</span>
+            </div>
+            <div style={{ padding: "12px 14px", borderRight: `1px solid ${COLORS.line}` }}>
+              <small style={{ display: "block", fontSize: "12px", color: COLORS.inkSoft }}>Baseline</small>
+              <b style={{ display: "block", fontSize: "20px", fontWeight: 500, margin: "2px 0 1px", color: baselineReady ? COLORS.statusOn : COLORS.statusOff }}>
+                {baselineReady ? "Siap" : "Belum siap"}
+              </b>
+              <span style={{ fontSize: "12px", color: COLORS.inkSoft }}>{status?.baseline_days ?? "—"} hari, minimal 24 jam</span>
+            </div>
+            <div style={{ padding: "12px 14px" }}>
+              <small style={{ display: "block", fontSize: "12px", color: COLORS.inkSoft }}>Perangkat terlacak</small>
+              <b style={{ display: "block", fontSize: "20px", fontWeight: 500, margin: "2px 0 1px", color: COLORS.ink }}>
+                {status?.devices_tracked ?? "—"}
+              </b>
+              <span style={{ fontSize: "12px", color: COLORS.inkSoft }}>dalam snapshot terakhir</span>
+            </div>
           </div>
 
-          {status?.last_error ? (
-            <div style={{ fontSize: "11px", color: COLORS.statusOff }}>Error terakhir: {status.last_error}</div>
-          ) : null}
+          {/* Context Bar */}
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", fontSize: "12px", color: COLORS.inkSoft }}>
+            <span style={{ padding: "3px 10px", border: `1px solid ${COLORS.line}`, borderRadius: "999px" }}>
+              SSID <b style={{ fontWeight: 500, color: COLORS.ink, fontFamily: "monospace" }}>{status?.current_ssid || "—"}</b>
+            </span>
+            <span style={{ padding: "3px 10px", border: `1px solid ${COLORS.line}`, borderRadius: "999px" }}>
+              BSSID <b style={{ fontWeight: 500, color: COLORS.ink, fontFamily: "monospace" }}>{status?.current_bssid || "—"}</b>
+            </span>
+            <span style={{ padding: "3px 10px", border: `1px solid ${COLORS.line}`, borderRadius: "999px" }}>
+              Temuan siklus terakhir <b style={{ fontWeight: 500, color: COLORS.ink, fontFamily: "monospace" }}>{status?.last_alert_count ?? 0}</b>
+            </span>
+          </div>
 
-          {schemaReady && !baselineReady ? (
-            <div
+          {/* Filter Tiles */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "12px" }}>
+            <button
+              onClick={() => setFilter(filter === "traffic_spike" ? "all" : "traffic_spike")}
               style={{
-                fontSize: "11px",
-                color: COLORS.inkSoft,
-                backgroundColor: COLORS.bgSubtle,
-                border: `1px dashed ${COLORS.line}`,
-                borderRadius: "6px",
-                padding: "8px 10px",
+                display: "flex",
+                alignItems: "baseline",
+                gap: "10px",
+                padding: "12px 14px",
+                border: `1px solid ${filter === "traffic_spike" ? COLORS.ink : COLORS.line}`,
+                backgroundColor: "transparent",
+                cursor: "pointer",
+                textAlign: "left",
+                borderRadius: "0px",
+                boxShadow: filter === "traffic_spike" ? "inset 0 0 0 1px #1F1D1A" : "none",
               }}
             >
-              Aturan yang membandingkan dengan baseline (perangkat baru, perangkat hilang, lonjakan trafik) baru aktif
-              setelah snapshot tertua berumur ≥ 24 jam. Aturan latensi dan perubahan BSSID sudah berjalan sekarang.
-            </div>
-          ) : null}
-
-          {/* Summary sections */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "8px" }}>
-            <SectionCard title="Perangkat baru" count={summary?.new_devices.length ?? 0}>
-              {summary?.new_devices.length ? (
-                <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "11px", color: COLORS.ink, fontFamily: "monospace" }}>
-                  {summary.new_devices.slice(0, 8).map((d) => (
-                    <li key={d.mac}>
-                      {d.mac} {d.ip ? `· ${d.ip}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div style={{ fontSize: "11px", color: COLORS.inkFaint }}>Tidak ada</div>
-              )}
-            </SectionCard>
-
-            <SectionCard title="Perangkat hilang" count={summary?.disappeared_devices.length ?? 0}>
-              {summary?.disappeared_devices.length ? (
-                <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "11px", color: COLORS.ink, fontFamily: "monospace" }}>
-                  {summary.disappeared_devices.slice(0, 8).map((d) => (
-                    <li key={d.mac}>
-                      {d.mac} · {fmtTime(d.last_seen)}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div style={{ fontSize: "11px", color: COLORS.inkFaint }}>Tidak ada</div>
-              )}
-            </SectionCard>
-
-            <SectionCard title="Lonjakan trafik" count={summary?.traffic_spikes.length ?? 0}>
-              {summary?.traffic_spikes.length ? (
-                <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "11px", color: COLORS.ink, fontFamily: "monospace" }}>
-                  {summary.traffic_spikes.slice(0, 8).map((d, i) => (
-                    <li key={`${d.device_mac}-${i}`}>{d.device_mac}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div style={{ fontSize: "11px", color: COLORS.inkFaint }}>Tidak ada</div>
-              )}
-            </SectionCard>
-          </div>
-
-          {/* Alerts history */}
-          <div>
-            <div
+              <b style={{ fontSize: "22px", fontWeight: 500, color: COLORS.accent }}>{summary?.traffic_spikes.length ?? 0}</b>
+              <span style={{ fontSize: "13px", color: COLORS.inkSoft }}>Lonjakan trafik</span>
+            </button>
+            <button
+              onClick={() => setFilter(filter === "new_device" ? "all" : "new_device")}
               style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                color: COLORS.inkSoft,
-                marginBottom: "6px",
+                display: "flex",
+                alignItems: "baseline",
+                gap: "10px",
+                padding: "12px 14px",
+                border: `1px solid ${filter === "new_device" ? COLORS.ink : COLORS.line}`,
+                backgroundColor: "transparent",
+                cursor: "pointer",
+                textAlign: "left",
+                borderRadius: "0px",
+                boxShadow: filter === "new_device" ? "inset 0 0 0 1px #1F1D1A" : "none",
               }}
             >
-              Riwayat temuan
-            </div>
-            {loading && alerts.length === 0 ? (
-              <div style={{ fontSize: "11px", color: COLORS.inkFaint }}>Memuat…</div>
-            ) : alerts.length === 0 ? (
-              <div style={{ fontSize: "11px", color: COLORS.inkFaint }}>Belum ada temuan tercatat.</div>
-            ) : (
-              <div style={{ border: `1px solid ${COLORS.line}`, borderRadius: "8px", overflow: "hidden" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft, textAlign: "left" }}>
-                      <th style={{ padding: "6px 8px", fontWeight: 500 }}>Waktu</th>
-                      <th style={{ padding: "6px 8px", fontWeight: 500 }}>Aturan</th>
-                      <th style={{ padding: "6px 8px", fontWeight: 500 }}>MAC</th>
-                      <th style={{ padding: "6px 8px", fontWeight: 500 }}>Pesan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {alerts.map((a, i) => (
-                      <tr key={a.id ?? `${a.rule_type}-${i}`} style={{ borderTop: `1px solid ${COLORS.line}` }}>
-                        <td style={{ padding: "6px 8px", color: COLORS.inkSoft, whiteSpace: "nowrap" }}>{fmtTime(a.ts)}</td>
-                        <td style={{ padding: "6px 8px", color: SEVERITY_COLOR[a.severity] ?? COLORS.ink, whiteSpace: "nowrap" }}>
-                          {RULE_LABEL[a.rule_type] ?? a.rule_type}
+              <b style={{ fontSize: "22px", fontWeight: 500, color: COLORS.statusOn }}>{summary?.new_devices.length ?? 0}</b>
+              <span style={{ fontSize: "13px", color: COLORS.inkSoft }}>Perangkat baru</span>
+            </button>
+            <button
+              onClick={() => setFilter(filter === "device_disappeared" ? "all" : "device_disappeared")}
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: "10px",
+                padding: "12px 14px",
+                border: `1px solid ${filter === "device_disappeared" ? COLORS.ink : COLORS.line}`,
+                backgroundColor: "transparent",
+                cursor: "pointer",
+                textAlign: "left",
+                borderRadius: "0px",
+                boxShadow: filter === "device_disappeared" ? "inset 0 0 0 1px #1F1D1A" : "none",
+              }}
+            >
+              <b style={{ fontSize: "22px", fontWeight: 500, color: COLORS.ink }}>{summary?.disappeared_devices.length ?? 0}</b>
+              <span style={{ fontSize: "13px", color: COLORS.inkSoft }}>Perangkat hilang</span>
+            </button>
+          </div>
+
+          {/* Table Tools */}
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <input
+              type="search"
+              placeholder="Cari MAC, IP, atau pesan"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{
+                border: `1px solid ${COLORS.line}`,
+                backgroundColor: "transparent",
+                padding: "6px 12px",
+                fontSize: "13px",
+                width: "220px",
+                borderRadius: "999px",
+                color: COLORS.ink,
+              }}
+            />
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={hideRandom}
+                onChange={(e) => setHideRandom(e.target.checked)}
+                style={{ position: "absolute", opacity: 0 }}
+              />
+              <div style={{
+                width: "32px",
+                height: "18px",
+                borderRadius: "999px",
+                backgroundColor: hideRandom ? COLORS.statusOn : COLORS.line,
+                position: "relative",
+                transition: "background 0.2s",
+              }}>
+                <div style={{
+                  position: "absolute",
+                  top: "2px",
+                  left: hideRandom ? "14px" : "2px",
+                  width: "14px",
+                  height: "14px",
+                  borderRadius: "50%",
+                  backgroundColor: COLORS.bgPanel,
+                  transition: "transform 0.2s",
+                }} />
+              </div>
+              Sembunyikan MAC acak
+            </label>
+            <span style={{ marginLeft: "auto", fontSize: "12px", color: COLORS.inkSoft }}>
+              {hiddenCount > 0 ? `${hiddenCount} MAC acak disembunyikan` : ""}
+            </span>
+          </div>
+
+          {/* Table */}
+          <div style={{ border: `1px solid ${COLORS.line}`, maxHeight: "340px", overflow: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "13px" }}>
+              <colgroup>
+                <col style={{ width: "118px" }} />
+                <col style={{ width: "110px" }} />
+                <col style={{ width: "30%" }} />
+                <col />
+              </colgroup>
+              <thead>
+                <tr style={{ backgroundColor: COLORS.bgSubtle, color: COLORS.inkSoft, textAlign: "left" }}>
+                  <th style={{ padding: "0 14px", fontWeight: 500, fontSize: "12px", height: "38px" }}>Waktu</th>
+                  <th style={{ padding: "0 14px", fontWeight: 500, fontSize: "12px" }}>Jenis</th>
+                  <th style={{ padding: "0 14px", fontWeight: 500, fontSize: "12px" }}>Perangkat</th>
+                  <th style={{ padding: "0 14px", fontWeight: 500, fontSize: "12px" }}>Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAlerts.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "28px", textAlign: "center", color: COLORS.inkSoft, fontSize: "13px" }}>
+                      Tidak ada temuan yang cocok.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAlerts.map((a, i) => {
+                    const timeData = fmtTimeCompact(a.ts);
+                    const isSpike = a.rule_type === "traffic_spike";
+
+                    const currentVal = a.current_value ?? 100;
+                    const baselineVal = a.baseline_value ?? 50;
+                    const isBaselineSmall = baselineVal < 10;
+                    const ratio = currentVal / baselineVal;
+                    const pct = Math.min((baselineVal / currentVal) * 100, 100);
+
+                    return (
+                      <tr key={a.id ?? (a.rule_type + "-" + i)} style={{ borderTop: "1px solid " + COLORS.line }}>
+                        <td style={{ padding: "10px 14px", color: COLORS.inkSoft }}>
+                          <div style={{ lineHeight: "1.35" }}>
+                            <b style={{ display: "block", color: COLORS.ink, fontWeight: 400, fontSize: "13px" }}>{timeData.time}</b>
+                            {timeData.date}
+                          </div>
                         </td>
-                        <td style={{ padding: "6px 8px", color: COLORS.ink, fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                          {a.device_mac ?? "—"}
+                        <td style={{ padding: "10px 14px" }}>
+                          <span style={{
+                            display: "inline-block",
+                            fontSize: "12px",
+                            padding: "2px 9px",
+                            borderRadius: "999px",
+                            backgroundColor: isSpike ? "rgba(180, 83, 26, 0.12)" :
+                                             a.rule_type === "new_device" ? "rgba(63, 122, 87, 0.13)" : "rgba(110, 106, 96, 0.14)",
+                            color: isSpike ? COLORS.accent :
+                                   a.rule_type === "new_device" ? COLORS.statusOn : COLORS.inkSoft,
+                          }}>
+                            {RULE_LABEL[a.rule_type] ?? a.rule_type}
+                          </span>
                         </td>
-                        <td style={{ padding: "6px 8px", color: COLORS.ink }}>{a.message}</td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <div style={{ lineHeight: "1.35" }}>
+                            <b style={{ fontWeight: 500, fontSize: "13px" }}>{a.message.split(" ")[0]}</b>
+                            <small style={{ display: "block", fontFamily: "monospace", fontSize: "11.5px", color: COLORS.inkSoft }}>
+                              {a.device_mac ?? "—"}
+                            </small>
+                          </div>
+                        </td>
+                        <td style={{ padding: "10px 14px" }}>
+                          {isSpike ? (
+                            <div style={{ lineHeight: "1.4" }}>
+                              <div>{currentVal} paket hari ini {isBaselineSmall ? <span style={{ fontSize: "11px", padding: "0 6px", borderRadius: "999px", backgroundColor: "rgba(180, 83, 26, 0.12)", color: COLORS.accent, marginLeft: "6px" }}>Tinjau</span> : ""}</div>
+                              <small style={{ display: "block", fontSize: "12px", color: COLORS.inkSoft }}>
+                                {isBaselineSmall
+                                  ? "Baseline terlalu kecil (rata-rata " + baselineVal + " paket), rasio tidak ditampilkan"
+                                  : ratio.toFixed(1) + "x rata-rata 7 hari (" + baselineVal + " paket)"}
+                              </small>
+                              {!isBaselineSmall && (
+                                <div style={{ position: "relative", height: "5px", backgroundColor: "rgba(180, 83, 26, 0.12)", marginTop: "8px", marginBottom: "2px", maxWidth: "260px" }}>
+                                  <div style={{ position: "absolute", inset: 0, backgroundColor: COLORS.accent, opacity: 0.55, width: pct + "%" }} />
+                                  <div style={{ position: "absolute", top: "-3px", bottom: "-3px", width: "2px", backgroundColor: COLORS.ink, left: pct + "%" }} />
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: "13px", lineHeight: "1.4" }}>{a.message}</div>
+                          )}
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    );
+                  })
+                )}
+              </tbody>
+              </table>
+            </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: COLORS.inkSoft, gap: "12px", flexWrap: "wrap" }}>
+            <span>Menampilkan {filteredAlerts.length} baris dari {alerts.length} temuan</span>
+            <span>MAC acak = alamat privat ponsel yang berganti-ganti, sering memicu temuan baru atau hilang yang palsu.</span>
           </div>
         </div>
       </div>
