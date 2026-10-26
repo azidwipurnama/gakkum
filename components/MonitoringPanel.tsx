@@ -529,14 +529,10 @@ export default function MonitoringPanel({ open, onClose }: { open: boolean; onCl
                         </td>
                         <td style={{ padding: "10px 14px" }}>
                           <span style={{
-                            display: "inline-block",
-                            fontSize: "12px",
-                            padding: "2px 9px",
-                            borderRadius: "999px",
-                            backgroundColor: isSpike ? "rgba(180, 83, 26, 0.12)" :
-                                             a.rule_type === "new_device" ? "rgba(63, 122, 87, 0.13)" : "rgba(110, 106, 96, 0.14)",
+                            fontSize: "13px",
                             color: isSpike ? COLORS.accent :
                                    a.rule_type === "new_device" ? COLORS.statusOn : COLORS.inkSoft,
+                            fontWeight: 500,
                           }}>
                             {RULE_LABEL[a.rule_type] ?? a.rule_type}
                           </span>
